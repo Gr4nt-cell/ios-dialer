@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Linking, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_SPACE, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
-import { contactName, contactPhoto } from '../phone';
-import { EmptyState, IconButton, LargeHeader, SearchBar, TextButton } from '../components/ui';
+import { contactName, contactPhoto, formatNumber, prettyLabel } from '../phone';
+import { load, save } from '../storage';
+import { Avatar, EmptyState, IconButton, LargeHeader, SearchBar, TextButton } from '../components/ui';
 import { Glass } from '../components/Glass';
 import ContactCard from '../components/ContactCard';
 
@@ -44,6 +46,59 @@ function LetterKey({ letter, selected, available, onPress, size }) {
   );
 }
 
+// List row, same size as a Recents row.
+function ContactRow({ item, onOpen, onCall }) {
+  const t = useTheme();
+  const name = contactName(item);
+  const first = (item.phoneNumbers || [])[0];
+  const subtitle = first ? (first.label ? prettyLabel(first.label) : formatNumber(first.number)) : item.company || '';
+  return (
+    <Pressable onPress={onOpen} onLongPress={first ? onCall : undefined} delayLongPress={350}>
+      {({ pressed }) => (
+        <View style={[styles.row, pressed && { backgroundColor: t.dark ? '#1C1C1E' : '#E5E5EA' }]}>
+          <View style={{ marginRight: 12 }}>
+            <Avatar name={name} image={contactPhoto(item, false)} size={40} />
+          </View>
+          <View style={[styles.rowBody, { borderBottomColor: t.separator }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }} numberOfLines={1}>
+                {name}
+              </Text>
+              {subtitle ? (
+                <Text style={{ color: t.secondary, fontSize: 15, marginTop: 1 }} numberOfLines={1}>
+                  {subtitle}
+                </Text>
+              ) : null}
+            </View>
+            {first ? (
+              <Pressable onPress={onCall} hitSlop={10}>
+                <Ionicons name="call-outline" size={22} color={t.blue} />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+function ViewToggle({ mode, onChange }) {
+  const t = useTheme();
+  const opt = (m, icon) => (
+    <Pressable onPress={() => onChange(m)} hitSlop={4}>
+      <View style={[styles.toggleKey, mode === m && { backgroundColor: t.dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.1)' }]}>
+        <Ionicons name={icon} size={17} color={mode === m ? t.text : t.secondary} />
+      </View>
+    </Pressable>
+  );
+  return (
+    <Glass radius={18} style={styles.toggle}>
+      {opt('grid', 'grid-outline')}
+      {opt('list', 'list-outline')}
+    </Glass>
+  );
+}
+
 export default function ContactsScreen() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -52,6 +107,16 @@ export default function ContactsScreen() {
   const { contacts, contactsPerm, contactsError, refreshContacts, call } = useData();
   const [query, setQuery] = useState('');
   const [letter, setLetter] = useState('all');
+  const [mode, setModeState] = useState('grid');
+
+  useEffect(() => {
+    load('contactsView', 'grid').then((m) => setModeState(m === 'list' ? 'list' : 'grid'));
+  }, []);
+  const setMode = (m) => {
+    Haptics.selectionAsync().catch(() => {});
+    setModeState(m);
+    save('contactsView', m);
+  };
 
   const sorted = useMemo(() => [...contacts].sort((a, b) => contactName(a).localeCompare(contactName(b))), [contacts]);
 
@@ -87,7 +152,12 @@ export default function ContactsScreen() {
   };
 
   const header = (
-    <LargeHeader title="Contacts" right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}>
+    <LargeHeader title="Contacts" right={
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <ViewToggle mode={mode} onChange={setMode} />
+          <IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />
+        </View>
+      }>
       <SearchBar value={query} onChangeText={setQuery} />
       {!query && contacts.length ? (
         <Glass radius={24} strong style={styles.filter}>
@@ -143,18 +213,21 @@ export default function ContactsScreen() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <FlatList
         data={list}
-        key={COLUMNS}
-        numColumns={COLUMNS}
+        key={mode}
+        numColumns={mode === 'grid' ? COLUMNS : 1}
         keyExtractor={(c) => c.id}
         ListHeaderComponent={header}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         initialNumToRender={24}
         windowSize={7}
-        columnWrapperStyle={{ paddingHorizontal: SIDE, gap: GAP, marginBottom: 14 }}
+        columnWrapperStyle={mode === 'grid' ? { paddingHorizontal: SIDE, gap: GAP, marginBottom: 14 } : undefined}
         renderItem={({ item }) => {
           const name = contactName(item);
           const first = (item.phoneNumbers || [])[0];
+          if (mode === 'list') {
+            return <ContactRow item={item} onOpen={() => nav.push({ name: 'contact', contactId: item.id })} onCall={() => first && call(first.number)} />;
+          }
           return (
             <ContactCard
               width={cardW}
@@ -200,4 +273,8 @@ const styles = StyleSheet.create({
   filter: { marginHorizontal: SIDE, marginTop: 10, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 4 },
   allChip: { paddingHorizontal: 12, height: 30, borderRadius: 15, justifyContent: 'center' },
   letterRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
+  rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingRight: 16, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 64 },
+  toggle: { flexDirection: 'row', height: 36, padding: 3, gap: 2, alignItems: 'center' },
+  toggleKey: { width: 34, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 });

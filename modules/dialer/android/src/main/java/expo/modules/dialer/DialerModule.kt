@@ -45,7 +45,11 @@ class DialerModule : Module() {
 
     OnCreate {
       (appContext.reactContext?.applicationContext as? Application)?.let { CallManager.hook(it) }
-      appContext.currentActivity?.let { CallManager.setActivity(it) }
+      appContext.currentActivity?.let {
+        CallManager.setActivity(it)
+        // the module loads after the main screen has started, so record that it's on screen
+        if (it.hasWindowFocus() || it.window?.decorView?.isShown == true) CallManager.markVisible(it, true)
+      }
       CallManager.listener = { json ->
         try { sendEvent("onCallsChanged", mapOf("json" to json)) } catch (_: Exception) {}
       }
@@ -54,6 +58,10 @@ class DialerModule : Module() {
 
     OnDestroy {
       CallManager.listener = null
+    }
+
+    OnActivityEntersForeground {
+      appContext.currentActivity?.let { CallManager.markVisible(it, true) }
     }
 
     // ---------- default phone app ----------

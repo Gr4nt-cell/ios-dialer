@@ -59,11 +59,13 @@ function ReturnToCall() {
     status = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
   const top = Math.max(4, Math.round((insets.top - 34) / 2));
+  // The status bar takes every touch inside its strip, so the pill reaches a little below it.
+  const height = Math.max(34, insets.top - top + 14);
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', top, left: 0, right: 0, alignItems: 'center' }}>
-      <Pressable onPress={() => setMinimized(false)}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', top, left: 0, right: 0, alignItems: 'center', zIndex: 50, elevation: 50 }}>
+      <Pressable onPress={() => setMinimized(false)} hitSlop={{ bottom: 12, left: 8, right: 8 }}>
         {({ pressed }) => (
-          <View style={[islandStyle, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+          <View style={[islandStyle, { height, borderRadius: Math.min(height / 2, 22), transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
             <Ionicons name="call" size={14} color="#30D158" />
             <Text style={{ color: '#30D158', fontSize: 13, fontWeight: '700', marginLeft: 5, flex: 1 }} numberOfLines={1}>
               {status}

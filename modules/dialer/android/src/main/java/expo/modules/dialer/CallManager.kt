@@ -303,24 +303,37 @@ object CallManager {
     app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
       override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) { track(activity) }
       override fun onActivityStarted(activity: Activity) {
-        if (activity !is AnswerActivity) started++
-        IslandOverlay.refresh()
+        markVisible(activity, true)
       }
       override fun onActivityResumed(activity: Activity) { track(activity) }
       override fun onActivityPaused(activity: Activity) {}
       override fun onActivityStopped(activity: Activity) {
-        if (activity !is AnswerActivity) started = maxOf(0, started - 1)
-        main.postDelayed({ IslandOverlay.refresh() }, 250)
+        markVisible(activity, false)
       }
       override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-      override fun onActivityDestroyed(activity: Activity) {}
+      override fun onActivityDestroyed(activity: Activity) { markVisible(activity, false) }
     })
   }
 
-  private var started = 0
+  // The app's screens that are currently started (on screen). Kept as a weak set rather than
+  // a counter: the callbacks are often registered after the main screen has already started,
+  // and a counter then stays wrong for the rest of the session.
+  private val visible = java.util.Collections.newSetFromMap(java.util.WeakHashMap<Activity, Boolean>())
 
   /** True while one of the app's screens is on screen. */
-  fun isAppVisible(): Boolean = started > 0
+  fun isAppVisible(): Boolean = visible.any { !it.isFinishing }
+
+  fun markVisible(activity: Activity, on: Boolean) {
+    if (activity is AnswerActivity) return
+    if (Looper.myLooper() != Looper.getMainLooper()) {
+      main.post { markVisible(activity, on) }
+      return
+    }
+    val changed = if (on) visible.add(activity) else visible.remove(activity)
+    if (changed) {
+      if (on) IslandOverlay.refresh() else main.postDelayed({ IslandOverlay.refresh() }, 250)
+    }
+  }
 
   /** Set when the call screen should be shown once the app comes forward (island / notification tap). */
   @Volatile var showCallRequested = false

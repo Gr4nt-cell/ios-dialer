@@ -43,6 +43,10 @@ object IslandOverlay {
   private var islandWm: WindowManager? = null
   private var expanded = false
   private var lastInteraction = 0L
+  // the status bar sits above app overlays and takes every touch in its strip, so the island
+  // reaches a little below it and keeps its buttons below it
+  private var pillHeightPx = 0
+  private var touchTopPx = 0
 
   private val rear = HashMap<Int, Pair<WindowManager, FrameLayout>>()
 
@@ -131,6 +135,7 @@ object IslandOverlay {
     val pillH = dpi(ctx, 34f)
     var y = dpi(ctx, 6f)
     var x = 0
+    var statusBar = statusBarHeight(ctx)
     if (Build.VERSION.SDK_INT >= 30) {
       try {
         val metrics = wm.currentWindowMetrics
@@ -139,10 +144,14 @@ object IslandOverlay {
           y = maxOf(0, cut.centerY() - pillH / 2)
           x = cut.centerX() - metrics.bounds.width() / 2
         }
+        val top = metrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top
+        if (top > 0) statusBar = top
       } catch (_: Exception) {}
     }
     params.x = x
     params.y = y
+    touchTopPx = maxOf(0, statusBar - y)
+    pillHeightPx = maxOf(pillH, touchTopPx + dpi(ctx, 14f))
 
     root.setOnTouchListener { _, e ->
       if (e.action == MotionEvent.ACTION_OUTSIDE && expanded && CallManager.ringingCall() == null) {
@@ -162,6 +171,21 @@ object IslandOverlay {
     } catch (_: Exception) {
       island = null
     }
+  }
+
+  private fun statusBarHeight(ctx: Context): Int {
+    val id = ctx.resources.getIdentifier("status_bar_height", "dimen", "android")
+    return if (id > 0) ctx.resources.getDimensionPixelSize(id) else dpi(ctx, 32f)
+  }
+
+  /** Opens the call screen. The island stays up until the app is on screen: hiding it first
+   *  would take away the visible window Android needs to let an app open from the background. */
+  private fun openCallScreen() {
+    val ctx = CallManager.appContext ?: return
+    expanded = false
+    lastSig = null
+    CallManager.launchUi(ctx)
+    main.postDelayed({ refresh() }, 600)
   }
 
   private fun hideIsland() {
@@ -310,9 +334,10 @@ object IslandOverlay {
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
-      background = rounded(Color.BLACK, dp(ctx, 17f))
+      val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 34f)
+      background = rounded(Color.BLACK, minOf(h / 2f, dp(ctx, 22f)))
       setPadding(dpi(ctx, 12f), 0, dpi(ctx, 12f), 0)
-      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 220f), dpi(ctx, 34f))
+      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 220f), h)
     }
     val icon = ImageView(ctx).apply {
       setImageResource(android.R.drawable.sym_action_call)
@@ -331,6 +356,10 @@ object IslandOverlay {
       lastInteraction = System.currentTimeMillis()
       render()
     }
+    row.setOnLongClickListener {
+      openCallScreen()
+      true
+    }
     return row
   }
 
@@ -345,7 +374,7 @@ object IslandOverlay {
       orientation = LinearLayout.VERTICAL
       gravity = if (compact) Gravity.NO_GRAVITY else Gravity.CENTER
       if (compact) background = rounded(Color.BLACK, dp(ctx, 34f))
-      setPadding(s(18f), s(16f), s(18f), s(16f))
+      setPadding(s(18f), if (compact) maxOf(s(16f), touchTopPx + dpi(ctx, 8f)) else s(16f), s(18f), s(16f))
       layoutParams = if (compact) {
         FrameLayout.LayoutParams(minOf(screenW - dpi(ctx, 20f), dpi(ctx, 420f)), ViewGroup.LayoutParams.WRAP_CONTENT)
       } else {
@@ -376,8 +405,7 @@ object IslandOverlay {
     names.addView(text(ctx, i.status, if (compact) 13f else 14f * scale, Color.parseColor(if (i.ringing) "#30D158" else "#A1A1A6")).apply { if (!compact) gravity = Gravity.CENTER; statusLabels.add(this) })
     header.addView(names, LinearLayout.LayoutParams(if (compact) 0 else ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, if (compact) 1f else 0f))
     header.setOnClickListener {
-      hideIsland()
-      CallManager.appContext?.let { CallManager.launchUi(it) }
+      if (compact) openCallScreen() else CallManager.appContext?.let { CallManager.launchUi(it) }
     }
     col.addView(header)
 

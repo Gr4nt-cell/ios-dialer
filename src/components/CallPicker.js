@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { formatNumber, prettyLabel } from '../phone';
 import { getPhoneAccounts } from '../dialer';
@@ -40,6 +41,7 @@ function Backdrop({ target, onClose }) {
  */
 export default function CallPicker({ picker, target, onClose, onPickNumber, onPickSim }) {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -51,13 +53,14 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
 
   if (!picker) return null;
 
-  const scale = fade.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] });
+  const scale = fade.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] });
+  const rise = fade.interpolate({ inputRange: [0, 1], outputRange: [60, 0] });
 
   return (
     <View style={StyleSheet.absoluteFill}>
       <Backdrop target={target} onClose={onClose} />
-      <View style={styles.center} pointerEvents="box-none">
-        <Animated.View style={{ alignItems: 'center', opacity: fade, transform: [{ scale }] }}>
+      <View style={[styles.lower, { paddingBottom: insets.bottom + 56 }]} pointerEvents="box-none">
+        <Animated.View style={{ alignItems: 'center', opacity: fade, transform: [{ translateY: rise }, { scale }] }}>
           {picker.mode === 'numbers' ? (
             <>
               <Text style={[styles.caption, { color: t.secondary }]}>{picker.action === 'message' ? 'Message which number?' : 'Call which number?'}</Text>
@@ -108,7 +111,8 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
 }
 
 const styles = StyleSheet.create({
-  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  // sits in the lower half of the screen, within thumb reach
+  lower: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 24 },
   caption: { fontSize: 13, fontWeight: '600', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.6 },
   numberPill: { minWidth: 250, paddingHorizontal: 26, paddingVertical: 12, alignItems: 'center' },
   usingPill: { paddingHorizontal: 18, height: 36, justifyContent: 'center', marginBottom: 8 },
