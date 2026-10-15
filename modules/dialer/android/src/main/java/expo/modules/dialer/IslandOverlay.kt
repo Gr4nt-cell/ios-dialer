@@ -192,7 +192,7 @@ object IslandOverlay {
     }
 
     val camera = cut
-    val minH = dpi(host, 22f)
+    val minH = dpi(host, 18f)
     var x = 0
     val y: Int
     if (viaService) {
@@ -201,7 +201,8 @@ object IslandOverlay {
         // leave a strip of screen above the island; stay centred on the camera
         val gapTop = dpi(host, 5f)
         val room = 2 * (camera.centerY() - gapTop)
-        pillHeightPx = maxOf(camera.height() + dpi(host, 2f), minOf(maxOf(minH, camera.height() + dpi(host, 4f)), room))
+        // as thin as possible: just enough to wrap the camera
+        pillHeightPx = maxOf(camera.height() + dpi(host, 1f), minOf(maxOf(minH, camera.height() + dpi(host, 2f)), room))
         y = maxOf(gapTop, camera.centerY() - pillHeightPx / 2)
         x = camera.centerX() - screenW / 2
         cameraGapPx = camera.width() + dpi(host, 6f)
@@ -447,7 +448,7 @@ object IslandOverlay {
   /** Collapsed pill: call duration on the left, a moving sound wave on the right, the camera in between. */
   private fun pill(ctx: Context, i: Info): View {
     val green = Color.parseColor("#30D158")
-    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 22f)
+    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 18f)
     val side = dpi(ctx, 36f)
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
@@ -457,14 +458,14 @@ object IslandOverlay {
       layoutParams = FrameLayout.LayoutParams(side * 2 + dpi(ctx, 18f) + cameraGapPx, h)
     }
     row.addView(
-      text(ctx, i.short, 11f, green, bold = true).apply { pillLabels.add(this) },
+      text(ctx, i.short, 10f, green, bold = true).apply { pillLabels.add(this); includeFontPadding = false },
       LinearLayout.LayoutParams(side, ViewGroup.LayoutParams.WRAP_CONTENT),
     )
     row.addView(View(ctx), LinearLayout.LayoutParams(if (cameraGapPx > 0) cameraGapPx else dpi(ctx, 8f), 1)) // camera
     val waveBox = FrameLayout(ctx)
     waveBox.addView(
       WaveView(ctx, green, active = i.active && !i.muted),
-      FrameLayout.LayoutParams(dpi(ctx, 18f), dpi(ctx, 11f), Gravity.END or Gravity.CENTER_VERTICAL),
+      FrameLayout.LayoutParams(dpi(ctx, 16f), dpi(ctx, 9f), Gravity.END or Gravity.CENTER_VERTICAL),
     )
     row.addView(waveBox, LinearLayout.LayoutParams(side, ViewGroup.LayoutParams.MATCH_PARENT))
     row.setOnClickListener {
