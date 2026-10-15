@@ -4,38 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { LinearGradient } from 'expo-linear-gradient';
 import Dialer from '../dialer';
 import { Glass, GlassShadow } from './Glass';
-
-// Layers that imitate iOS "liquid glass" refraction on top of the blur: light bending at the
-// rim (bright top edge, glowing lower lip, lit sides), a thin inner bevel, and a faint
-// chromatic fringe where the glass is thickest.
-function Refraction({ radius, dark, strong }) {
-  const k = strong ? 1.35 : 1;
-  const w = (a) => `rgba(255,255,255,${Math.min(1, a * k)})`;
-  return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
-      {/* chromatic fringe */}
-      <LinearGradient
-        colors={dark ? ['rgba(120,180,255,0.14)', 'rgba(0,0,0,0)', 'rgba(255,150,210,0.12)'] : ['rgba(120,180,255,0.16)', 'rgba(255,255,255,0)', 'rgba(255,160,210,0.14)']}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      {/* bright upper edge (light refracted through the top curve) */}
-      <LinearGradient colors={[w(dark ? 0.32 : 0.75), w(0)]} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '42%' }} />
-      {/* glowing lower lip */}
-      <LinearGradient colors={[w(0), w(dark ? 0.12 : 0.35)]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '30%' }} />
-      {/* lit sides */}
-      <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={[w(dark ? 0.16 : 0.4), w(0)]} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 18 }} />
-      <LinearGradient start={{ x: 1, y: 0 }} end={{ x: 0, y: 0 }} colors={[w(dark ? 0.16 : 0.4), w(0)]} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 18 }} />
-      {/* inner bevel */}
-      <View style={{ position: 'absolute', left: 1, right: 1, top: 1, bottom: 1, borderRadius: radius - 1, borderWidth: 1, borderColor: w(dark ? 0.2 : 0.65) }} />
-    </View>
-  );
-}
 
 // 60% lighter than the system selection tick
 function tick() {
@@ -162,8 +132,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <GlassShadow radius={32} style={{ flex: 1 }}>
-        <Glass blur outline radius={32} intensity={90} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62 }}>
-          <Refraction radius={32} dark={t.dark} />
+        <Glass blur outline radius={32} intensity={70} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62 }}>
           {itemW > 0 ? (
             <Animated.View
               pointerEvents="none"
@@ -176,9 +145,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 transform: [{ translateX: Animated.multiply(pos, itemW) }, { scaleX: lensScale }, { scaleY: lensScaleY }],
               }}
             >
-              <Glass radius={27} selected style={{ flex: 1 }} tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.35)'} tintOpacity={1}>
-                <Refraction radius={27} dark={t.dark} strong />
-              </Glass>
+              <Glass radius={27} selected style={{ flex: 1 }} tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'} tintOpacity={1} />
             </Animated.View>
           ) : null}
           <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: 4 }} {...responder.panHandlers}>
@@ -187,7 +154,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
               const color = on ? t.blue : t.text;
               return (
                 <View key={tab.key} style={styles.item} pointerEvents="none">
-                  <View style={{ transform: [{ scale: hover === i ? 1.12 : on ? 1.04 : 1 }] }}>
+                  <View style={{ transform: [{ scale: hover === i ? 1.1 : 1 }] }}>
                     <Ionicons name={tab.icon === 'search' ? 'search' : on ? tab.icon : tab.icon + '-outline'} size={tabs.length > 5 ? 22 : 24} color={color} />
                     {badges[tab.key] ? (
                       <View style={[styles.badge, { backgroundColor: t.red }]}>
