@@ -80,11 +80,11 @@ function statusText(c, who) {
   switch (c.state) {
     case 'ringing':
     case 'simulated_ringing':
-      return who.label ? `incoming call · ${who.label}` : 'incoming call';
+      return 'incoming call';
     case 'dialing':
     case 'connecting':
     case 'new':
-      return who.label && who.label !== 'unknown number' ? `calling ${who.label}…` : 'calling…';
+      return 'calling…';
     case 'select_account':
       return 'choose a SIM';
     case 'holding':

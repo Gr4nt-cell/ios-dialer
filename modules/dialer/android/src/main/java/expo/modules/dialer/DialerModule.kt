@@ -203,6 +203,34 @@ class DialerModule : Module() {
       } catch (_: Exception) { false }
     }
 
+    // Soft tick for the tab bar, at a fraction of the normal strength (0..1).
+    Function("softTick") { strength: Double ->
+      try {
+        val v: android.os.Vibrator? = if (android.os.Build.VERSION.SDK_INT >= 31) {
+          (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? android.os.VibratorManager)?.defaultVibrator
+        } else {
+          @Suppress("DEPRECATION")
+          ctx.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+        }
+        if (v != null && v.hasVibrator()) {
+          val s = strength.coerceIn(0.05, 1.0).toFloat()
+          if (android.os.Build.VERSION.SDK_INT >= 30 &&
+            v.areAllPrimitivesSupported(android.os.VibrationEffect.Composition.PRIMITIVE_TICK)
+          ) {
+            v.vibrate(
+              android.os.VibrationEffect.startComposition()
+                .addPrimitive(android.os.VibrationEffect.Composition.PRIMITIVE_TICK, s)
+                .compose(),
+            )
+          } else if (android.os.Build.VERSION.SDK_INT >= 26) {
+            val amp = (255 * s * 0.6f).toInt().coerceIn(1, 255)
+            v.vibrate(android.os.VibrationEffect.createOneShot(8, amp))
+          }
+        }
+      } catch (_: Exception) {}
+      true
+    }
+
     Function("getIslandSize") { ->
       val z = IslandOverlay.size(ctx)
       mapOf("height" to z.height, "width" to z.width, "dx" to z.dx, "dy" to z.dy)
