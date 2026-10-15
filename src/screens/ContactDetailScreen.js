@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,8 @@ import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, durationLabel, formatNumber, numberKey, prettyLabel, sendMessage, timeLabel } from '../phone';
 import { Avatar, Cell, Group, IconButton, TextButton } from '../components/ui';
-import { Glass } from '../components/Glass';
+import { BlurTargetView, Glass } from '../components/Glass';
+import CallPicker, { callAccounts } from '../components/CallPicker';
 import { useActionSheet } from '../components/ActionSheet';
 import Dialer from '../dialer';
 import { loadRecordings } from './RecordingsScreen';
@@ -99,6 +100,43 @@ export default function ContactDetailScreen({ route }) {
 
   const blocked = primary ? phones.some((p) => isBlocked(p.number)) : false;
   const favorite = primary ? phones.some((p) => isFavorite(p.number)) : false;
+
+  // ---------- blurred number / SIM pickers ----------
+  const blurTarget = useRef(null);
+  const [picker, setPicker] = useState(null);
+
+  // number chosen → straight to "Call Using" when the phone has more than one SIM
+  const startCall = (p) => {
+    const accounts = callAccounts();
+    if (accounts.length >= 2) setPicker({ mode: 'sim', number: p.number, accounts });
+    else {
+      setPicker(null);
+      call(p.number);
+    }
+  };
+
+  const pickNumberFor = (action) => {
+    if (!phones.length) return;
+    if (phones.length === 1) {
+      if (action === 'message') sendMessage(phones[0].number);
+      else startCall(phones[0]);
+      return;
+    }
+    setPicker({ mode: 'numbers', action, phones });
+  };
+
+  const onPickNumber = (p) => {
+    if (picker && picker.action === 'message') {
+      setPicker(null);
+      sendMessage(p.number);
+    } else startCall(p);
+  };
+
+  const onPickSim = (a) => {
+    const number = picker && picker.number;
+    setPicker(null);
+    if (number) call(number, a.key);
+  };
 
   const chooseNumber = (title, onPick) => {
     if (phones.length <= 1) return primary && onPick(phones[0] || { number: primary, label: 'phone' });
@@ -213,6 +251,7 @@ export default function ContactDetailScreen({ route }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.grouped }}>
+      <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.grouped }}>
       <View style={[styles.nav, { paddingTop: insets.top }]}>
         <IconButton glass name="chevron-back" onPress={nav.pop} />
         {contact ? <TextButton glass title="Edit" onPress={edit} /> : null}
@@ -244,8 +283,8 @@ export default function ContactDetailScreen({ route }) {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 18 }}>
-          <Action icon="chatbubble" label="message" disabled={!primary} onPress={() => chooseNumber('Message', (p) => sendMessage(p.number))} />
-          <Action icon="call" label="call" disabled={!primary} onPress={() => chooseNumber('Call', (p) => call(p.number))} />
+          <Action icon="chatbubble" label="message" disabled={!primary} onPress={() => pickNumberFor('message')} />
+          <Action icon="call" label="call" disabled={!primary} onPress={() => pickNumberFor('call')} />
           <Action icon="logo-whatsapp" label="WhatsApp" color="#25D366" disabled={!primary} onPress={whatsApp} />
           <Action icon="share-outline" label="share" disabled={!primary} onPress={share} />
         </View>
@@ -275,7 +314,7 @@ export default function ContactDetailScreen({ route }) {
                 label={prettyLabel(p.label)}
                 value={formatNumber(p.number)}
                 color={t.blue}
-                onPress={() => call(p.number)}
+                onPress={() => startCall(p)}
                 onLongPress={() => Clipboard.setStringAsync(p.number).then(() => Alert.alert('Copied', formatNumber(p.number)))}
                 right={isBlocked(p.number) ? <Ionicons name="hand-left" size={16} color={t.red} /> : null}
               />
@@ -304,7 +343,7 @@ export default function ContactDetailScreen({ route }) {
         ) : null}
 
         <Group style={{ marginBottom: 18 }}>
-          {primary ? <Cell value="Send Message" color={t.blue} onPress={() => chooseNumber('Message', (p) => sendMessage(p.number))} /> : null}
+          {primary ? <Cell value="Send Message" color={t.blue} onPress={() => pickNumberFor('message')} /> : null}
           {primary ? <Cell value="Share Contact" color={t.blue} onPress={share} /> : null}
           {recordingCount ? (
             <Cell value={`Call Recordings (${recordingCount})`} color={t.blue} onPress={() => nav.push({ name: 'recordings', numbers: phones.map((p) => p.number) })} />
@@ -325,6 +364,8 @@ export default function ContactDetailScreen({ route }) {
           </Group>
         ) : null}
       </ScrollView>
+      </BlurTargetView>
+      <CallPicker picker={picker} target={blurTarget} onClose={() => setPicker(null)} onPickNumber={onPickNumber} onPickSim={onPickSim} />
     </View>
   );
 }
