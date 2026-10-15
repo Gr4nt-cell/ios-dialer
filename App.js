@@ -58,19 +58,18 @@ function ReturnToCall() {
     const s = Math.max(0, Math.floor((Date.now() - call.connectTime) / 1000));
     status = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
-  const top = Math.max(4, Math.round((insets.top - 34) / 2));
-  // The status bar takes every touch inside its strip, so the pill reaches a little below it.
-  const height = Math.max(34, insets.top - top + 14);
+  // Just below the status bar: Android gives every tap inside the status-bar strip to the system.
+  const top = insets.top + 4;
   return (
     <View pointerEvents="box-none" style={{ position: 'absolute', top, left: 0, right: 0, alignItems: 'center', zIndex: 50, elevation: 50 }}>
-      <Pressable onPress={() => setMinimized(false)} hitSlop={{ bottom: 12, left: 8, right: 8 }}>
+      <Pressable onPress={() => setMinimized(false)} hitSlop={10}>
         {({ pressed }) => (
-          <View style={[islandStyle, { height, borderRadius: Math.min(height / 2, 22), transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+          <View style={[islandStyle, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
             <Ionicons name="call" size={14} color="#30D158" />
             <Text style={{ color: '#30D158', fontSize: 13, fontWeight: '700', marginLeft: 5, flex: 1 }} numberOfLines={1}>
               {status}
             </Text>
-            <View style={{ width: 40 }} />
+            <View style={{ width: 10 }} />
             <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', flex: 1, textAlign: 'right' }} numberOfLines={1}>
               {name}
             </Text>
@@ -81,7 +80,7 @@ function ReturnToCall() {
   );
 }
 
-const islandStyle = { flexDirection: 'row', alignItems: 'center', backgroundColor: '#000', width: 220, height: 34, borderRadius: 17, paddingHorizontal: 12 };
+const islandStyle = { flexDirection: 'row', alignItems: 'center', backgroundColor: '#000', width: 190, height: 30, borderRadius: 15, paddingHorizontal: 11 };
 
 function Main() {
   const t = useTheme();

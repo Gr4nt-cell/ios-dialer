@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
@@ -42,6 +42,7 @@ function Backdrop({ target, onClose }) {
 export default function CallPicker({ picker, target, onClose, onPickNumber, onPickSim }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const { height: screenH } = useWindowDimensions();
   const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -57,10 +58,15 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
   const rise = fade.interpolate({ inputRange: [0, 1], outputRange: [60, 0] });
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { zIndex: 100, elevation: 100 }]}>
       <Backdrop target={target} onClose={onClose} />
-      <View style={[styles.lower, { paddingBottom: insets.bottom + 56 }]} pointerEvents="box-none">
-        <Animated.View style={{ alignItems: 'center', opacity: fade, transform: [{ translateY: rise }, { scale }] }}>
+      {/* pinned to the bottom edge of the screen, never higher than its middle */}
+      <Animated.View
+        style={[
+          styles.sheet,
+          { bottom: Math.max(insets.bottom, 12) + 36, maxHeight: screenH / 2, opacity: fade, transform: [{ translateY: rise }, { scale }] },
+        ]}
+      >
           {picker.mode === 'numbers' ? (
             <>
               <Text style={[styles.caption, { color: t.secondary }]}>{picker.action === 'message' ? 'Message which number?' : 'Call which number?'}</Text>
@@ -104,15 +110,14 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
               </View>
             </>
           )}
-        </Animated.View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // sits in the lower half of the screen, within thumb reach
-  lower: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 24 },
+  // lower half of the screen, within thumb reach
+  sheet: { position: 'absolute', left: 0, right: 0, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 24 },
   caption: { fontSize: 13, fontWeight: '600', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.6 },
   numberPill: { minWidth: 250, paddingHorizontal: 26, paddingVertical: 12, alignItems: 'center' },
   usingPill: { paddingHorizontal: 18, height: 36, justifyContent: 'center', marginBottom: 8 },

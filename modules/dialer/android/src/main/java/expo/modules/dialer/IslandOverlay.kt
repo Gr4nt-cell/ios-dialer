@@ -43,10 +43,6 @@ object IslandOverlay {
   private var islandWm: WindowManager? = null
   private var expanded = false
   private var lastInteraction = 0L
-  // the status bar sits above app overlays and takes every touch in its strip, so the island
-  // reaches a little below it and keeps its buttons below it
-  private var pillHeightPx = 0
-  private var touchTopPx = 0
 
   private val rear = HashMap<Int, Pair<WindowManager, FrameLayout>>()
 
@@ -131,27 +127,21 @@ object IslandOverlay {
         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
       }
     }
-    // centre the pill on the selfie camera when the phone reports where it is
-    val pillH = dpi(ctx, 34f)
-    var y = dpi(ctx, 6f)
+    // Centred under the selfie camera, just below the status bar: the status bar sits above app
+    // overlays and takes every touch inside its strip, so anything drawn there can't be tapped.
     var x = 0
     var statusBar = statusBarHeight(ctx)
     if (Build.VERSION.SDK_INT >= 30) {
       try {
         val metrics = wm.currentWindowMetrics
         val cut = metrics.windowInsets.displayCutout?.boundingRects?.firstOrNull { it.top < dp(ctx, 80f) }
-        if (cut != null) {
-          y = maxOf(0, cut.centerY() - pillH / 2)
-          x = cut.centerX() - metrics.bounds.width() / 2
-        }
-        val top = metrics.windowInsets.getInsets(android.view.WindowInsets.Type.statusBars()).top
+        if (cut != null) x = cut.centerX() - metrics.bounds.width() / 2
+        val top = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.statusBars()).top
         if (top > 0) statusBar = top
       } catch (_: Exception) {}
     }
     params.x = x
-    params.y = y
-    touchTopPx = maxOf(0, statusBar - y)
-    pillHeightPx = maxOf(pillH, touchTopPx + dpi(ctx, 14f))
+    params.y = statusBar + dpi(ctx, 4f)
 
     root.setOnTouchListener { _, e ->
       if (e.action == MotionEvent.ACTION_OUTSIDE && expanded && CallManager.ringingCall() == null) {
@@ -334,10 +324,9 @@ object IslandOverlay {
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
-      val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 34f)
-      background = rounded(Color.BLACK, minOf(h / 2f, dp(ctx, 22f)))
-      setPadding(dpi(ctx, 12f), 0, dpi(ctx, 12f), 0)
-      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 220f), h)
+      background = rounded(Color.BLACK, dp(ctx, 15f))
+      setPadding(dpi(ctx, 11f), 0, dpi(ctx, 11f), 0)
+      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 190f), dpi(ctx, 30f))
     }
     val icon = ImageView(ctx).apply {
       setImageResource(android.R.drawable.sym_action_call)
@@ -345,7 +334,7 @@ object IslandOverlay {
     }
     row.addView(icon, LinearLayout.LayoutParams(dpi(ctx, 16f), dpi(ctx, 16f)))
     row.addView(text(ctx, i.status, 13f, green, bold = true).apply { setPadding(dpi(ctx, 5f), 0, 0, 0); statusLabels.add(this) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-    row.addView(View(ctx), LinearLayout.LayoutParams(dpi(ctx, 40f), 1)) // camera gap
+    row.addView(View(ctx), LinearLayout.LayoutParams(dpi(ctx, 10f), 1))
     row.addView(
       text(ctx, i.name, 13f, Color.WHITE, bold = true).apply { gravity = Gravity.END },
       LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
@@ -373,10 +362,10 @@ object IslandOverlay {
     val col = LinearLayout(ctx).apply {
       orientation = LinearLayout.VERTICAL
       gravity = if (compact) Gravity.NO_GRAVITY else Gravity.CENTER
-      if (compact) background = rounded(Color.BLACK, dp(ctx, 34f))
-      setPadding(s(18f), if (compact) maxOf(s(16f), touchTopPx + dpi(ctx, 8f)) else s(16f), s(18f), s(16f))
+      if (compact) background = rounded(Color.BLACK, dp(ctx, 26f))
+      setPadding(s(if (compact) 14f else 18f), s(if (compact) 12f else 16f), s(if (compact) 14f else 18f), s(if (compact) 12f else 16f))
       layoutParams = if (compact) {
-        FrameLayout.LayoutParams(minOf(screenW - dpi(ctx, 20f), dpi(ctx, 420f)), ViewGroup.LayoutParams.WRAP_CONTENT)
+        FrameLayout.LayoutParams(minOf(screenW - dpi(ctx, 24f), dpi(ctx, 360f)), ViewGroup.LayoutParams.WRAP_CONTENT)
       } else {
         FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
       }
@@ -395,7 +384,7 @@ object IslandOverlay {
       typeface = Typeface.DEFAULT_BOLD
       background = rounded(Color.parseColor("#3A3A3C"), s(24f).toFloat())
     }
-    header.addView(avatar, LinearLayout.LayoutParams(s(if (compact) 46f else 60f), s(if (compact) 46f else 60f)))
+    header.addView(avatar, LinearLayout.LayoutParams(s(if (compact) 38f else 60f), s(if (compact) 38f else 60f)))
     val names = LinearLayout(ctx).apply {
       orientation = LinearLayout.VERTICAL
       gravity = if (compact) Gravity.START else Gravity.CENTER_HORIZONTAL
@@ -413,14 +402,14 @@ object IslandOverlay {
     val buttons = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER
-      setPadding(0, s(14f), 0, 0)
+      setPadding(0, s(if (compact) 10f else 14f), 0, 0)
     }
     fun button(label: String, iconRes: Int, bg: Int, rotate: Float = 0f, onTap: () -> Unit) {
       val box = LinearLayout(ctx).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER_HORIZONTAL
       }
-      val size = s(if (compact) 50f else 58f)
+      val size = s(if (compact) 42f else 58f)
       val img = ImageView(ctx).apply {
         setImageResource(iconRes)
         imageTintList = ColorStateList.valueOf(Color.WHITE)
