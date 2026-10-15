@@ -80,6 +80,27 @@ function CallPreview({ colors }) {
   );
 }
 
+// − value + control for the island size settings
+function Stepper({ value, onChange, min, max, step = 1, format }) {
+  const t = useTheme();
+  const btn = (icon, next, disabled) => (
+    <Pressable onPress={() => !disabled && onChange(next)} hitSlop={6} disabled={disabled}>
+      {({ pressed }) => (
+        <View style={{ width: 32, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? t.fill : t.dark ? '#2C2C2E' : '#EFEFF4', opacity: disabled ? 0.4 : 1 }}>
+          <Ionicons name={icon} size={16} color={t.text} />
+        </View>
+      )}
+    </Pressable>
+  );
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      {btn('remove', Math.max(min, value - step), value <= min)}
+      <Text style={{ color: t.secondary, fontSize: 15, minWidth: 54, textAlign: 'center' }}>{format ? format(value) : value}</Text>
+      {btn('add', Math.min(max, value + step), value >= max)}
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -100,6 +121,25 @@ export default function SettingsScreen() {
     });
     return () => sub.remove();
   }, []);
+  const [islandSize, setIslandSizeState] = useState(() => {
+    try {
+      return Dialer && Dialer.getIslandSize ? Dialer.getIslandSize() : { height: 0, width: 0, dx: 0, dy: 0 };
+    } catch {
+      return { height: 0, width: 0, dx: 0, dy: 0 };
+    }
+  });
+  const setIslandSize = (patch) => {
+    const next = { ...islandSize, ...patch };
+    setIslandSizeState(next);
+    try {
+      if (Dialer && Dialer.setIslandSize) {
+        Dialer.setIslandSize(next.height | 0, next.width | 0, next.dx | 0, next.dy | 0);
+        if (Dialer.previewIsland) Dialer.previewIsland();
+      }
+    } catch {
+      // ignore
+    }
+  };
   const setOverlayPref = (patch) => {
     const next = { ...overlay, ...patch };
     setOverlay(next);
@@ -171,13 +211,34 @@ export default function SettingsScreen() {
             onPress={overlay.service || !Dialer ? undefined : () => Dialer.openAccessibilitySettings()}
             right={overlay.service ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>Open</Text>}
           />
+          {overlay.service ? (
+            <>
+              <Cell
+                value="Thickness"
+                right={
+                  <Stepper
+                    value={islandSize.height}
+                    min={0}
+                    max={40}
+                    onChange={(v) => setIslandSize({ height: v > 0 && v < 12 ? (islandSize.height === 0 ? 12 : 0) : v })}
+                    format={(v) => (v === 0 ? 'Auto' : `${v}`)}
+                  />
+                }
+              />
+              <Cell value="Width" right={<Stepper value={islandSize.width} min={-16} max={40} step={2} onChange={(v) => setIslandSize({ width: v })} format={(v) => (v > 0 ? `+${v}` : `${v}`)} />} />
+              <Cell value="Move Up / Down" right={<Stepper value={islandSize.dy} min={-15} max={40} onChange={(v) => setIslandSize({ dy: v })} format={(v) => (v > 0 ? `↓ ${v}` : v < 0 ? `↑ ${-v}` : '0')} />} />
+              <Cell value="Move Left / Right" right={<Stepper value={islandSize.dx} min={-60} max={60} step={2} onChange={(v) => setIslandSize({ dx: v })} format={(v) => (v > 0 ? `→ ${v}` : v < 0 ? `← ${-v}` : '0')} />} />
+              <Cell value="Preview Island" color={t.blue} onPress={() => Dialer && Dialer.previewIsland && Dialer.previewIsland()} />
+              <Cell value="Reset Size" color={t.red} onPress={() => setIslandSize({ height: 0, width: 0, dx: 0, dy: 0 })} />
+            </>
+          ) : null}
           {!overlay.service ? (
             <Cell value="Allow Restricted Settings" onPress={Dialer ? () => Dialer.openAppInfo() : undefined} right={<Text style={{ color: t.blue, fontSize: 15 }}>App Info</Text>} />
           ) : null}
         </Group>
         <Footer>
           {overlay.service
-            ? 'During a call, a pill around the selfie camera shows the timer. Tap it for mute, speaker and end (or answer and decline), tap the name to open the call.'
+            ? 'During a call, a pill around the selfie camera shows the timer. Tap it for mute, speaker and end (or answer and decline), tap the name to open the call. Changing the size shows a preview for a few seconds; sizes are in dp, Auto fits it to your camera.'
             : 'To put calls around the selfie camera, turn on "Call Island" under Accessibility › Downloaded apps. If Android says it\'s a restricted setting, tap App Info, then ⋮ › Allow restricted settings, and try again. The island only draws the call; it doesn\'t read your screen.'}
         </Footer>
 

@@ -203,6 +203,17 @@ class DialerModule : Module() {
       } catch (_: Exception) { false }
     }
 
+    Function("getIslandSize") { ->
+      val z = IslandOverlay.size(ctx)
+      mapOf("height" to z.height, "width" to z.width, "dx" to z.dx, "dy" to z.dy)
+    }
+
+    Function("setIslandSize") { height: Int, width: Int, dx: Int, dy: Int ->
+      IslandOverlay.setSize(ctx, height, width, dx, dy)
+    }
+
+    Function("previewIsland") { -> IslandOverlay.preview(6) }
+
     Function("setCallScreenShown") { shown: Boolean ->
       IslandOverlay.callScreenShown = shown
       IslandOverlay.refresh()

@@ -55,6 +55,7 @@ object IslandOverlay {
   private var cameraGapPx = 0
   private var cameraClearPx = 0
   private var cameraTopPx = 0
+  private var sideExtraPx = 0
 
   fun attachService(s: IslandAccessibilityService) {
     service = java.lang.ref.WeakReference(s)
@@ -86,6 +87,38 @@ object IslandOverlay {
   // ---------- preferences / permission ----------
 
   fun islandEnabled(ctx: Context) = ctx.getSharedPreferences(PREFS, 0).getBoolean("island", true)
+
+  // ---------- size / position set in the app's settings (dp; height 0 = automatic) ----------
+
+  data class Size(val height: Int, val width: Int, val dx: Int, val dy: Int)
+
+  fun size(ctx: Context): Size {
+    val p = ctx.getSharedPreferences(PREFS, 0)
+    return Size(p.getInt("sizeH", 0), p.getInt("sizeW", 0), p.getInt("sizeDX", 0), p.getInt("sizeDY", 0))
+  }
+
+  fun setSize(ctx: Context, height: Int, width: Int, dx: Int, dy: Int) {
+    ctx.getSharedPreferences(PREFS, 0).edit()
+      .putInt("sizeH", height).putInt("sizeW", width).putInt("sizeDX", dx).putInt("sizeDY", dy).apply()
+    main.post {
+      hideIsland() // rebuilt with the new geometry
+      refresh()
+    }
+  }
+
+  // shows a sample island for a few seconds so the size can be judged without a call
+  @Volatile private var previewUntil = 0L
+
+  private fun previewing() = System.currentTimeMillis() < previewUntil
+
+  fun preview(seconds: Int = 6) {
+    previewUntil = System.currentTimeMillis() + seconds * 1000L
+    main.post {
+      hideIsland()
+      refresh()
+    }
+    main.postDelayed({ refresh() }, seconds * 1000L + 150)
+  }
   fun rearEnabled(ctx: Context) = ctx.getSharedPreferences(PREFS, 0).getBoolean("rear", true)
 
   fun setPrefs(ctx: Context, island: Boolean, rear: Boolean) {
@@ -107,7 +140,7 @@ object IslandOverlay {
     val allowed = call != null && canDraw(ctx)
 
     val viaService = svc() != null
-    val wantIsland = allowedIsland(ctx, call != null, viaService)
+    val wantIsland = allowedIsland(ctx, call != null || previewing(), viaService)
     if (wantIsland) {
       if (island != null && islandViaService != viaService) hideIsland()
       showIsland(ctx)
@@ -226,8 +259,12 @@ object IslandOverlay {
       cameraClearPx = 0
       cameraTopPx = 0
     }
-    params.x = x
-    params.y = y
+    // user adjustments from Settings › Dynamic Island
+    val adj = size(host)
+    if (adj.height > 0) pillHeightPx = dpi(host, adj.height.toFloat())
+    sideExtraPx = dpi(host, adj.width.toFloat())
+    params.x = x + dpi(host, adj.dx.toFloat())
+    params.y = maxOf(0, y + dpi(host, adj.dy.toFloat()))
 
     root.setOnTouchListener { _, e ->
       if (e.action == MotionEvent.ACTION_OUTSIDE && expanded && CallManager.ringingCall() == null) {
@@ -345,7 +382,11 @@ object IslandOverlay {
 
   private fun info(ctx: Context): Info? {
     val ringing = CallManager.ringingCall()
-    val call = ringing ?: CallManager.primaryCall() ?: return null
+    val call = ringing ?: CallManager.primaryCall()
+    if (call == null) {
+      if (!previewing()) return null
+      return Info("Preview", "1:23", false, true, false, false, "1:23", "1:23", "SIM1")
+    }
     val state = CallManager.stateOf(call)
     val sim = simLabel(ctx, call)
     val via = if (sim != null) " via $sim" else ""
@@ -451,7 +492,7 @@ object IslandOverlay {
   private fun pill(ctx: Context, i: Info): View {
     val green = Color.parseColor("#30D158")
     val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 16f)
-    val side = dpi(ctx, 36f)
+    val side = maxOf(dpi(ctx, 20f), dpi(ctx, 36f) + sideExtraPx)
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
