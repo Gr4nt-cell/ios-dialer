@@ -82,7 +82,29 @@ export function CallProvider({ children }) {
   }, [ringingCount]);
 
   // ---------- call recording ----------
-  const { settings } = useData();
+  const { settings, refreshCallLog } = useData();
+
+  // Refresh Recents as soon as a call ends. Android writes the call log entry a moment after the
+  // call drops, so check a few times over the next few seconds.
+  const hadCalls = useRef(false);
+  useEffect(() => {
+    if (live.length) {
+      hadCalls.current = true;
+      return undefined;
+    }
+    if (!hadCalls.current) return undefined;
+    hadCalls.current = false;
+    const timers = [400, 1200, 2500, 5000, 9000].map((ms) =>
+      setTimeout(() => {
+        try {
+          refreshCallLog(false);
+        } catch {
+          // ignore
+        }
+      }, ms)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [live.length, refreshCallLog]);
   const recording = state.recording;
 
   const startRecording = useCallback(async (number, quiet = false) => {
