@@ -37,7 +37,7 @@ const ROUTES = {
   recordings: RecordingsScreen,
 };
 
-// In-app "Dynamic Island": a black pill around the selfie camera while a call is minimised.
+// Green "return to call" bar while a call is minimised.
 function ReturnToCall() {
   const insets = useSafeAreaInsets();
   const { live, minimized, setMinimized } = useCalls();
@@ -59,29 +59,22 @@ function ReturnToCall() {
     const s = Math.max(0, Math.floor((Date.now() - call.connectTime) / 1000));
     status = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }
-  // Just below the status bar: Android gives every tap inside the status-bar strip to the system.
-  const top = insets.top + 4;
+  // classic green "return to call" bar under the status bar
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', top, left: 0, right: 0, alignItems: 'center', zIndex: 50, elevation: 50 }}>
-      <Pressable onPress={() => setMinimized(false)} hitSlop={10}>
-        {({ pressed }) => (
-          <View style={[islandStyle, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-            <Ionicons name="call" size={14} color="#30D158" />
-            <Text style={{ color: '#30D158', fontSize: 13, fontWeight: '700', marginLeft: 5, flex: 1 }} numberOfLines={1}>
-              {status}
-            </Text>
-            <View style={{ width: 10 }} />
-            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', flex: 1, textAlign: 'right' }} numberOfLines={1}>
-              {name}
+    <Pressable onPress={() => setMinimized(false)} style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, elevation: 50 }}>
+      {({ pressed }) => (
+        <View style={{ paddingTop: insets.top, backgroundColor: pressed ? '#28B14C' : '#30D158' }}>
+          <View style={{ height: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
+            <Ionicons name="call" size={13} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 6 }} numberOfLines={1}>
+              {name} · {status}
             </Text>
           </View>
-        )}
-      </Pressable>
-    </View>
+        </View>
+      )}
+    </Pressable>
   );
 }
-
-const islandStyle = { flexDirection: 'row', alignItems: 'center', backgroundColor: '#000', width: 190, height: 30, borderRadius: 15, paddingHorizontal: 11 };
 
 function Main() {
   const t = useTheme();

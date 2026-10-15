@@ -101,7 +101,7 @@ export default function SettingsScreen() {
   const setOverlayPref = (patch) => {
     const next = { ...overlay, ...patch };
     setOverlay(next);
-    if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(!!next.island, !!next.rear);
+    if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(false, !!next.rear);
   };
   const { width } = useWindowDimensions();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
@@ -161,17 +161,16 @@ export default function SettingsScreen() {
         </Group>
         <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Tinted makes glass more opaque and easier to read. The call screen always stays dark.</Footer>
 
-        <SectionTitle>Dynamic Island</SectionTitle>
+        <SectionTitle>Rear Screen</SectionTitle>
         <Group>
           <Cell
             value="Display over Other Apps"
             onPress={overlay.allowed || !Dialer ? undefined : () => Dialer.openOverlaySettings()}
             right={overlay.allowed ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>Allow</Text>}
           />
-          <Cell value="Show Calls Around Camera" right={<Switch value={overlay.island !== false} onValueChange={(v) => setOverlayPref({ island: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell value="Show Calls on Rear Screen" right={<Switch value={overlay.rear !== false} onValueChange={(v) => setOverlayPref({ rear: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
         </Group>
-        <Footer>While you're on a call in another app, a pill around the selfie camera shows the timer — tap it for mute, speaker and end, or to answer an incoming call. On phones with a rear or cover screen that apps can use, the call and its buttons appear there too. Both need "Display over other apps".</Footer>
+        <Footer>On phones with a rear or cover screen that apps can use, calls and their buttons appear there. Needs "Display over other apps".</Footer>
 
         <SectionTitle>Call Screen</SectionTitle>
         <Group>

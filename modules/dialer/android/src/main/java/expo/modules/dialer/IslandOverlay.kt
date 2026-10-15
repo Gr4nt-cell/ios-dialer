@@ -76,7 +76,7 @@ object IslandOverlay {
     val call = CallManager.ringingCall() ?: CallManager.primaryCall()
     val allowed = call != null && canDraw(ctx)
 
-    if (allowed && islandEnabled(ctx) && !CallManager.isAppVisible()) showIsland(ctx) else hideIsland()
+    hideIsland() // the camera pill was removed; only rear / cover screens are drawn
     if (allowed && rearEnabled(ctx)) showRear(ctx) else hideRear()
 
     if (island != null || rear.isNotEmpty()) {
