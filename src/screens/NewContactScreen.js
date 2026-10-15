@@ -108,15 +108,16 @@ export default function NewContactScreen({ route }) {
       if (perm.status !== 'granted') throw new Error('Contacts permission is needed to save.');
       const first = firstName.trim();
       const last = lastName.trim();
-      const id = await Contacts.addContactAsync({
-        contactType: Contacts.ContactTypes.Person,
-        name: [first, last].filter(Boolean).join(' ') || company.trim(),
-        firstName: first,
-        lastName: last,
-        company: company.trim() || undefined,
-        phoneNumbers: phones.filter((p) => p.value.trim()).map((p) => ({ label: p.label, number: p.value.trim() })),
-        emails: emails.filter((e) => e.value.trim()).map((e) => ({ label: e.label, email: e.value.trim() })),
-      });
+      // Android's native side rejects any field that is present but undefined, so only send filled-in ones.
+      const data = { name: [first, last].filter(Boolean).join(' ') || company.trim() };
+      if (first) data.firstName = first;
+      if (last) data.lastName = last;
+      if (company.trim()) data.company = company.trim();
+      const numbers = phones.filter((p) => p.value.trim()).map((p) => ({ label: p.label, number: p.value.trim() }));
+      if (numbers.length) data.phoneNumbers = numbers;
+      const mails = emails.filter((e) => e.value.trim()).map((e) => ({ label: e.label, email: e.value.trim() }));
+      if (mails.length) data.emails = mails;
+      const id = await Contacts.addContactAsync(data);
       if (photo && id && Dialer && Dialer.setContactPhoto) {
         try {
           await Dialer.setContactPhoto(String(id), photo, null);
