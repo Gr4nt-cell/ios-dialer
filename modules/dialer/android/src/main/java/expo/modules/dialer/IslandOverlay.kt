@@ -198,15 +198,18 @@ object IslandOverlay {
     if (viaService) {
       // around the camera, like the iPhone's island
       if (camera != null && camera.height() > 0) {
-        pillHeightPx = maxOf(minH, camera.height() + dpi(host, 6f))
-        y = maxOf(0, camera.centerY() - pillHeightPx / 2)
+        // leave a strip of screen above the island; stay centred on the camera
+        val gapTop = dpi(host, 5f)
+        val room = 2 * (camera.centerY() - gapTop)
+        pillHeightPx = maxOf(camera.height() + dpi(host, 2f), minOf(maxOf(minH, camera.height() + dpi(host, 6f)), room))
+        y = maxOf(gapTop, camera.centerY() - pillHeightPx / 2)
         x = camera.centerX() - screenW / 2
         cameraGapPx = camera.width() + dpi(host, 8f)
         cameraClearPx = maxOf(0, camera.bottom - y) + dpi(host, 4f)
         cameraTopPx = maxOf(0, camera.top - y)
       } else {
         pillHeightPx = minH
-        y = maxOf(0, (statusBar - minH) / 2)
+        y = maxOf(dpi(host, 5f), (statusBar - minH) / 2)
         cameraGapPx = dpi(host, 10f)
         cameraClearPx = 0
         cameraTopPx = 0
