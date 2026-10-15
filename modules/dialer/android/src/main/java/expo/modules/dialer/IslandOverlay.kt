@@ -192,22 +192,24 @@ object IslandOverlay {
     }
 
     val camera = cut
-    val minH = dpi(host, 18f)
+    val minH = dpi(host, 16f)
     var x = 0
     val y: Int
     if (viaService) {
       // around the camera, like the iPhone's island
       if (camera != null && camera.height() > 0) {
-        // leave a strip of screen above the island; stay centred on the camera
+        // Phones often report the camera area taller than the hole itself (down to the bottom of
+        // the status bar), so size the pill from the hole's diameter — the rect's smaller side —
+        // and keep it thin: just wraps the lens.
+        val lens = minOf(camera.width(), camera.height())
         val gapTop = dpi(host, 5f)
         val room = 2 * (camera.centerY() - gapTop)
-        // as thin as possible: just enough to wrap the camera
-        pillHeightPx = maxOf(camera.height() + dpi(host, 1f), minOf(maxOf(minH, camera.height() + dpi(host, 2f)), room))
+        pillHeightPx = (lens + dpi(host, 2f)).coerceIn(dpi(host, 16f), dpi(host, 22f)).coerceAtMost(maxOf(dpi(host, 16f), room))
         y = maxOf(gapTop, camera.centerY() - pillHeightPx / 2)
         x = camera.centerX() - screenW / 2
-        cameraGapPx = camera.width() + dpi(host, 6f)
-        cameraClearPx = maxOf(0, camera.bottom - y) + dpi(host, 4f)
-        cameraTopPx = maxOf(0, camera.top - y)
+        cameraGapPx = lens + dpi(host, 6f)
+        cameraClearPx = maxOf(0, camera.centerY() + lens / 2 - y) + dpi(host, 4f)
+        cameraTopPx = maxOf(0, camera.centerY() - lens / 2 - y)
       } else {
         pillHeightPx = minH
         y = maxOf(dpi(host, 5f), (statusBar - minH) / 2)
@@ -448,7 +450,7 @@ object IslandOverlay {
   /** Collapsed pill: call duration on the left, a moving sound wave on the right, the camera in between. */
   private fun pill(ctx: Context, i: Info): View {
     val green = Color.parseColor("#30D158")
-    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 18f)
+    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 16f)
     val side = dpi(ctx, 36f)
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
