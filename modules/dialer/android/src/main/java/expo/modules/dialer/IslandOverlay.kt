@@ -41,6 +41,35 @@ object IslandOverlay {
 
   private var island: FrameLayout? = null
   private var islandWm: WindowManager? = null
+  private var islandViaService = false
+
+  // accessibility service that hosts the island above the status bar (null when not enabled)
+  private var service: java.lang.ref.WeakReference<IslandAccessibilityService>? = null
+  private fun svc(): IslandAccessibilityService? = service?.get()
+
+  /** Set from JS: true while the in-app call screen is showing (no island needed then). */
+  @Volatile var callScreenShown = false
+
+  // geometry of the current island (px)
+  private var pillHeightPx = 0
+  private var cameraGapPx = 0
+  private var cameraClearPx = 0
+
+  fun attachService(s: IslandAccessibilityService) {
+    service = java.lang.ref.WeakReference(s)
+    main.post { hideIsland(); refresh() }
+  }
+
+  fun detachService(s: IslandAccessibilityService) {
+    if (svc() !== s) return
+    main.post {
+      if (islandViaService) hideIsland()
+      service = null
+      refresh()
+    }
+  }
+
+  fun serviceOn(): Boolean = svc() != null
   private var expanded = false
   private var lastInteraction = 0L
 
@@ -76,7 +105,12 @@ object IslandOverlay {
     val call = CallManager.ringingCall() ?: CallManager.primaryCall()
     val allowed = call != null && canDraw(ctx)
 
-    hideIsland() // the camera pill was removed; only rear / cover screens are drawn
+    val viaService = svc() != null
+    val wantIsland = allowedIsland(ctx, call != null, viaService)
+    if (wantIsland) {
+      if (island != null && islandViaService != viaService) hideIsland()
+      showIsland(ctx)
+    } else hideIsland()
     if (allowed && rearEnabled(ctx)) showRear(ctx) else hideRear()
 
     if (island != null || rear.isNotEmpty()) {
@@ -84,6 +118,17 @@ object IslandOverlay {
       main.post(ticker)
     } else {
       main.removeCallbacks(ticker)
+    }
+  }
+
+  private fun allowedIsland(ctx: Context, hasCall: Boolean, viaService: Boolean): Boolean {
+    if (!hasCall || !islandEnabled(ctx)) return false
+    return if (viaService) {
+      // above everything, including this app: hide only while the call screen itself is open
+      !(CallManager.isAppVisible() && callScreenShown)
+    } else {
+      // fallback window can't reach the camera area; only use it while the app is in the background
+      canDraw(ctx) && !CallManager.isAppVisible()
     }
   }
 
@@ -107,12 +152,15 @@ object IslandOverlay {
   @SuppressLint("ClickableViewAccessibility")
   private fun showIsland(ctx: Context) {
     if (island != null) return
-    val wm = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    val root = FrameLayout(ctx)
+    val host: Context = svc() ?: ctx
+    val viaService = host is IslandAccessibilityService
+    val wm = host.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    val root = FrameLayout(host)
+    val type = if (viaService) WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY else overlayType()
     val params = WindowManager.LayoutParams(
       WindowManager.LayoutParams.WRAP_CONTENT,
       WindowManager.LayoutParams.WRAP_CONTENT,
-      overlayType(),
+      type,
       WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
         WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
@@ -127,21 +175,49 @@ object IslandOverlay {
         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
       }
     }
-    // Centred under the selfie camera, just below the status bar: the status bar sits above app
-    // overlays and takes every touch inside its strip, so anything drawn there can't be tapped.
-    var x = 0
-    var statusBar = statusBarHeight(ctx)
+
+    // where the selfie camera is
+    var statusBar = statusBarHeight(host)
+    var cut: android.graphics.Rect? = null
+    var screenW = host.resources.displayMetrics.widthPixels
     if (Build.VERSION.SDK_INT >= 30) {
       try {
         val metrics = wm.currentWindowMetrics
-        val cut = metrics.windowInsets.displayCutout?.boundingRects?.firstOrNull { it.top < dp(ctx, 80f) }
-        if (cut != null) x = cut.centerX() - metrics.bounds.width() / 2
+        screenW = metrics.bounds.width()
+        cut = metrics.windowInsets.displayCutout?.boundingRects?.firstOrNull { it.top < dp(host, 80f) }
         val top = metrics.windowInsets.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.statusBars()).top
         if (top > 0) statusBar = top
       } catch (_: Exception) {}
     }
+
+    val camera = cut
+    val minH = dpi(host, 30f)
+    var x = 0
+    val y: Int
+    if (viaService) {
+      // around the camera, like the iPhone's island
+      if (camera != null && camera.height() > 0) {
+        pillHeightPx = maxOf(minH, camera.height() + dpi(host, 10f))
+        y = maxOf(0, camera.centerY() - pillHeightPx / 2)
+        x = camera.centerX() - screenW / 2
+        cameraGapPx = camera.width() + dpi(host, 14f)
+        cameraClearPx = maxOf(0, camera.bottom - y) + dpi(host, 6f)
+      } else {
+        pillHeightPx = minH
+        y = maxOf(0, (statusBar - minH) / 2)
+        cameraGapPx = dpi(host, 10f)
+        cameraClearPx = 0
+      }
+    } else {
+      // fallback: just below the status bar, where taps still reach it
+      pillHeightPx = minH
+      y = statusBar + dpi(host, 4f)
+      if (camera != null) x = camera.centerX() - screenW / 2
+      cameraGapPx = dpi(host, 10f)
+      cameraClearPx = 0
+    }
     params.x = x
-    params.y = statusBar + dpi(ctx, 4f)
+    params.y = y
 
     root.setOnTouchListener { _, e ->
       if (e.action == MotionEvent.ACTION_OUTSIDE && expanded && CallManager.ringingCall() == null) {
@@ -155,6 +231,7 @@ object IslandOverlay {
       wm.addView(root, params)
       island = root
       islandWm = wm
+      islandViaService = viaService
       lastSig = null
       expanded = CallManager.ringingCall() != null
       render()
@@ -175,6 +252,7 @@ object IslandOverlay {
     expanded = false
     lastSig = null
     CallManager.launchUi(ctx)
+    CallManager.emit() // lets the app show the call screen if it's already open
     main.postDelayed({ refresh() }, 600)
   }
 
@@ -183,6 +261,7 @@ object IslandOverlay {
     try { islandWm?.removeView(v) } catch (_: Exception) {}
     island = null
     islandWm = null
+    islandViaService = false
     expanded = false
     lastSig = null
   }
@@ -324,9 +403,10 @@ object IslandOverlay {
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
-      background = rounded(Color.BLACK, dp(ctx, 15f))
-      setPadding(dpi(ctx, 11f), 0, dpi(ctx, 11f), 0)
-      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 190f), dpi(ctx, 30f))
+      val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 30f)
+      background = rounded(Color.BLACK, h / 2f)
+      setPadding(dpi(ctx, 12f), 0, dpi(ctx, 12f), 0)
+      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 120f) + cameraGapPx, h)
     }
     val icon = ImageView(ctx).apply {
       setImageResource(android.R.drawable.sym_action_call)
@@ -334,7 +414,7 @@ object IslandOverlay {
     }
     row.addView(icon, LinearLayout.LayoutParams(dpi(ctx, 16f), dpi(ctx, 16f)))
     row.addView(text(ctx, i.status, 13f, green, bold = true).apply { setPadding(dpi(ctx, 5f), 0, 0, 0); statusLabels.add(this) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-    row.addView(View(ctx), LinearLayout.LayoutParams(dpi(ctx, 10f), 1))
+    row.addView(View(ctx), LinearLayout.LayoutParams(if (cameraGapPx > 0) cameraGapPx else dpi(ctx, 10f), 1)) // camera
     row.addView(
       text(ctx, i.name, 13f, Color.WHITE, bold = true).apply { gravity = Gravity.END },
       LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
@@ -363,7 +443,12 @@ object IslandOverlay {
       orientation = LinearLayout.VERTICAL
       gravity = if (compact) Gravity.NO_GRAVITY else Gravity.CENTER
       if (compact) background = rounded(Color.BLACK, dp(ctx, 26f))
-      setPadding(s(if (compact) 14f else 18f), s(if (compact) 12f else 16f), s(if (compact) 14f else 18f), s(if (compact) 12f else 16f))
+      setPadding(
+        s(if (compact) 14f else 18f),
+        if (compact) maxOf(s(12f), cameraClearPx) else s(16f),
+        s(if (compact) 14f else 18f),
+        s(if (compact) 12f else 16f),
+      )
       layoutParams = if (compact) {
         FrameLayout.LayoutParams(minOf(screenW - dpi(ctx, 24f), dpi(ctx, 360f)), ViewGroup.LayoutParams.WRAP_CONTENT)
       } else {

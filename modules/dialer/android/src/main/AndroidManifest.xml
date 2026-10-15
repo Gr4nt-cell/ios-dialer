@@ -45,6 +45,18 @@
       android:exported="false"
       android:foregroundServiceType="microphone" />
 
+    <!-- Call island around the selfie camera (accessibility windows sit above the status bar). -->
+    <service
+      android:name="expo.modules.dialer.IslandAccessibilityService"
+      android:exported="true"
+      android:label="@string/dialer_island_service_label"
+      android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+      <meta-data android:name="android.accessibilityservice" android:resource="@xml/dialer_island_service" />
+    </service>
+
     <activity
       android:name="expo.modules.dialer.AnswerActivity"
       android:excludeFromRecents="true"

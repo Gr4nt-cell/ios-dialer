@@ -90,18 +90,20 @@ export default function SettingsScreen() {
   const [newBlock, setNewBlock] = useState('');
   const [overlay, setOverlay] = useState(() => ({
     allowed: Dialer && Dialer.canDrawOverlays ? Dialer.canDrawOverlays() : false,
+    service: Dialer && Dialer.islandServiceEnabled ? Dialer.islandServiceEnabled() : false,
     ...(Dialer && Dialer.getOverlayPrefs ? Dialer.getOverlayPrefs() : { island: true, rear: true }),
   }));
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => {
-      if (st === 'active' && Dialer && Dialer.canDrawOverlays) setOverlay((o) => ({ ...o, allowed: Dialer.canDrawOverlays() }));
+      if (st === 'active' && Dialer && Dialer.canDrawOverlays)
+        setOverlay((o) => ({ ...o, allowed: Dialer.canDrawOverlays(), service: Dialer.islandServiceEnabled ? Dialer.islandServiceEnabled() : false }));
     });
     return () => sub.remove();
   }, []);
   const setOverlayPref = (patch) => {
     const next = { ...overlay, ...patch };
     setOverlay(next);
-    if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(false, !!next.rear);
+    if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(next.island !== false, !!next.rear);
   };
   const { width } = useWindowDimensions();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
@@ -160,6 +162,24 @@ export default function SettingsScreen() {
           <Cell value="Glass" right={<Segmented options={[{ label: 'Clear', value: 'clear' }, { label: 'Tinted', value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
         </Group>
         <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Tinted makes glass more opaque and easier to read. The call screen always stays dark.</Footer>
+
+        <SectionTitle>Dynamic Island</SectionTitle>
+        <Group>
+          <Cell value="Show Calls Around Camera" right={<Switch value={overlay.island !== false} onValueChange={(v) => setOverlayPref({ island: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
+          <Cell
+            value="Turn On Call Island"
+            onPress={overlay.service || !Dialer ? undefined : () => Dialer.openAccessibilitySettings()}
+            right={overlay.service ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>Open</Text>}
+          />
+          {!overlay.service ? (
+            <Cell value="Allow Restricted Settings" onPress={Dialer ? () => Dialer.openAppInfo() : undefined} right={<Text style={{ color: t.blue, fontSize: 15 }}>App Info</Text>} />
+          ) : null}
+        </Group>
+        <Footer>
+          {overlay.service
+            ? 'During a call, a pill around the selfie camera shows the timer. Tap it for mute, speaker and end (or answer and decline), tap the name to open the call.'
+            : 'To put calls around the selfie camera, turn on "Call Island" under Accessibility › Downloaded apps. If Android says it\'s a restricted setting, tap App Info, then ⋮ › Allow restricted settings, and try again. The island only draws the call; it doesn\'t read your screen.'}
+        </Footer>
 
         <SectionTitle>Rear Screen</SectionTitle>
         <Group>

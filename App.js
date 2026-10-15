@@ -37,7 +37,15 @@ const ROUTES = {
   recordings: RecordingsScreen,
 };
 
-// Green "return to call" bar while a call is minimised.
+function islandOn() {
+  try {
+    return !!(Dialer && Dialer.islandServiceEnabled && Dialer.islandServiceEnabled() && Dialer.getOverlayPrefs && Dialer.getOverlayPrefs().island !== false);
+  } catch {
+    return false;
+  }
+}
+
+// Green "return to call" bar while a call is minimised (when the island isn't available).
 function ReturnToCall() {
   const insets = useSafeAreaInsets();
   const { live, minimized, setMinimized } = useCalls();
@@ -50,6 +58,8 @@ function ReturnToCall() {
     return () => clearInterval(id);
   }, [call, minimized]);
   if (!live.length || !minimized || !call) return null;
+  // with the island service on, the island around the camera takes over (also inside the app)
+  if (islandOn()) return null;
   const match = call.number ? resolve(call.number) : null;
   const name = match ? contactName(match.contact) : call.name || call.number || 'Call';
   let status = 'Calling…';

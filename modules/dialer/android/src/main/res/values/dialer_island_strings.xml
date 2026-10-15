@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="dialer_island_service_label">Call Island</string>
+  <string name="dialer_island_service_description">Shows your ongoing call as a pill around the selfie camera, with mute, speaker and end buttons. It doesn\'t read or collect anything from your screen or other apps.</string>
+</resources>

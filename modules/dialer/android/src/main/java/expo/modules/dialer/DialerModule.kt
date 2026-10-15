@@ -178,6 +178,36 @@ class DialerModule : Module() {
 
     Function("setOverlayPrefs") { island: Boolean, rear: Boolean -> IslandOverlay.setPrefs(ctx, island, rear) }
 
+    // the island around the camera runs inside an accessibility service (only those windows can
+    // be drawn over the status bar and still be tapped)
+    Function("islandServiceEnabled") { ->
+      IslandOverlay.serviceOn() || IslandAccessibilityService.isEnabled(ctx)
+    }
+
+    Function("openAccessibilitySettings") { ->
+      try {
+        ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+      } catch (_: Exception) { false }
+    }
+
+    // sideloaded apps on Android 13+ must have "restricted settings" allowed before
+    // their accessibility service can be switched on: that's on the app's info page
+    Function("openAppInfo") { ->
+      try {
+        ctx.startActivity(
+          Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + ctx.packageName))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        true
+      } catch (_: Exception) { false }
+    }
+
+    Function("setCallScreenShown") { shown: Boolean ->
+      IslandOverlay.callScreenShown = shown
+      IslandOverlay.refresh()
+    }
+
     // true once after the app was opened from the island / call notification
     Function("consumeShowCall") { ->
       val v = CallManager.showCallRequested

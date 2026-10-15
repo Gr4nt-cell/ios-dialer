@@ -17,7 +17,15 @@ export function CallProvider({ children }) {
 
   useEffect(() => {
     if (!Dialer) return undefined;
-    const sub = Dialer.addListener('onCallsChanged', (e) => setState(parseCallState(e.json)));
+    const sub = Dialer.addListener('onCallsChanged', (e) => {
+      setState(parseCallState(e.json));
+      // tapped the island while the app was already open: show the call screen
+      try {
+        if (Dialer.consumeShowCall && Dialer.consumeShowCall()) setMinimized(false);
+      } catch {
+        // ignore
+      }
+    });
     setState(parseCallState(Dialer.getState()));
     return () => sub.remove();
   }, []);
@@ -121,6 +129,17 @@ export function CallProvider({ children }) {
     return ok || now;
   }, []);
 
+  const showScreen = (live.length > 0 || !!ended) && !minimized;
+
+  // the island around the camera hides while the call screen itself is open
+  useEffect(() => {
+    try {
+      if (Dialer && Dialer.setCallScreenShown) Dialer.setCallScreenShown(!!showScreen);
+    } catch {
+      // ignore
+    }
+  }, [showScreen]);
+
   const value = {
     available: !!Dialer,
     calls: state.calls,
@@ -134,7 +153,7 @@ export function CallProvider({ children }) {
     setMinimized,
     isDefault,
     requestDefault,
-    showScreen: (live.length > 0 || !!ended) && !minimized,
+    showScreen,
   };
 
   return <CallContext.Provider value={value}>{children}</CallContext.Provider>;
