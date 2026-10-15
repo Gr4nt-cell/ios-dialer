@@ -191,17 +191,17 @@ object IslandOverlay {
     }
 
     val camera = cut
-    val minH = dpi(host, 30f)
+    val minH = dpi(host, 26f)
     var x = 0
     val y: Int
     if (viaService) {
       // around the camera, like the iPhone's island
       if (camera != null && camera.height() > 0) {
-        pillHeightPx = maxOf(minH, camera.height() + dpi(host, 10f))
+        pillHeightPx = maxOf(minH, camera.height() + dpi(host, 6f))
         y = maxOf(0, camera.centerY() - pillHeightPx / 2)
         x = camera.centerX() - screenW / 2
-        cameraGapPx = camera.width() + dpi(host, 14f)
-        cameraClearPx = maxOf(0, camera.bottom - y) + dpi(host, 6f)
+        cameraGapPx = camera.width() + dpi(host, 8f)
+        cameraClearPx = maxOf(0, camera.bottom - y) + dpi(host, 4f)
       } else {
         pillHeightPx = minH
         y = maxOf(0, (statusBar - minH) / 2)
@@ -321,20 +321,47 @@ object IslandOverlay {
 
   // ---------- drawing ----------
 
-  private data class Info(val name: String, val status: String, val ringing: Boolean, val active: Boolean, val muted: Boolean, val speaker: Boolean)
+  private data class Info(
+    val name: String,
+    val status: String,
+    val ringing: Boolean,
+    val active: Boolean,
+    val muted: Boolean,
+    val speaker: Boolean,
+    val short: String, // small pill: call duration
+    val sim: String?, // "SIM 2" when the phone has more than one
+  )
 
   private fun info(ctx: Context): Info? {
     val ringing = CallManager.ringingCall()
     val call = ringing ?: CallManager.primaryCall() ?: return null
     val state = CallManager.stateOf(call)
+    val sim = simLabel(ctx, call)
+    val via = if (sim != null) " via $sim" else ""
     val status = when {
-      ringing != null -> "Incoming call"
+      ringing != null -> "Incoming call$via"
       state == Call.STATE_HOLDING -> "On hold"
-      state == Call.STATE_ACTIVE -> clock(call.details.connectTimeMillis)
-      else -> "Calling…"
+      state == Call.STATE_ACTIVE -> clock(call.details.connectTimeMillis) + via
+      else -> "Calling$via…"
     }
-    return Info(CallNotifications.title(ctx, call), status, ringing != null, state == Call.STATE_ACTIVE, CallManager.isMuted(), CallManager.isSpeaker())
+    val short = when {
+      state == Call.STATE_ACTIVE -> clock(call.details.connectTimeMillis)
+      state == Call.STATE_HOLDING -> "Hold"
+      else -> "•••"
+    }
+    return Info(CallNotifications.title(ctx, call), status, ringing != null, state == Call.STATE_ACTIVE, CallManager.isMuted(), CallManager.isSpeaker(), short, sim)
   }
+
+  private fun simLabel(ctx: Context, call: Call): String? = try {
+    val handle = call.details.accountHandle
+    val tm = ctx.getSystemService(Context.TELECOM_SERVICE) as android.telecom.TelecomManager
+    @SuppressLint("MissingPermission")
+    val all = tm.callCapablePhoneAccounts
+    val idx = if (handle == null) -1 else all.indexOfFirst { it == handle }
+    if (all.size > 1 && idx >= 0) "SIM${idx + 1}" else null
+  } catch (_: Exception) { null }
+
+
 
   private fun clock(start: Long): String {
     if (start <= 0) return "0:00"
@@ -352,6 +379,7 @@ object IslandOverlay {
 
   // status labels updated in place every second, so taps aren't lost to rebuilds
   private val statusLabels = ArrayList<TextView>()
+  private val pillLabels = ArrayList<TextView>()
   private var lastSig: String? = null
 
   private fun render() {
@@ -366,13 +394,15 @@ object IslandOverlay {
     val sig = listOf(i.name, i.ringing, i.active, i.muted, i.speaker, expanded, island != null, rear.keys.sorted(), i.status.takeIf { !i.active }).joinToString("|")
     if (sig == lastSig) {
       statusLabels.forEach { it.text = i.status }
+      pillLabels.forEach { it.text = i.short }
       return
     }
     lastSig = sig
     statusLabels.clear()
+    pillLabels.clear()
     island?.let { root ->
       root.removeAllViews()
-      root.addView(if (expanded || i.ringing) card(root.context, i, compact = true) else pill(root.context, i))
+      root.addView(if (expanded || i.ringing) islandCard(root.context, i) else pill(root.context, i))
     }
     rear.values.forEach { (_, root) ->
       root.removeAllViews()
@@ -397,28 +427,29 @@ object IslandOverlay {
     ellipsize = TextUtils.TruncateAt.END
   }
 
-  /** Collapsed pill: timer on the left, caller on the right, room for the camera in between. */
+  /** Collapsed pill: call duration on the left, a moving sound wave on the right, the camera in between. */
   private fun pill(ctx: Context, i: Info): View {
     val green = Color.parseColor("#30D158")
+    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 26f)
+    val side = dpi(ctx, 46f)
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
-      val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 30f)
       background = rounded(Color.BLACK, h / 2f)
-      setPadding(dpi(ctx, 12f), 0, dpi(ctx, 12f), 0)
-      layoutParams = FrameLayout.LayoutParams(dpi(ctx, 120f) + cameraGapPx, h)
+      setPadding(dpi(ctx, 10f), 0, dpi(ctx, 10f), 0)
+      layoutParams = FrameLayout.LayoutParams(side * 2 + dpi(ctx, 20f) + cameraGapPx, h)
     }
-    val icon = ImageView(ctx).apply {
-      setImageResource(android.R.drawable.sym_action_call)
-      imageTintList = ColorStateList.valueOf(green)
-    }
-    row.addView(icon, LinearLayout.LayoutParams(dpi(ctx, 16f), dpi(ctx, 16f)))
-    row.addView(text(ctx, i.status, 13f, green, bold = true).apply { setPadding(dpi(ctx, 5f), 0, 0, 0); statusLabels.add(this) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-    row.addView(View(ctx), LinearLayout.LayoutParams(if (cameraGapPx > 0) cameraGapPx else dpi(ctx, 10f), 1)) // camera
     row.addView(
-      text(ctx, i.name, 13f, Color.WHITE, bold = true).apply { gravity = Gravity.END },
-      LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
+      text(ctx, i.short, 12f, green, bold = true).apply { pillLabels.add(this) },
+      LinearLayout.LayoutParams(side, ViewGroup.LayoutParams.WRAP_CONTENT),
     )
+    row.addView(View(ctx), LinearLayout.LayoutParams(if (cameraGapPx > 0) cameraGapPx else dpi(ctx, 8f), 1)) // camera
+    val waveBox = FrameLayout(ctx)
+    waveBox.addView(
+      WaveView(ctx, green, active = i.active && !i.muted),
+      FrameLayout.LayoutParams(dpi(ctx, 22f), dpi(ctx, 14f), Gravity.END or Gravity.CENTER_VERTICAL),
+    )
+    row.addView(waveBox, LinearLayout.LayoutParams(side, ViewGroup.LayoutParams.MATCH_PARENT))
     row.setOnClickListener {
       expanded = true
       lastSig = null
@@ -430,6 +461,102 @@ object IslandOverlay {
       true
     }
     return row
+  }
+
+  /** Little animated level bars, like the iPhone's call island. */
+  private class WaveView(ctx: Context, private val color: Int, private val active: Boolean) : View(ctx) {
+    private val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
+    private val bars = 5
+    private val phase = floatArrayOf(0f, 1.7f, 0.6f, 2.4f, 1.1f)
+    override fun onDraw(c: android.graphics.Canvas) {
+      super.onDraw(c)
+      val t = System.currentTimeMillis() / 1000.0
+      val gap = width / (bars * 2f - 1f)
+      for (k in 0 until bars) {
+        val level = if (active) (0.35 + 0.65 * Math.abs(Math.sin(t * (2.2 + k * 0.45) + phase[k]))).toFloat() else 0.22f
+        val bh = maxOf(gap, height * level)
+        val x = k * gap * 2f
+        val top = (height - bh) / 2f
+        c.drawRoundRect(x, top, x + gap, top + bh, gap / 2f, gap / 2f, paint)
+      }
+      if (active && isAttachedToWindow) postInvalidateDelayed(70)
+    }
+  }
+
+  /** Expanded island (as in the iOS-style mock-up): caller on the left, round buttons on the right. */
+  private fun islandCard(ctx: Context, i: Info): View {
+    val metrics = ctx.resources.displayMetrics
+    val red = Color.parseColor("#FF3B30")
+    val blue = Color.parseColor("#0A84FF")
+    val gray = Color.parseColor("#3A3A3C")
+    val col = LinearLayout(ctx).apply {
+      orientation = LinearLayout.VERTICAL
+      background = rounded(Color.BLACK, dp(ctx, 30f))
+      setPadding(dpi(ctx, 18f), maxOf(dpi(ctx, 12f), cameraClearPx), dpi(ctx, 14f), dpi(ctx, 14f))
+      layoutParams = FrameLayout.LayoutParams(minOf(metrics.widthPixels - dpi(ctx, 16f), dpi(ctx, 400f)), ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+    val row = LinearLayout(ctx).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+    }
+    // left: "Phone" tag, caller, status
+    val info = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+    val tag = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+    tag.addView(
+      ImageView(ctx).apply {
+        setImageResource(android.R.drawable.sym_action_call)
+        imageTintList = ColorStateList.valueOf(Color.WHITE)
+      },
+      LinearLayout.LayoutParams(dpi(ctx, 12f), dpi(ctx, 12f)),
+    )
+    tag.addView(text(ctx, "Phone", 11f, Color.WHITE, bold = true).apply { setPadding(dpi(ctx, 4f), 0, 0, 0) })
+    info.addView(tag)
+    info.addView(text(ctx, i.name, 19f, Color.WHITE, bold = true).apply { setPadding(0, dpi(ctx, 6f), 0, 0) })
+    info.addView(text(ctx, i.status, 12f, Color.parseColor("#C7C7CC")).apply { setPadding(0, dpi(ctx, 2f), 0, 0); statusLabels.add(this) })
+    info.setOnClickListener { openCallScreen() }
+    row.addView(info, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+
+    fun button(label: String, iconRes: Int, bg: Int, rotate: Float = 0f, onTap: () -> Unit) {
+      val box = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER_HORIZONTAL
+        setPadding(dpi(ctx, 6f), 0, dpi(ctx, 6f), 0)
+      }
+      val size = dpi(ctx, 48f)
+      box.addView(
+        ImageView(ctx).apply {
+          setImageResource(iconRes)
+          imageTintList = ColorStateList.valueOf(Color.WHITE)
+          background = rounded(bg, size / 2f)
+          val pad = (size * 0.27f).toInt()
+          setPadding(pad, pad, pad, pad)
+          rotation = rotate
+        },
+        LinearLayout.LayoutParams(size, size),
+      )
+      box.addView(text(ctx, label, 11f, Color.WHITE).apply { setPadding(0, dpi(ctx, 5f), 0, 0); gravity = Gravity.CENTER })
+      box.setOnClickListener {
+        lastInteraction = System.currentTimeMillis()
+        onTap()
+        main.postDelayed({ render() }, 300)
+      }
+      row.addView(box, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+    }
+    val ringingId = CallManager.ringingCall()?.let { CallManager.idOf(it) }
+    val primaryId = CallManager.primaryCall()?.let { CallManager.idOf(it) }
+    if (i.ringing && ringingId != null) {
+      button("Decline", android.R.drawable.sym_action_call, red, 135f) { CallManager.reject(ringingId, null) }
+      button("Accept", android.R.drawable.sym_action_call, blue) {
+        CallManager.answer(ringingId)
+        expanded = false
+      }
+    } else if (primaryId != null) {
+      button(if (i.muted) "Unmute" else "Mute", android.R.drawable.ic_btn_speak_now, if (i.muted) Color.parseColor("#8E8E93") else gray) { CallManager.toggleMute() }
+      button("Speaker", android.R.drawable.ic_lock_silent_mode_off, if (i.speaker) blue else gray) { CallManager.toggleSpeaker() }
+      button("End", android.R.drawable.sym_action_call, red, 135f) { CallManager.hangup(primaryId) }
+    }
+    col.addView(row)
+    return col
   }
 
   /** Expanded card (island) or full call panel (rear screen). */

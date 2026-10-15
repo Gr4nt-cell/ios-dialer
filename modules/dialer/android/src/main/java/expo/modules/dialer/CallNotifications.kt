@@ -71,7 +71,7 @@ object CallNotifications {
     val audio = CallManager.service?.callAudioState
     try {
       if (ringing != null) {
-        val key = "in:" + CallManager.idOf(ringing)
+        val key = "in:" + CallManager.idOf(ringing) + ":" + IslandOverlay.serviceOn() + ":" + isLocked(ctx)
         if (key != lastKey) post(ctx, build(ctx, ringing, incoming = true, callStyle = true)) { build(ctx, ringing, incoming = true, callStyle = false) }
         lastKey = key
       } else if (ongoing != null) {
@@ -176,7 +176,10 @@ object CallNotifications {
       else -> "Calling…"
     }
 
-    val b = NotificationCompat.Builder(ctx, if (incoming) CH_INCOMING else CH_ONGOING)
+    // With the call island on and the phone unlocked, the island shows the incoming call,
+    // so the notification stays quiet (no pop-up banner on top of the island).
+    val islandTakesOver = incoming && IslandOverlay.serviceOn() && IslandOverlay.islandEnabled(ctx) && !isLocked(ctx)
+    val b = NotificationCompat.Builder(ctx, if (incoming && !islandTakesOver) CH_INCOMING else CH_ONGOING)
       .setSmallIcon(android.R.drawable.sym_action_call)
       .setContentTitle(name)
       .setContentText(text)
@@ -191,8 +194,8 @@ object CallNotifications {
       .setColor(if (incoming) 0xFF30D158.toInt() else 0xFF34C759.toInt())
 
     if (incoming) {
-      b.setPriority(NotificationCompat.PRIORITY_MAX)
-      if (open != null) b.setFullScreenIntent(open, true)
+      b.setPriority(if (islandTakesOver) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_MAX)
+      if (open != null && !islandTakesOver) b.setFullScreenIntent(open, true)
     } else {
       b.setPriority(NotificationCompat.PRIORITY_HIGH)
       val connected = call.details.connectTimeMillis
@@ -264,6 +267,10 @@ object CallNotifications {
     } catch (_: Exception) {}
     return extras
   }
+
+  private fun isLocked(ctx: Context): Boolean = try {
+    (ctx.getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager).isKeyguardLocked
+  } catch (_: Exception) { true }
 
   fun lookupName(ctx: Context, number: String): String? {
     if (number.isBlank()) return null
