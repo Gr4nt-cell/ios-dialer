@@ -192,7 +192,7 @@ object IslandOverlay {
     }
 
     val camera = cut
-    val minH = dpi(host, 26f)
+    val minH = dpi(host, 22f)
     var x = 0
     val y: Int
     if (viaService) {
@@ -201,10 +201,10 @@ object IslandOverlay {
         // leave a strip of screen above the island; stay centred on the camera
         val gapTop = dpi(host, 5f)
         val room = 2 * (camera.centerY() - gapTop)
-        pillHeightPx = maxOf(camera.height() + dpi(host, 2f), minOf(maxOf(minH, camera.height() + dpi(host, 6f)), room))
+        pillHeightPx = maxOf(camera.height() + dpi(host, 2f), minOf(maxOf(minH, camera.height() + dpi(host, 4f)), room))
         y = maxOf(gapTop, camera.centerY() - pillHeightPx / 2)
         x = camera.centerX() - screenW / 2
-        cameraGapPx = camera.width() + dpi(host, 8f)
+        cameraGapPx = camera.width() + dpi(host, 6f)
         cameraClearPx = maxOf(0, camera.bottom - y) + dpi(host, 4f)
         cameraTopPx = maxOf(0, camera.top - y)
       } else {
@@ -447,24 +447,24 @@ object IslandOverlay {
   /** Collapsed pill: call duration on the left, a moving sound wave on the right, the camera in between. */
   private fun pill(ctx: Context, i: Info): View {
     val green = Color.parseColor("#30D158")
-    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 26f)
-    val side = dpi(ctx, 46f)
+    val h = if (pillHeightPx > 0) pillHeightPx else dpi(ctx, 22f)
+    val side = dpi(ctx, 36f)
     val row = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
       background = rounded(Color.BLACK, h / 2f)
-      setPadding(dpi(ctx, 10f), 0, dpi(ctx, 10f), 0)
-      layoutParams = FrameLayout.LayoutParams(side * 2 + dpi(ctx, 20f) + cameraGapPx, h)
+      setPadding(dpi(ctx, 9f), 0, dpi(ctx, 9f), 0)
+      layoutParams = FrameLayout.LayoutParams(side * 2 + dpi(ctx, 18f) + cameraGapPx, h)
     }
     row.addView(
-      text(ctx, i.short, 12f, green, bold = true).apply { pillLabels.add(this) },
+      text(ctx, i.short, 11f, green, bold = true).apply { pillLabels.add(this) },
       LinearLayout.LayoutParams(side, ViewGroup.LayoutParams.WRAP_CONTENT),
     )
     row.addView(View(ctx), LinearLayout.LayoutParams(if (cameraGapPx > 0) cameraGapPx else dpi(ctx, 8f), 1)) // camera
     val waveBox = FrameLayout(ctx)
     waveBox.addView(
       WaveView(ctx, green, active = i.active && !i.muted),
-      FrameLayout.LayoutParams(dpi(ctx, 22f), dpi(ctx, 14f), Gravity.END or Gravity.CENTER_VERTICAL),
+      FrameLayout.LayoutParams(dpi(ctx, 18f), dpi(ctx, 11f), Gravity.END or Gravity.CENTER_VERTICAL),
     )
     row.addView(waveBox, LinearLayout.LayoutParams(side, ViewGroup.LayoutParams.MATCH_PARENT))
     row.setOnClickListener {
@@ -514,8 +514,8 @@ object IslandOverlay {
     val card = LinearLayout(ctx).apply {
       orientation = LinearLayout.HORIZONTAL
       background = rounded(Color.BLACK, dp(ctx, 32f))
-      setPadding(dpi(ctx, 20f), topPad, dpi(ctx, 14f), dpi(ctx, 16f))
-      layoutParams = FrameLayout.LayoutParams(minOf(metrics.widthPixels - dpi(ctx, 16f), dpi(ctx, 400f)), ViewGroup.LayoutParams.WRAP_CONTENT)
+      setPadding(dpi(ctx, 24f), topPad, dpi(ctx, 20f), dpi(ctx, 16f))
+      layoutParams = FrameLayout.LayoutParams(minOf(metrics.widthPixels - dpi(ctx, 40f), dpi(ctx, 380f)), ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 
     // left: name / duration / sim (tap to open the call screen)
