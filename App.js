@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Linking, Modal, Pressable, Text, View } from 'react-native';
+import { BackHandler, Linking, Modal, Text, View } from 'react-native';
+import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';

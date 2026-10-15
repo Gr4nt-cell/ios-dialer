@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
-import { Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Linking, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
 import { Ionicons } from '@expo/vector-icons';

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';

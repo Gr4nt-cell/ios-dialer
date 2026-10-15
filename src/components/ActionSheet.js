@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from './Touch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { Glass } from './Glass';
@@ -17,7 +18,7 @@ function Sheet({ sheet, onClose }) {
   };
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable style={styles.backdrop} onPress={onClose} />
+      <Pressable feedback="none" style={styles.backdrop} onPress={onClose} />
       <View style={[styles.wrap, { paddingBottom: insets.bottom + 10 }]}>
         <Glass radius={26} style={styles.group}>
           {sheet.title || sheet.message ? (

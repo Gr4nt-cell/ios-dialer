@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Linking, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, Linking, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from '../components/Touch';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -208,6 +209,9 @@ export default function ContactsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <FlatList
+        removeClippedSubviews
+        maxToRenderPerBatch={12}
+        updateCellsBatchingPeriod={30}
         data={list}
         key={mode}
         numColumns={mode === 'grid' ? COLUMNS : 1}

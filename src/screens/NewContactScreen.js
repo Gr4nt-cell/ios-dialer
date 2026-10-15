@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import * as Contacts from 'expo-contacts/legacy';
 import * as ImagePicker from 'expo-image-picker';

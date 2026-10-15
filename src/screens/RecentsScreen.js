@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, Linking, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Linking, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_SPACE, useTheme } from '../theme';
@@ -130,6 +131,9 @@ export default function RecentsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <FlatList
+        removeClippedSubviews
+        maxToRenderPerBatch={12}
+        updateCellsBatchingPeriod={30}
         data={list}
         keyExtractor={(g) => g.id}
         ListHeaderComponent={header}

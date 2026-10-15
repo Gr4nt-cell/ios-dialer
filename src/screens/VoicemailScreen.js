@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_SPACE, useTheme } from '../theme';

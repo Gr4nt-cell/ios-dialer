@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -162,6 +163,9 @@ export default function CallsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <FlatList
+        removeClippedSubviews
+        maxToRenderPerBatch={12}
+        updateCellsBatchingPeriod={30}
         data={list}
         keyExtractor={(g) => g.id}
         ListHeaderComponent={header}

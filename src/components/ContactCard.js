@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from './Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';

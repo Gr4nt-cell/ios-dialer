@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_SPACE, useTheme } from '../theme';

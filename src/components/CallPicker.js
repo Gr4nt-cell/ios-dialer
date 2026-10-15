@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable } from './Touch';
 import * as ExpoBlur from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
@@ -24,7 +25,7 @@ function Backdrop({ target, onClose }) {
   const blurProps =
     Platform.OS !== 'android' ? {} : HAS_TARGET_API ? (target ? { blurTarget: target, blurMethod: 'dimezisBlurViewSdk31Plus' } : null) : { experimentalBlurMethod: 'dimezisBlurView' };
   return (
-    <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+    <Pressable feedback="none" style={StyleSheet.absoluteFill} onPress={onClose}>
       {blurProps ? (
         <BlurView {...blurProps} intensity={45} tint={t.dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'} style={StyleSheet.absoluteFill} />
       ) : null}

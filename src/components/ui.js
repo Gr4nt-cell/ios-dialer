@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable } from './Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';

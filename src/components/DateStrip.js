@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { Pressable } from './Touch';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme';
 import { Glass } from './Glass';

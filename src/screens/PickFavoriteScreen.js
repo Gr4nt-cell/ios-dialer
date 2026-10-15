@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
@@ -36,6 +37,9 @@ export default function PickFavoriteScreen() {
         <SearchBar value={query} onChangeText={setQuery} />
       </View>
       <FlatList
+        removeClippedSubviews
+        maxToRenderPerBatch={12}
+        updateCellsBatchingPeriod={30}
         data={list}
         keyExtractor={(c) => c.id}
         keyboardShouldPersistTaps="handled"

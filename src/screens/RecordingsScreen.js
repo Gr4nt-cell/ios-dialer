@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -97,6 +98,9 @@ export default function RecordingsScreen({ route }) {
     <View style={{ flex: 1, backgroundColor: t.grouped }}>
       <SheetHeader title="Recordings" left={<IconButton glass name="chevron-back" onPress={nav.pop} />} />
       <FlatList
+        removeClippedSubviews
+        maxToRenderPerBatch={12}
+        updateCellsBatchingPeriod={30}
         data={list}
         keyExtractor={(r) => r.name}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40, gap: 10 }}
