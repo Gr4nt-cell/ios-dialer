@@ -100,9 +100,9 @@ export function LargeHeader({ title, left, right, center, children, compact }) {
   return (
     <View style={{ paddingTop: insets.top, backgroundColor: t.bg }}>
       <View style={styles.bar}>
-        <View style={styles.barSide}>{left}</View>
-        <View style={styles.barCenter}>{center}</View>
-        <View style={[styles.barSide, { alignItems: 'flex-end' }]}>{right}</View>
+        <View style={styles.barLeft}>{left}</View>
+        {center ? <View style={styles.barCenter}>{center}</View> : <View style={{ flex: 1 }} />}
+        <View style={styles.barRight}>{right}</View>
       </View>
       {title && !compact ? <Text style={[styles.largeTitle, { color: t.text }]}>{title}</Text> : null}
       {children}
@@ -234,7 +234,7 @@ export function SheetHeader({ title, left, right }) {
             {title}
           </Text>
         </View>
-        <View style={[styles.barSide, { alignItems: 'flex-end' }]}>{right}</View>
+        <View style={[styles.barSide, { justifyContent: 'flex-end' }]}>{right}</View>
       </View>
     </View>
   );
@@ -243,6 +243,9 @@ export function SheetHeader({ title, left, right }) {
 const styles = StyleSheet.create({
   bar: { height: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
   barSide: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  // large-title bars: buttons keep their natural width, right ones sit flush with the right edge
+  barLeft: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
+  barRight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0, marginLeft: 8 },
   barCenter: { flex: 2, alignItems: 'center' },
   largeTitle: { fontSize: 34, fontWeight: '700', letterSpacing: 0.37, paddingHorizontal: 16, marginBottom: 8 },
   search: { marginHorizontal: 16, marginBottom: 10, height: 40 },
