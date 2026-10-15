@@ -24,6 +24,8 @@ class DialerInCallService : InCallService() {
   }
 
   override fun onUnbind(intent: Intent?): Boolean {
+    Ringer.stop()
+    IslandOverlay.hideAll()
     CallManager.service = null
     CallNotifications.cancel(this)
     return super.onUnbind(intent)
@@ -45,7 +47,14 @@ class DialerInCallService : InCallService() {
     if (!CallManager.hasLiveCalls()) {
       CallNotifications.cancel(this)
       RecordingService.stop(this)
+      Ringer.stop()
     }
+  }
+
+  // Telecom asks us to stop ringing (volume key, power button…)
+  override fun onSilenceRinger() {
+    super.onSilenceRinger()
+    Ringer.silence()
   }
 
   @Deprecated("Deprecated in Java")

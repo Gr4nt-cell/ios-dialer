@@ -145,7 +145,36 @@ class DialerModule : Module() {
     Function("postDialContinue") { id: String, proceed: Boolean -> CallManager.postDialContinue(id, proceed) }
     Function("selectAccount") { id: String, key: String -> CallManager.selectAccount(id, key) }
     Function("silenceRinger") { ->
-      try { telecom().silenceRinger(); true } catch (_: Exception) { false }
+      Ringer.silence()
+      try { telecom().silenceRinger() } catch (_: Exception) {}
+      true
+    }
+
+    // ---------- Dynamic Island & rear screen ----------
+
+    Function("canDrawOverlays") { -> IslandOverlay.canDraw(ctx) }
+
+    Function("openOverlaySettings") { ->
+      try {
+        ctx.startActivity(
+          Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + ctx.packageName))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        true
+      } catch (_: Exception) { false }
+    }
+
+    Function("getOverlayPrefs") { ->
+      mapOf("island" to IslandOverlay.islandEnabled(ctx), "rear" to IslandOverlay.rearEnabled(ctx))
+    }
+
+    Function("setOverlayPrefs") { island: Boolean, rear: Boolean -> IslandOverlay.setPrefs(ctx, island, rear) }
+
+    // true once after the app was opened from the island / call notification
+    Function("consumeShowCall") { ->
+      val v = CallManager.showCallRequested
+      CallManager.showCallRequested = false
+      v
     }
 
     // ---------- system block list (works while this app is the default phone app) ----------

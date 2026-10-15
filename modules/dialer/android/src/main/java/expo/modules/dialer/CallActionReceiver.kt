@@ -6,13 +6,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 
-/** Decline / Hang up buttons on call notifications. */
+/** Decline / Hang up / Mute / Speaker buttons on call notifications. */
 class CallActionReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
-    val id = intent.getStringExtra("id") ?: return
+    val id = intent.getStringExtra("id") ?: ""
     when (intent.action) {
       CallNotifications.ACTION_DECLINE -> CallManager.reject(id, null)
       CallNotifications.ACTION_HANGUP -> CallManager.hangup(id)
+      CallNotifications.ACTION_MUTE -> CallManager.toggleMute()
+      CallNotifications.ACTION_SPEAKER -> CallManager.toggleSpeaker()
     }
   }
 }

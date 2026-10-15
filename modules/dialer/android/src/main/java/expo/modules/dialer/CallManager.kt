@@ -206,6 +206,8 @@ object CallManager {
     lastSnapshot = try { buildSnapshot() } catch (_: Exception) { lastSnapshot }
     try { listener?.invoke(lastSnapshot) } catch (_: Exception) {}
     service?.let { CallNotifications.update(it) }
+    appContext?.let { Ringer.update(it) }
+    IslandOverlay.refresh()
     activityRef?.get()?.let { applyFlags(it) }
     updateProximity()
   }
@@ -258,6 +260,14 @@ object CallManager {
     }
   }
 
+  fun isMuted(): Boolean = service?.callAudioState?.isMuted == true
+
+  fun isSpeaker(): Boolean = service?.callAudioState?.route == CallAudioState.ROUTE_SPEAKER
+
+  fun toggleMute() = mute(!isMuted())
+
+  fun toggleSpeaker() = setRoute(if (isSpeaker()) CallAudioState.ROUTE_WIRED_OR_EARPIECE else CallAudioState.ROUTE_SPEAKER)
+
   fun mute(on: Boolean) {
     main.post { service?.setMuted(on) }
   }
@@ -292,14 +302,28 @@ object CallManager {
     hooked = true
     app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
       override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) { track(activity) }
-      override fun onActivityStarted(activity: Activity) {}
+      override fun onActivityStarted(activity: Activity) {
+        if (activity !is AnswerActivity) started++
+        IslandOverlay.refresh()
+      }
       override fun onActivityResumed(activity: Activity) { track(activity) }
       override fun onActivityPaused(activity: Activity) {}
-      override fun onActivityStopped(activity: Activity) {}
+      override fun onActivityStopped(activity: Activity) {
+        if (activity !is AnswerActivity) started = maxOf(0, started - 1)
+        main.postDelayed({ IslandOverlay.refresh() }, 250)
+      }
       override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
       override fun onActivityDestroyed(activity: Activity) {}
     })
   }
+
+  private var started = 0
+
+  /** True while one of the app's screens is on screen. */
+  fun isAppVisible(): Boolean = started > 0
+
+  /** Set when the call screen should be shown once the app comes forward (island / notification tap). */
+  @Volatile var showCallRequested = false
 
   private fun track(activity: Activity) {
     if (activity is AnswerActivity) return
@@ -329,6 +353,7 @@ object CallManager {
     val intent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName) ?: return
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     intent.putExtra("dialer_show_call", true)
+    showCallRequested = true
     try { ctx.startActivity(intent) } catch (_: Exception) {}
   }
 

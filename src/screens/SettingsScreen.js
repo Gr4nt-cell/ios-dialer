@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
@@ -87,6 +88,21 @@ export default function SettingsScreen() {
   const { available, isDefault, requestDefault } = useCalls();
   const [vm, setVm] = useState(settings.voicemailNumber);
   const [newBlock, setNewBlock] = useState('');
+  const [overlay, setOverlay] = useState(() => ({
+    allowed: Dialer && Dialer.canDrawOverlays ? Dialer.canDrawOverlays() : false,
+    ...(Dialer && Dialer.getOverlayPrefs ? Dialer.getOverlayPrefs() : { island: true, rear: true }),
+  }));
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active' && Dialer && Dialer.canDrawOverlays) setOverlay((o) => ({ ...o, allowed: Dialer.canDrawOverlays() }));
+    });
+    return () => sub.remove();
+  }, []);
+  const setOverlayPref = (patch) => {
+    const next = { ...overlay, ...patch };
+    setOverlay(next);
+    if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(!!next.island, !!next.rear);
+  };
   const { width } = useWindowDimensions();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
   const bg = settings.callBackground || 'auto';
@@ -144,6 +160,18 @@ export default function SettingsScreen() {
           <Cell value="Glass" right={<Segmented options={[{ label: 'Clear', value: 'clear' }, { label: 'Tinted', value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
         </Group>
         <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Tinted makes glass more opaque and easier to read. The call screen always stays dark.</Footer>
+
+        <SectionTitle>Dynamic Island</SectionTitle>
+        <Group>
+          <Cell
+            value="Display over Other Apps"
+            onPress={overlay.allowed || !Dialer ? undefined : () => Dialer.openOverlaySettings()}
+            right={overlay.allowed ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>Allow</Text>}
+          />
+          <Cell value="Show Calls Around Camera" right={<Switch value={overlay.island !== false} onValueChange={(v) => setOverlayPref({ island: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
+          <Cell value="Show Calls on Rear Screen" right={<Switch value={overlay.rear !== false} onValueChange={(v) => setOverlayPref({ rear: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
+        </Group>
+        <Footer>While you're on a call in another app, a pill around the selfie camera shows the timer — tap it for mute, speaker and end, or to answer an incoming call. On phones with a rear or cover screen that apps can use, the call and its buttons appear there too. Both need "Display over other apps".</Footer>
 
         <SectionTitle>Call Screen</SectionTitle>
         <Group>

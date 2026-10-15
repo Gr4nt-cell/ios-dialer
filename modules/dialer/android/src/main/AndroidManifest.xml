@@ -11,6 +11,9 @@
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+  <uses-permission android:name="android.permission.VIBRATE" />
 
   <queries>
     <package android:name="com.whatsapp" />
@@ -25,8 +28,11 @@
     <service
       android:name="expo.modules.dialer.DialerInCallService"
       android:exported="true"
+      android:foregroundServiceType="phoneCall"
       android:permission="android.permission.BIND_INCALL_SERVICE">
       <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+      <!-- the app plays the ringtone itself (many phones, e.g. Xiaomi, leave it to the phone app) -->
+      <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" />
       <intent-filter>
         <action android:name="android.telecom.InCallService" />
       </intent-filter>

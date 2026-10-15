@@ -28,6 +28,12 @@ export function CallProvider({ children }) {
       if (s === 'active') {
         setIsDefault(!!Dialer.isDefaultDialer());
         setState(parseCallState(Dialer.getState()));
+        // opened from the Dynamic Island / call notification: show the call screen
+        try {
+          if (Dialer.consumeShowCall && Dialer.consumeShowCall()) setMinimized(false);
+        } catch {
+          // ignore
+        }
       }
     });
     return () => sub.remove();

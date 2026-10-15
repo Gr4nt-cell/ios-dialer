@@ -9,7 +9,7 @@ import { ActionSheetProvider } from './src/components/ActionSheet';
 import { NavContext } from './src/nav';
 import { useTheme } from './src/theme';
 import { load, save } from './src/storage';
-import { parseTelUrl } from './src/phone';
+import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { CLASSIC_TABS, UNIFIED_TABS } from './src/components/TabBar';
 import { BlurTargetView, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -36,23 +36,50 @@ const ROUTES = {
   recordings: RecordingsScreen,
 };
 
+// In-app "Dynamic Island": a black pill around the selfie camera while a call is minimised.
 function ReturnToCall() {
   const insets = useSafeAreaInsets();
   const { live, minimized, setMinimized } = useCalls();
-  if (!live.length || !minimized) return null;
+  const { resolve } = useData();
+  const [, tick] = useState(0);
+  const call = live.find((c) => c.state === 'active') || live[0];
+  useEffect(() => {
+    if (!call || !minimized) return undefined;
+    const id = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [call, minimized]);
+  if (!live.length || !minimized || !call) return null;
+  const match = call.number ? resolve(call.number) : null;
+  const name = match ? contactName(match.contact) : call.name || call.number || 'Call';
+  let status = 'Calling…';
+  if (call.state === 'ringing') status = 'Incoming';
+  else if (call.state === 'holding') status = 'On hold';
+  else if (call.state === 'active' && call.connectTime) {
+    const s = Math.max(0, Math.floor((Date.now() - call.connectTime) / 1000));
+    status = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+  const top = Math.max(4, Math.round((insets.top - 34) / 2));
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top + 4, left: 0, right: 0, alignItems: 'center' }}>
+    <View pointerEvents="box-none" style={{ position: 'absolute', top, left: 0, right: 0, alignItems: 'center' }}>
       <Pressable onPress={() => setMinimized(false)}>
         {({ pressed }) => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#34C759', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 18, opacity: pressed ? 0.8 : 1 }}>
-            <Ionicons name="call" size={14} color="#fff" />
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 6 }}>Touch to return to call</Text>
+          <View style={[islandStyle, { transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+            <Ionicons name="call" size={14} color="#30D158" />
+            <Text style={{ color: '#30D158', fontSize: 13, fontWeight: '700', marginLeft: 5, flex: 1 }} numberOfLines={1}>
+              {status}
+            </Text>
+            <View style={{ width: 40 }} />
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', flex: 1, textAlign: 'right' }} numberOfLines={1}>
+              {name}
+            </Text>
           </View>
         )}
       </Pressable>
     </View>
   );
 }
+
+const islandStyle = { flexDirection: 'row', alignItems: 'center', backgroundColor: '#000', width: 220, height: 34, borderRadius: 17, paddingHorizontal: 12 };
 
 function Main() {
   const t = useTheme();
