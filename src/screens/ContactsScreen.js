@@ -52,7 +52,6 @@ function ContactRow({ item, onOpen, onCall }) {
   const t = useTheme();
   const name = contactName(item);
   const first = (item.phoneNumbers || [])[0];
-  const subtitle = first ? (first.label ? prettyLabel(first.label) : formatNumber(first.number)) : item.company || '';
   return (
     <Pressable onPress={onOpen} onLongPress={first ? onCall : undefined} delayLongPress={350}>
       {({ pressed }) => (
@@ -61,21 +60,9 @@ function ContactRow({ item, onOpen, onCall }) {
             <Avatar name={name} image={contactPhoto(item, false)} size={40} />
           </View>
           <View style={[styles.rowBody, { borderBottomColor: t.separator }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }} numberOfLines={1}>
-                {name}
-              </Text>
-              {subtitle ? (
-                <Text style={{ color: t.secondary, fontSize: 15, marginTop: 1 }} numberOfLines={1}>
-                  {subtitle}
-                </Text>
-              ) : null}
-            </View>
-            {first ? (
-              <Pressable onPress={onCall} hitSlop={10}>
-                <Ionicons name="call-outline" size={22} color={t.blue} />
-              </Pressable>
-            ) : null}
+            <Text style={{ color: t.text, fontSize: 17, fontWeight: '600', flex: 1 }} numberOfLines={1}>
+              {name}
+            </Text>
           </View>
         </View>
       )}
