@@ -616,19 +616,19 @@ export default function CallScreen() {
             <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Call Using</Text>
           </Glass>
           {/* one tile per SIM, side by side */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 14, paddingHorizontal: 16 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 9, paddingHorizontal: 16 }}>
             {(primary.accounts || []).map((a, i) => (
               <Pressable key={a.key} onPress={() => { tap(); Dialer.selectAccount(primary.id, a.key); }}>
                 {({ pressed }) => (
-                  <Glass radius={20} pressed={pressed} style={styles.simTile}>
+                  <Glass radius={12} pressed={pressed} style={styles.simTile}>
                     <View style={[styles.simBadge, { backgroundColor: t.blue }]}>
-                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>{i + 1}</Text>
+                      <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>{i + 1}</Text>
                     </View>
-                    <Text style={{ color: t.text, fontSize: 15, fontWeight: '600', marginTop: 6 }} numberOfLines={1}>
+                    <Text style={{ color: t.text, fontSize: 10, fontWeight: '600', marginTop: 4 }} numberOfLines={1}>
                       {a.label || `SIM ${i + 1}`}
                     </Text>
                     {a.number ? (
-                      <Text style={{ color: t.secondary, fontSize: 11, marginTop: 1 }} numberOfLines={1}>
+                      <Text style={{ color: t.secondary, fontSize: 8, marginTop: 1 }} numberOfLines={1}>
                         {formatNumber(a.number)}
                       </Text>
                     ) : null}
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
   answerRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 36 },
   pillRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 44, marginBottom: 34 },
   dtmfKey: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
-  simTile: { width: 128, paddingVertical: 12, paddingHorizontal: 10, alignItems: 'center' },
-  simBadge: { width: 24, height: 24, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  simTile: { width: 77, paddingVertical: 7, paddingHorizontal: 6, alignItems: 'center' },
+  simBadge: { width: 15, height: 15, borderRadius: 4.5, alignItems: 'center', justifyContent: 'center' },
   simRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
 });
