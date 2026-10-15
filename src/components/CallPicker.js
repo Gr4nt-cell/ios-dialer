@@ -36,7 +36,7 @@ function Backdrop({ target, onClose }) {
 /**
  * Blurred pop-up over the screen.
  *  - mode 'numbers': a stack of number pills to pick from
- *  - mode 'sim':     "Call Using" with a button per SIM
+ *  - mode 'sim':     a button per SIM
  * `target` is the ref of a BlurTargetView wrapping the screen content (for the real blur).
  */
 export default function CallPicker({ picker, target, onClose, onPickNumber, onPickSim }) {
@@ -64,7 +64,7 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
       <Animated.View
         style={[
           styles.sheet,
-          { bottom: Math.max(insets.bottom, 12) + 36, maxHeight: screenH / 2, opacity: fade, transform: [{ translateY: rise }, { scale }] },
+          { bottom: Math.max(insets.bottom, 12) + 90, maxHeight: screenH / 2, opacity: fade, transform: [{ translateY: rise }, { scale }] },
         ]}
       >
           {picker.mode === 'numbers' ? (
@@ -83,19 +83,16 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
             </>
           ) : (
             <>
-              <Glass radius={18} outline style={styles.usingPill}>
-                <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Call Using</Text>
-              </Glass>
-              <Text style={{ color: t.secondary, fontSize: 13, marginBottom: 12 }}>{formatNumber(picker.number)}</Text>
-              <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Text style={{ color: t.secondary, fontSize: 15, marginBottom: 14 }}>{formatNumber(picker.number)}</Text>
+              <View style={{ flexDirection: 'row', gap: 14 }}>
                 {picker.accounts.map((a, i) => (
                   <Pressable key={a.key} onPress={() => onPickSim(a)}>
                     {({ pressed }) => (
-                      <Glass radius={16} pressed={pressed} outline style={styles.simTile}>
+                      <Glass radius={19} pressed={pressed} outline style={styles.simTile}>
                         <View style={[styles.simBadge, { backgroundColor: t.blue }]}>
-                          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{i + 1}</Text>
+                          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{i + 1}</Text>
                         </View>
-                        <Text style={{ color: t.text, fontSize: 13, fontWeight: '600', marginTop: 5 }} numberOfLines={1}>
+                        <Text style={{ color: t.text, fontSize: 16, fontWeight: '600', marginTop: 6 }} numberOfLines={1}>
                           {a.label || `SIM ${i + 1}`}
                         </Text>
                       </Glass>
@@ -115,7 +112,6 @@ const styles = StyleSheet.create({
   sheet: { position: 'absolute', left: 0, right: 0, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 24 },
   caption: { fontSize: 13, fontWeight: '600', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.6 },
   numberPill: { minWidth: 250, paddingHorizontal: 26, paddingVertical: 12, alignItems: 'center' },
-  usingPill: { paddingHorizontal: 18, height: 36, justifyContent: 'center', marginBottom: 8 },
-  simTile: { width: 110, paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center' },
-  simBadge: { width: 20, height: 20, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  simTile: { width: 132, paddingVertical: 12, paddingHorizontal: 10, alignItems: 'center' },
+  simBadge: { width: 24, height: 24, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
 });

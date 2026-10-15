@@ -610,21 +610,17 @@ export default function CallScreen() {
 
       {/* SIM picker ("ask every time") / keypad / controls */}
       {primary.state === 'select_account' ? (
-        <View style={{ alignItems: 'center', marginBottom: 18 }}>
-          {/* "Call Using" pill */}
-          <Glass radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center', marginBottom: 14 }}>
-            <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Call Using</Text>
-          </Glass>
+        <View style={{ alignItems: 'center', marginBottom: 70 }}>
           {/* one tile per SIM, side by side */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 9, paddingHorizontal: 16 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 11, paddingHorizontal: 16 }}>
             {(primary.accounts || []).map((a, i) => (
               <Pressable key={a.key} onPress={() => { tap(); Dialer.selectAccount(primary.id, a.key); }}>
                 {({ pressed }) => (
-                  <Glass radius={12} pressed={pressed} style={styles.simTile}>
+                  <Glass radius={14} pressed={pressed} style={styles.simTile}>
                     <View style={[styles.simBadge, { backgroundColor: t.blue }]}>
-                      <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>{i + 1}</Text>
+                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{i + 1}</Text>
                     </View>
-                    <Text style={{ color: t.text, fontSize: 10, fontWeight: '600', marginTop: 4 }} numberOfLines={1}>
+                    <Text style={{ color: t.text, fontSize: 12, fontWeight: '600', marginTop: 5 }} numberOfLines={1}>
                       {a.label || `SIM ${i + 1}`}
                     </Text>
                   </Glass>
@@ -749,7 +745,7 @@ const styles = StyleSheet.create({
   answerRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 36 },
   pillRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 44, marginBottom: 34 },
   dtmfKey: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
-  simTile: { width: 85, paddingVertical: 7, paddingHorizontal: 6, alignItems: 'center' },
-  simBadge: { width: 15, height: 15, borderRadius: 4.5, alignItems: 'center', justifyContent: 'center' },
+  simTile: { width: 102, paddingVertical: 9, paddingHorizontal: 7, alignItems: 'center' },
+  simBadge: { width: 18, height: 18, borderRadius: 5.5, alignItems: 'center', justifyContent: 'center' },
   simRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
 });
