@@ -627,11 +627,6 @@ export default function CallScreen() {
                     <Text style={{ color: t.text, fontSize: 10, fontWeight: '600', marginTop: 4 }} numberOfLines={1}>
                       {a.label || `SIM ${i + 1}`}
                     </Text>
-                    {a.number ? (
-                      <Text style={{ color: t.secondary, fontSize: 8, marginTop: 1 }} numberOfLines={1}>
-                        {formatNumber(a.number)}
-                      </Text>
-                    ) : null}
                   </Glass>
                 )}
               </Pressable>
@@ -694,18 +689,23 @@ export default function CallScreen() {
       )}
 
       {/* bottom row: Add Call · End · Keypad (End always in the middle) */}
+      {primary.state === 'select_account' ? null : (
       <View style={styles.gridRow}>
         {keypad || primary.state === 'select_account' ? (
           <View style={{ width: COL }} />
         ) : (
           <CallButton size={KEY} icon={canMerge ? 'git-merge' : 'add'} label={canMerge ? 'Merge' : 'Add Call'} onPress={addOrMerge} />
         )}
-        <EndKey
-          onPress={() => {
-            tap();
-            Dialer.hangup(primary.id);
-          }}
-        />
+        {primary.state === 'select_account' ? (
+          <View style={{ width: COL }} />
+        ) : (
+          <EndKey
+            onPress={() => {
+              tap();
+              Dialer.hangup(primary.id);
+            }}
+          />
+        )}
         {keypad ? (
           <Pressable onPress={() => setKeypad(false)} hitSlop={12} style={{ width: COL, alignItems: 'center', paddingTop: 18 }}>
             <Glass dark radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center' }}>
@@ -718,6 +718,7 @@ export default function CallScreen() {
           <CallButton size={KEY} icon="keypad" label="Keypad" onPress={() => setKeypad(true)} disabled={!connected} />
         )}
       </View>
+      )}
     </>
   );
 }
@@ -748,7 +749,7 @@ const styles = StyleSheet.create({
   answerRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 36 },
   pillRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 44, marginBottom: 34 },
   dtmfKey: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
-  simTile: { width: 77, paddingVertical: 7, paddingHorizontal: 6, alignItems: 'center' },
+  simTile: { width: 85, paddingVertical: 7, paddingHorizontal: 6, alignItems: 'center' },
   simBadge: { width: 15, height: 15, borderRadius: 4.5, alignItems: 'center', justifyContent: 'center' },
   simRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
 });

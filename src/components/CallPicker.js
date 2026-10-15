@@ -98,11 +98,6 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
                         <Text style={{ color: t.text, fontSize: 13, fontWeight: '600', marginTop: 5 }} numberOfLines={1}>
                           {a.label || `SIM ${i + 1}`}
                         </Text>
-                        {a.number ? (
-                          <Text style={{ color: t.secondary, fontSize: 10, marginTop: 1 }} numberOfLines={1}>
-                            {formatNumber(a.number)}
-                          </Text>
-                        ) : null}
                       </Glass>
                     )}
                   </Pressable>
@@ -121,6 +116,6 @@ const styles = StyleSheet.create({
   caption: { fontSize: 13, fontWeight: '600', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.6 },
   numberPill: { minWidth: 250, paddingHorizontal: 26, paddingVertical: 12, alignItems: 'center' },
   usingPill: { paddingHorizontal: 18, height: 36, justifyContent: 'center', marginBottom: 8 },
-  simTile: { width: 100, paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center' },
+  simTile: { width: 110, paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center' },
   simBadge: { width: 20, height: 20, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
 });

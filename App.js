@@ -24,6 +24,7 @@ import PickFavoriteScreen from './src/screens/PickFavoriteScreen';
 import UssdScreen from './src/screens/UssdScreen';
 import RecordingsScreen from './src/screens/RecordingsScreen';
 import CallScreen from './src/screens/CallScreen';
+import Dialer from './src/dialer';
 import CallsScreen from './src/screens/CallsScreen';
 import SearchScreen from './src/screens/SearchScreen';
 
@@ -193,7 +194,11 @@ function Main() {
         );
       })}
       {showScreen ? (
-        <Modal visible animationType="fade" onRequestClose={() => live.length && setMinimized(true)} statusBarTranslucent navigationBarTranslucent>
+        <Modal visible animationType="fade" onRequestClose={() => {
+            const pending = live.find((c) => c.state === 'select_account');
+            if (pending) Dialer.hangup(pending.id);
+            else if (live.length) setMinimized(true);
+          }} statusBarTranslucent navigationBarTranslucent>
           <SafeAreaProvider>
             <CallScreen />
           </SafeAreaProvider>

@@ -152,12 +152,8 @@ export default function ContactsScreen() {
   };
 
   const header = (
-    <LargeHeader title="Contacts" right={
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <ViewToggle mode={mode} onChange={setMode} />
-          <IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />
-        </View>
-      }>
+    <LargeHeader title="Contacts" left={<ViewToggle mode={mode} onChange={setMode} />}
+      right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}>
       <SearchBar value={query} onChangeText={setQuery} />
       {!query && contacts.length ? (
         <Glass radius={24} strong style={styles.filter}>
