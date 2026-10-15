@@ -93,6 +93,20 @@ export default function ContactDetailScreen({ route }) {
   }, [route.calls, phones, recents]);
 
   const phoneKeys = phones.map((p) => numberKey(p.number)).join(',');
+
+  // With several numbers, mark the one you called most recently.
+  const lastCalled = useMemo(() => {
+    if (phones.length < 2) return null;
+    const keys = new Set(phoneKeys.split(','));
+    let best = null;
+    for (const g of recents) {
+      if (!keys.has(g.key)) continue;
+      for (const c of g.calls) {
+        if (c.type === 'outgoing' && (!best || c.date > best.date)) best = { key: g.key, date: c.date };
+      }
+    }
+    return best;
+  }, [phones.length, phoneKeys, recents]);
   const recordingCount = useMemo(() => {
     const keys = new Set(phoneKeys.split(','));
     return loadRecordings().filter((r) => keys.has(numberKey(r.number))).length;
@@ -122,7 +136,7 @@ export default function ContactDetailScreen({ route }) {
       else startCall(phones[0]);
       return;
     }
-    setPicker({ mode: 'numbers', action, phones });
+    setPicker({ mode: 'numbers', action, phones, lastKey: lastCalled && lastCalled.key });
   };
 
   const onPickNumber = (p) => {
@@ -218,7 +232,7 @@ export default function ContactDetailScreen({ route }) {
 
   const toggleFavorite = () => {
     if (favorite) phones.forEach((p) => removeFavoriteByNumber(p.number));
-    else if (phones.length > 1) setPicker({ mode: 'numbers', action: 'favorite', phones });
+    else if (phones.length > 1) setPicker({ mode: 'numbers', action: 'favorite', phones, lastKey: lastCalled && lastCalled.key });
     else if (phones.length === 1) addFavorite(contact, phones[0].number, prettyLabel(phones[0].label));
   };
 
@@ -323,7 +337,14 @@ export default function ContactDetailScreen({ route }) {
                 onPress={() => startCall(p)}
                 onLongPress={() => Clipboard.setStringAsync(p.number).then(() => Alert.alert('Copied', formatNumber(p.number)))}
                 right={isBlocked(p.number) ? <Ionicons name="hand-left" size={16} color={t.red} /> : null}
-              />
+              >
+                {lastCalled && lastCalled.key === numberKey(p.number) ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3 }}>
+                    <Ionicons name="arrow-up-outline" size={12} color={t.green} style={{ transform: [{ rotate: '45deg' }], marginRight: 3 }} />
+                    <Text style={{ color: t.green, fontSize: 12, fontWeight: '600' }}>Last called · {timeLabel(lastCalled.date)}</Text>
+                  </View>
+                ) : null}
+              </Cell>
             ))}
           </Group>
         ) : null}

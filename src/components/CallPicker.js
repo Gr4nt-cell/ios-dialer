@@ -3,7 +3,7 @@ import { Animated, Platform, Pressable, StyleSheet, Text, View, useWindowDimensi
 import * as ExpoBlur from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
-import { formatNumber, prettyLabel } from '../phone';
+import { formatNumber, numberKey, prettyLabel } from '../phone';
 import { getPhoneAccounts } from '../dialer';
 import { Glass } from './Glass';
 
@@ -75,7 +75,14 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
                   {({ pressed }) => (
                     <Glass radius={24} pressed={pressed} outline style={styles.numberPill}>
                       <Text style={{ color: t.text, fontSize: 20, fontWeight: '600', letterSpacing: 0.5 }}>{formatNumber(p.number)}</Text>
-                      {p.label ? <Text style={{ color: t.secondary, fontSize: 12, marginTop: 1 }}>{prettyLabel(p.label)}</Text> : null}
+                      {p.label || (picker.lastKey && picker.lastKey === numberKey(p.number)) ? (
+                        <Text style={{ color: t.secondary, fontSize: 12, marginTop: 1 }}>
+                          {p.label ? prettyLabel(p.label) : ''}
+                          {picker.lastKey && picker.lastKey === numberKey(p.number) ? (
+                            <Text style={{ color: t.green, fontWeight: '600' }}>{p.label ? '  ·  ' : ''}Last called</Text>
+                          ) : null}
+                        </Text>
+                      ) : null}
                     </Glass>
                   )}
                 </Pressable>
