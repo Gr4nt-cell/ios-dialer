@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 import { initials } from '../phone';
-import { gradientFor } from '../gradients';
 
 /**
  * Tall rounded "poster" card: the contact's photo, or their own gradient with initials.
@@ -14,7 +13,6 @@ import { gradientFor } from '../gradients';
 export default function ContactCard({ width, height, name, label, image, colorKey, onPress, onLongPress, overlay, radius = 22 }) {
   const t = useTheme();
   const letters = initials(name);
-  const [c1, c2, base] = gradientFor(colorKey || name);
   return (
     <Pressable onPress={onPress} onLongPress={onLongPress} delayLongPress={350} style={{ width }}>
       {({ pressed }) => (
@@ -26,7 +24,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
                 width,
                 height,
                 borderRadius: radius,
-                borderColor: t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.06)',
+                borderColor: t.dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.9)',
                 transform: [{ scale: pressed ? 0.95 : 1 }],
               },
             ]}
@@ -34,19 +32,21 @@ export default function ContactCard({ width, height, name, label, image, colorKe
             {image ? (
               <Image source={{ uri: image }} resizeMode="cover" style={StyleSheet.absoluteFill} />
             ) : (
-              <LinearGradient
-                colors={[c1, c2, base]}
-                locations={[0, 0.55, 1]}
-                start={{ x: 0.1, y: 0 }}
-                end={{ x: 0.9, y: 1 }}
-                style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 }]}
-              >
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: t.dark ? '#3A3A3C' : '#E9E9EE', alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 }]}>
+                {/* soft frosted highlight for the liquid-glass look */}
+                <LinearGradient
+                  colors={t.dark ? ['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.02)', 'rgba(0,0,0,0.12)'] : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.25)', 'rgba(0,0,0,0.04)']}
+                  locations={[0, 0.5, 1]}
+                  start={{ x: 0.2, y: 0 }}
+                  end={{ x: 0.8, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
                 {letters ? (
-                  <Text style={{ color: 'rgba(255,255,255,0.94)', fontSize: Math.round(width * 0.36), fontWeight: '600', letterSpacing: 0.5 }}>{letters}</Text>
+                  <Text style={{ color: t.dark ? '#C7C7CC' : '#8E8E93', fontSize: Math.round(width * 0.36), fontWeight: '600', letterSpacing: 0.5 }}>{letters}</Text>
                 ) : (
-                  <Ionicons name="person" size={Math.round(width * 0.42)} color="rgba(255,255,255,0.9)" />
+                  <Ionicons name="person" size={Math.round(width * 0.42)} color={t.dark ? '#AEAEB2' : '#A1A1A6'} />
                 )}
-              </LinearGradient>
+              </View>
             )}
             {/* glass sheen along the top edge */}
             <LinearGradient colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']} style={styles.sheen} pointerEvents="none" />
@@ -81,7 +81,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
 }
 
 const styles = StyleSheet.create({
-  card: { overflow: 'hidden', backgroundColor: '#222', borderWidth: StyleSheet.hairlineWidth },
+  card: { overflow: 'hidden', backgroundColor: '#E9E9EE', borderWidth: 1, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   sheen: { position: 'absolute', left: 0, right: 0, top: 0, height: '35%' },
   shade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 },
   overlayText: { position: 'absolute', left: 10, right: 8, bottom: 9 },
