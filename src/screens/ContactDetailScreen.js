@@ -126,6 +126,11 @@ export default function ContactDetailScreen({ route }) {
   };
 
   const onPickNumber = (p) => {
+    if (picker && picker.action === 'favorite') {
+      setPicker(null);
+      addFavorite(contact, p.number, prettyLabel(p.label));
+      return;
+    }
     if (picker && picker.action === 'message') {
       setPicker(null);
       sendMessage(p.number);
@@ -213,7 +218,8 @@ export default function ContactDetailScreen({ route }) {
 
   const toggleFavorite = () => {
     if (favorite) phones.forEach((p) => removeFavoriteByNumber(p.number));
-    else chooseNumber('Add to Favorites', (p) => addFavorite(contact, p.number, prettyLabel(p.label)));
+    else if (phones.length > 1) setPicker({ mode: 'numbers', action: 'favorite', phones });
+    else if (phones.length === 1) addFavorite(contact, phones[0].number, prettyLabel(phones[0].label));
   };
 
   const toggleBlock = () => {

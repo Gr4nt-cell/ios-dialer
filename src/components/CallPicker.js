@@ -69,7 +69,7 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
       >
           {picker.mode === 'numbers' ? (
             <>
-              <Text style={[styles.caption, { color: t.secondary }]}>{picker.action === 'message' ? 'Message which number?' : 'Call which number?'}</Text>
+              <Text style={[styles.caption, { color: t.secondary }]}>{picker.action === 'message' ? 'Message which number?' : picker.action === 'favorite' ? 'Add which number to Favorites?' : 'Call which number?'}</Text>
               {picker.phones.map((p, i) => (
                 <Pressable key={p.id || i} onPress={() => onPickNumber(p)} style={{ marginBottom: 12 }}>
                   {({ pressed }) => (
