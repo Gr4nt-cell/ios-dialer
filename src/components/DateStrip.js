@@ -50,7 +50,7 @@ export default function DateStrip({ value, onChange, marked }) {
   const monthLabel = (d) => MONTHS[d.getMonth()] + (d.getFullYear() !== today.getFullYear() ? ` ’${String(d.getFullYear()).slice(2)}` : '');
 
   return (
-    <Glass radius={24} style={{ marginHorizontal: 16, paddingTop: 10, paddingBottom: 8 }}>
+    <Glass radius={24} strong style={{ marginHorizontal: 16, paddingTop: 10, paddingBottom: 8 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 26, marginBottom: 8 }}>
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10}>
           <Text style={{ color: t.secondary, fontSize: 14, fontWeight: '500' }}>{monthLabel(prev)}</Text>

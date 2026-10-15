@@ -35,6 +35,7 @@ export function Glass({
   pointerEvents,
   onLayout,
   outline = false, // stronger edge, e.g. the floating tab bar
+  strong = false, // clearly visible edge, e.g. the date strip and letter panel
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
@@ -52,7 +53,9 @@ export function Glass({
     : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;
   const fill = tint ? tint : dark ? `rgba(44,44,48,${alpha})` : `rgba(255,255,255,${alpha})`;
   const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
-  const rim = outline
+  const rim = strong
+    ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
+    : outline
     ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
     : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
   const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
@@ -95,7 +98,7 @@ export function Glass({
       {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
       <LinearGradient
         pointerEvents="none"
         colors={[rimTop, 'rgba(255,255,255,0)']}

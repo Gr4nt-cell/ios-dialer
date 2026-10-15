@@ -90,7 +90,7 @@ export default function ContactsScreen() {
     <LargeHeader title="Contacts" right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}>
       <SearchBar value={query} onChangeText={setQuery} />
       {!query && contacts.length ? (
-        <Glass radius={24} style={styles.filter}>
+        <Glass radius={24} strong style={styles.filter}>
           <Pressable onPress={() => pick('all')} style={{ alignSelf: 'flex-start', marginBottom: 4 }}>
             {({ pressed }) => (
               <View
