@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from './Touch';
-import * as Haptics from 'expo-haptics';
+import { scrollTick } from '../haptics';
 import { useTheme } from '../theme';
 import { EXTENDED_BLUR, Glass } from './Glass';
 
@@ -34,7 +34,7 @@ export default function DateStrip({ value, onChange, marked }) {
   }, [value, stripW]);
 
   const select = (d) => {
-    Haptics.selectionAsync().catch(() => {});
+    scrollTick();
     onChange(startOfDay(d));
   };
 

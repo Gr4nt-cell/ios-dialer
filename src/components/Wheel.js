@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Animated } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { scrollTick } from '../haptics';
 
 const AnimatedFlatList = Animated.FlatList;
 
@@ -27,7 +27,8 @@ export default function Wheel({
   transform = 'scale',
   scaleRange = [0.6, 0.82, 1, 0.82, 0.6],
   opacityRange = [0.4, 0.75, 1, 0.75, 0.4],
-  haptics = true,
+  /** Tick strength, 0–1 (false/0 for none). */
+  haptics = 0.6,
   /**
    * Re-style items as they pass the middle. The language wheel wants it (the
    * centred row is bolder); a carousel of photo cards does not — restyling on
@@ -68,7 +69,7 @@ export default function Wheel({
       if (i !== lastIndex.current) {
         lastIndex.current = i;
         if (liveCentre) setCentre(i);
-        if (haptics) Haptics.selectionAsync().catch(() => {});
+        if (haptics) scrollTick(haptics === true ? 0.6 : haptics);
       }
     },
     [horizontal, itemSize, haptics, liveCentre]

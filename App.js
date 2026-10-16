@@ -14,6 +14,7 @@ import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { CLASSIC_TABS, UNIFIED_TABS } from './src/components/TabBar';
 import { BlurTargetView, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
+import { setHapticsEnabled } from './src/haptics';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import RecentsScreen from './src/screens/RecentsScreen';
 import ContactsScreen from './src/screens/ContactsScreen';
@@ -107,6 +108,11 @@ function Main() {
   useEffect(() => {
     load('lastTab', 'keypad').then((saved) => setTabState((cur) => (cur === 'keypad' ? saved : cur)));
   }, []);
+
+  // the Haptics switch in Settings also governs the ticks lists give
+  useEffect(() => {
+    setHapticsEnabled(settings.haptics !== false);
+  }, [settings.haptics]);
 
   const setTab = useCallback((next) => {
     setTabState(next);

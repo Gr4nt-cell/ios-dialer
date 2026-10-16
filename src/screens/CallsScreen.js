@@ -93,7 +93,6 @@ function FavoritesRow() {
         // a carousel should fling like the lists elsewhere, not step card by card
         oneAtATime={false}
         liveCentre={false}
-        haptics={false}
         renderItem={renderCard}
       />
     </View>

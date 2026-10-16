@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Linking, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Touch';
-import * as Haptics from 'expo-haptics';
+import { scrollTick } from '../haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_SPACE, useTheme } from '../theme';
@@ -103,7 +103,7 @@ export default function ContactsScreen() {
     load('contactsView', 'grid').then((m) => setModeState(m === 'list' ? 'list' : 'grid'));
   }, []);
   const setMode = (m) => {
-    Haptics.selectionAsync().catch(() => {});
+    scrollTick();
     setModeState(m);
     save('contactsView', m);
   };
@@ -137,7 +137,7 @@ export default function ContactsScreen() {
   const keySize = Math.min(25.5, Math.floor((width - SIDE * 2 - 16) / 14) * 0.85);
 
   const pick = (l) => {
-    Haptics.selectionAsync().catch(() => {});
+    scrollTick();
     setLetter(l);
   };
 
