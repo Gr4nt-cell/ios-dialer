@@ -11,6 +11,8 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber } from '../phone';
 import { Cell, Group, IconButton, Segmented, SheetHeader, TextButton } from '../components/ui';
+import { useActionSheet } from '../components/ActionSheet';
+import { LANGS, deviceLanguage, useT } from '../i18n';
 import { useCalls } from '../CallContext';
 import Dialer from '../dialer';
 
@@ -104,6 +106,8 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
 
 export default function SettingsScreen() {
   const t = useTheme();
+  const tr = useT();
+  const sheet = useActionSheet();
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const { settings, updateSettings, blocked, block, unblock, resolve, callLogPerm, refreshCallLog, contactsPerm, refreshContacts } = useData();
@@ -151,6 +155,19 @@ export default function SettingsScreen() {
   const bg = settings.callBackground || 'auto';
   const previewColors = bg === 'auto' ? gradientFor('Jane Appleseed') : gradientFor('', bg);
 
+  const current = settings.language || 'system';
+  const chooseLanguage = () =>
+    sheet.show({
+      title: tr('Language'),
+      options: [
+        { text: `${tr('System')}${current === 'system' ? '  ✓' : ''}`, onPress: () => updateSettings({ language: 'system' }) },
+        ...LANGS.map((l) => ({
+          text: `${l.name}${current === l.code ? '  ✓' : ''}`,
+          onPress: () => updateSettings({ language: l.code }),
+        })),
+      ],
+    });
+
   const toggle = (key) => <Switch value={!!settings[key]} onValueChange={(v) => updateSettings({ [key]: v })} trackColor={{ true: t.green }} thumbColor="#fff" />;
 
   const permRow = (label, status, onAsk) => (
@@ -161,9 +178,9 @@ export default function SettingsScreen() {
         status === 'granted' ? (
           <Ionicons name="checkmark-circle" size={20} color={t.green} />
         ) : status === 'unavailable' ? (
-          <Text style={{ color: t.secondary, fontSize: 15 }}>Needs app build</Text>
+          <Text style={{ color: t.secondary, fontSize: 15 }}>{tr('Needs app build')}</Text>
         ) : (
-          <Text style={{ color: t.blue, fontSize: 15 }}>Allow</Text>
+          <Text style={{ color: t.blue, fontSize: 15 }}>{tr('Allow')}</Text>
         )
       }
     />
@@ -171,9 +188,9 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <SheetHeader title="Settings" right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
+      <SheetHeader title={tr('Settings')} right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 10 }}>
-        <SectionTitle>Default Phone App</SectionTitle>
+        <SectionTitle>{tr('Default Phone App')}</SectionTitle>
         <Group>
           <Cell
             value={isDefault ? 'Phone is your default' : 'Set as Default Phone App'}
@@ -196,21 +213,30 @@ export default function SettingsScreen() {
             : 'Install the app build (not Expo Go) to use Phone as your default.'}
         </Footer>
 
-        <SectionTitle>Appearance</SectionTitle>
+        <SectionTitle>{tr('Appearance')}</SectionTitle>
         <Group>
-          <Cell value="Theme" right={<Segmented options={[{ label: 'System', value: 'system' }, { label: 'Light', value: 'light' }, { label: 'Dark', value: 'dark' }]} value={settings.theme || 'system'} onChange={(v) => updateSettings({ theme: v })} />} />
-          <Cell value="Layout" right={<Segmented options={[{ label: 'Unified', value: 'unified' }, { label: 'Classic', value: 'classic' }]} value={settings.layout || 'unified'} onChange={(v) => updateSettings({ layout: v })} />} />
-          <Cell value="Glass" right={<Segmented options={[{ label: 'Clear', value: 'clear' }, { label: 'Tinted', value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
+          <Cell value="Theme" right={<Segmented options={[{ label: tr('System'), value: 'system' }, { label: tr('Light'), value: 'light' }, { label: tr('Dark'), value: 'dark' }]} value={settings.theme || 'system'} onChange={(v) => updateSettings({ theme: v })} />} />
+          <Cell value="Layout" right={<Segmented options={[{ label: tr('Unified'), value: 'unified' }, { label: tr('Classic'), value: 'classic' }]} value={settings.layout || 'unified'} onChange={(v) => updateSettings({ layout: v })} />} />
+          <Cell value="Glass" right={<Segmented options={[{ label: tr('Clear'), value: 'clear' }, { label: tr('Tinted'), value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
+          <Cell
+            value={tr('Language')}
+            onPress={chooseLanguage}
+            right={
+              <Text style={{ color: t.secondary, fontSize: 15 }}>
+                {(LANGS.find((l) => l.code === (settings.language === 'system' || !settings.language ? deviceLanguage() : settings.language)) || LANGS[0]).name}
+              </Text>
+            }
+          />
         </Group>
         <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Tinted makes glass more opaque and easier to read. The call screen always stays dark.</Footer>
 
-        <SectionTitle>Dynamic Island</SectionTitle>
+        <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>
           <Cell value="Show Calls Around Camera" right={<Switch value={overlay.island !== false} onValueChange={(v) => setOverlayPref({ island: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell
             value="Turn On Call Island"
             onPress={overlay.service || !Dialer ? undefined : () => Dialer.openAccessibilitySettings()}
-            right={overlay.service ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>Open</Text>}
+            right={overlay.service ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>{tr('Open')}</Text>}
           />
           {overlay.service ? (
             <>
@@ -234,7 +260,7 @@ export default function SettingsScreen() {
             </>
           ) : null}
           {!overlay.service ? (
-            <Cell value="Allow Restricted Settings" onPress={Dialer ? () => Dialer.openAppInfo() : undefined} right={<Text style={{ color: t.blue, fontSize: 15 }}>App Info</Text>} />
+            <Cell value="Allow Restricted Settings" onPress={Dialer ? () => Dialer.openAppInfo() : undefined} right={<Text style={{ color: t.blue, fontSize: 15 }}>{tr('App Info')}</Text>} />
           ) : null}
         </Group>
         <Footer>
@@ -243,25 +269,25 @@ export default function SettingsScreen() {
             : 'To put calls around the selfie camera, turn on "Call Island" under Accessibility › Downloaded apps. If Android says it\'s a restricted setting, tap App Info, then ⋮ › Allow restricted settings, and try again. The island only draws the call; it doesn\'t read your screen.'}
         </Footer>
 
-        <SectionTitle>Rear Screen</SectionTitle>
+        <SectionTitle>{tr('Rear Screen')}</SectionTitle>
         <Group>
           <Cell
             value="Display over Other Apps"
             onPress={overlay.allowed || !Dialer ? undefined : () => Dialer.openOverlaySettings()}
-            right={overlay.allowed ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>Allow</Text>}
+            right={overlay.allowed ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>{tr('Allow')}</Text>}
           />
           <Cell value="Show Calls on Rear Screen" right={<Switch value={overlay.rear !== false} onValueChange={(v) => setOverlayPref({ rear: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
         </Group>
         <Footer>On phones with a rear or cover screen that apps can use, calls and their buttons appear there. Needs "Display over other apps".</Footer>
 
-        <SectionTitle>Call Screen</SectionTitle>
+        <SectionTitle>{tr('Call Screen')}</SectionTitle>
         <Group>
           <Cell value="Contact Photos" right={toggle('callPhoto')} />
           <Cell value="Depth Effect" right={<Switch value={settings.callDepth !== false && settings.callPhoto !== false} disabled={settings.callPhoto === false} onValueChange={(v) => updateSettings({ callDepth: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
         </Group>
         <Footer>Shows a contact’s picture full screen while you’re on a call with them. Depth Effect places the person in front of their name, the way a poster looks.</Footer>
 
-        <SectionTitle>Call Background</SectionTitle>
+        <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>
           <CallPreview colors={previewColors} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, paddingBottom: 2 }}>
@@ -273,45 +299,45 @@ export default function SettingsScreen() {
         </Group>
         <Footer>Used for callers without a photo. Automatic gives every contact their own colours.</Footer>
 
-        <SectionTitle>Call Recording</SectionTitle>
+        <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>
           <Cell value="Record Calls Automatically" right={toggle('autoRecord')} />
-          <Cell value="Recordings" color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
+          <Cell value={tr('Recordings')} color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
         </Group>
         <Footer>Tap Record on the call screen to record a call. Android only lets the phone’s own system app hear the other side directly, so on most phones turn on Speaker while recording to capture both voices clearly. Recording laws differ by country — let people know when you record.</Footer>
 
-        <SectionTitle>Sounds & Haptics</SectionTitle>
+        <SectionTitle>{tr('Sounds & Haptics')}</SectionTitle>
         <Group>
           <Cell value="Dial Pad Tones" right={toggle('dialTones')} />
           <Cell value="Keypad Haptics" right={toggle('haptics')} />
         </Group>
-        <Footer>Plays a tone and a light tap for each key you press.</Footer>
+        <Footer>{tr('Plays a tone and a light tap for each key you press.')}</Footer>
 
-        <SectionTitle>Voicemail</SectionTitle>
+        <SectionTitle>{tr('Voicemail')}</SectionTitle>
         <Group>
           <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: t.text, fontSize: 17, width: 110 }}>Number</Text>
+            <Text style={{ color: t.text, fontSize: 17, width: 110 }}>{tr('Number')}</Text>
             <TextInput
               value={vm}
               onChangeText={setVm}
               onEndEditing={() => updateSettings({ voicemailNumber: cleanNumber(vm) })}
               onBlur={() => updateSettings({ voicemailNumber: cleanNumber(vm) })}
-              placeholder="Carrier default"
+              placeholder={tr('Carrier default')}
               placeholderTextColor={t.secondary}
               keyboardType="phone-pad"
               style={{ flex: 1, color: t.text, fontSize: 17, paddingVertical: 14, textAlign: 'right' }}
             />
           </View>
         </Group>
-        <Footer>Leave empty to use your SIM’s voicemail number.</Footer>
+        <Footer>{tr('Leave empty to use your SIM’s voicemail number.')}</Footer>
 
-        <SectionTitle>USSD Codes</SectionTitle>
+        <SectionTitle>{tr('USSD Codes')}</SectionTitle>
         <Group>
           <Cell value="Show Replies in App" right={toggle('ussdInApp')} />
         </Group>
         <Footer>Codes like *124# show the network’s reply here. Turn off to always use the network’s own dialog, which works best for long menus.</Footer>
 
-        <SectionTitle>Blocked Contacts</SectionTitle>
+        <SectionTitle>{tr('Blocked Contacts')}</SectionTitle>
         <Group>
           {blocked.map((n) => {
             const match = resolve(n);
@@ -319,7 +345,7 @@ export default function SettingsScreen() {
               <Cell
                 key={n}
                 value={match ? contactName(match.contact) : formatNumber(n)}
-                right={<TextButton title="Unblock" color={t.red} onPress={() => unblock(n)} />}
+                right={<TextButton title={tr('Unblock')} color={t.red} onPress={() => unblock(n)} />}
               >
                 {match ? <Text style={{ color: t.secondary, fontSize: 13 }}>{formatNumber(n)}</Text> : null}
               </Cell>
@@ -329,13 +355,13 @@ export default function SettingsScreen() {
             <TextInput
               value={newBlock}
               onChangeText={setNewBlock}
-              placeholder="Add number to block"
+              placeholder={tr('Add number to block')}
               placeholderTextColor={t.secondary}
               keyboardType="phone-pad"
               style={{ flex: 1, color: t.text, fontSize: 17, paddingVertical: 14 }}
             />
             <TextButton
-              title="Block"
+              title={tr('Block')}
               disabled={!cleanNumber(newBlock)}
               onPress={() => {
                 block(cleanNumber(newBlock));
@@ -346,13 +372,13 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{isDefault ? 'Blocked numbers can’t call or text this phone.' : 'Blocked numbers are flagged in Recents. Make Phone your default to block them system-wide.'}</Footer>
 
-        <SectionTitle>Access</SectionTitle>
+        <SectionTitle>{tr('Access')}</SectionTitle>
         <Group>
           {permRow('Contacts', contactsPerm, () => refreshContacts(true))}
           {permRow('Call History', callLogPerm, () => refreshCallLog(true))}
           <Cell value="Open App Settings" color={t.blue} onPress={() => Linking.openSettings()} />
         </Group>
-        <Footer>If a permission was turned off, re-enable it in app settings.</Footer>
+        <Footer>{tr('If a permission was turned off, re-enable it in app settings.')}</Footer>
       </ScrollView>
     </View>
   );

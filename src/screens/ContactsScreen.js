@@ -12,6 +12,7 @@ import { load, save } from '../storage';
 import { Avatar, EmptyState, IconButton, LargeHeader, SearchBar, TextButton } from '../components/ui';
 import { Glass } from '../components/Glass';
 import ContactCard from '../components/ContactCard';
+import { useT } from '../i18n';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
 const ROWS = [LETTERS.slice(0, 14), LETTERS.slice(14)];
@@ -88,6 +89,7 @@ function ViewToggle({ mode, onChange }) {
 }
 
 export default function ContactsScreen() {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -140,7 +142,7 @@ export default function ContactsScreen() {
   };
 
   const header = (
-    <LargeHeader title="Contacts" left={<ViewToggle mode={mode} onChange={setMode} />}
+    <LargeHeader title={tr('Contacts')} left={<ViewToggle mode={mode} onChange={setMode} />}
       right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}>
       <SearchBar value={query} onChangeText={setQuery} />
       {!query && contacts.length ? (
@@ -154,7 +156,7 @@ export default function ContactsScreen() {
                 ]}
               >
                 <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: 15, fontWeight: '600' }}>
-                  All <Text style={{ fontWeight: '400', color: letter === 'all' ? 'rgba(255,255,255,0.85)' : t.secondary }}>({contacts.length})</Text>
+                  {tr('All')} <Text style={{ fontWeight: '400', color: letter === 'all' ? 'rgba(255,255,255,0.85)' : t.secondary }}>({contacts.length})</Text>
                 </Text>
               </View>
             )}
@@ -185,9 +187,9 @@ export default function ContactsScreen() {
         {header}
         <EmptyState
           icon="people-outline"
-          title="No Access to Contacts"
+          title={tr('No Access to Contacts')}
           message="Allow access to contacts to see the people you call and message."
-          action={<TextButton title="Open Settings" bold onPress={() => Linking.openSettings()} />}
+          action={<TextButton title={tr('Open Settings')} bold onPress={() => Linking.openSettings()} />}
         />
       </View>
     );
@@ -243,9 +245,9 @@ export default function ContactsScreen() {
             }
             action={
               !query && letter !== 'all' && contacts.length ? (
-                <TextButton glass title="Show All" onPress={() => setLetter('all')} />
+                <TextButton glass title={tr('Show All')} onPress={() => setLetter('all')} />
               ) : !query && contactsError ? (
-                <TextButton glass title="Try Again" onPress={() => refreshContacts(true)} />
+                <TextButton glass title={tr('Try Again')} onPress={() => refreshContacts(true)} />
               ) : null
             }
           />

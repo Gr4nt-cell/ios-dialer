@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import Dialer from '../dialer';
 import { Glass, GlassShadow } from './Glass';
+import { useT } from '../i18n';
 
 // 60% lighter than the system selection tick
 function tick() {
@@ -40,6 +41,7 @@ export const CLASSIC_TABS = [
 // along the bar like on iOS: it follows your finger, lights up the tab under it, ticks as it
 // crosses tabs, and selects the tab you let go on. A plain tap still selects straight away.
 export default function TabBar({ tabs, active, onChange, badges = {} }) {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const [width, setWidth] = useState(0);
@@ -163,7 +165,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                     ) : null}
                   </View>
                   <Text style={[styles.label, { color }]} numberOfLines={1}>
-                    {tab.label}
+                    {tr(tab.label)}
                   </Text>
                 </View>
               );

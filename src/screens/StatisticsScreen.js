@@ -12,6 +12,7 @@ import { Glass } from '../components/Glass';
 import Aurora from '../components/Aurora';
 import { Bars, Meter, ShareRows, StackedBar } from '../components/Charts';
 import { computeStats, formatDuration, formatHour, formatShort } from '../stats';
+import { useT } from '../i18n';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -30,6 +31,7 @@ function Card({ children, style }) {
 }
 
 export default function StatisticsScreen() {
+  const tr = useT();
   const t = useTheme();
   const nav = useNav();
   const insets = useSafeAreaInsets();
@@ -61,10 +63,10 @@ export default function StatisticsScreen() {
   }, [contacts]);
 
   const slices = [
-    { key: 'incoming', label: 'Incoming', value: stats.byType.incoming, color: t.chartIncoming },
-    { key: 'outgoing', label: 'Outgoing', value: stats.byType.outgoing, color: t.chartOutgoing },
-    { key: 'missed', label: 'Missed', value: stats.byType.missed, color: t.chartMissed },
-    { key: 'other', label: 'Other', value: stats.byType.other, color: t.chartOther },
+    { key: 'incoming', label: tr('Incoming'), value: stats.byType.incoming, color: t.chartIncoming },
+    { key: 'outgoing', label: tr('Outgoing'), value: stats.byType.outgoing, color: t.chartOutgoing },
+    { key: 'missed', label: tr('Missed'), value: stats.byType.missed, color: t.chartMissed },
+    { key: 'other', label: tr('Other'), value: stats.byType.other, color: t.chartOther },
   ].filter((s) => s.value > 0);
 
   const trend =
@@ -84,31 +86,31 @@ export default function StatisticsScreen() {
       <Aurora variant="sheet" />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
         <LargeHeader
-          title="Statistics"
+          title={tr('Statistics')}
           left={<IconButton glass name="chevron-back" onPress={nav.pop} />}
         />
 
         <View style={{ paddingHorizontal: 16, marginTop: 2 }}>
-          <Segmented options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
+          <Segmented options={PERIOD_OPTIONS.map((o) => ({ ...o, label: tr(o.label) }))} value={period} onChange={setPeriod} />
         </View>
 
         {stats.total === 0 ? (
           <Card style={{ alignItems: 'center', paddingVertical: 34 }}>
             <Ionicons name="stats-chart-outline" size={30} color={t.secondary} />
-            <Text style={{ color: t.text, fontSize: 18, fontWeight: '600', marginTop: 14 }}>No calls in this period</Text>
+            <Text style={{ color: t.text, fontSize: 18, fontWeight: '600', marginTop: 14 }}>{tr('No calls in this period')}</Text>
             <Text style={{ color: t.secondary, fontSize: 15, marginTop: 6, textAlign: 'center' }}>
-              Try a longer period, or make a call.
+              {tr('Try a longer period, or make a call.')}
             </Text>
           </Card>
         ) : (
           <>
             {/* breakdown */}
             <Card>
-              <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>Call breakdown</Text>
+              <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>{tr('Call breakdown')}</Text>
               {trend ? <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{trend}</Text> : null}
               <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 18 }}>
                 <Text style={{ color: t.text, fontSize: 44, fontWeight: '700', letterSpacing: -0.5 }}>{stats.total}</Text>
-                <Text style={{ color: t.secondary, fontSize: 13 }}>total calls</Text>
+                <Text style={{ color: t.secondary, fontSize: 13 }}>{tr('total calls')}</Text>
               </View>
               <StackedBar slices={slices} />
               <View style={{ height: 18 }} />
@@ -135,7 +137,7 @@ export default function StatisticsScreen() {
                 <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', marginTop: 10 }} numberOfLines={1}>
                   {formatDuration(stats.talkSeconds)}
                 </Text>
-                <Text style={{ color: t.secondary, fontSize: 12 }}>Talk time</Text>
+                <Text style={{ color: t.secondary, fontSize: 12 }}>{tr('Talk time')}</Text>
               </Glass>
               <Glass radius={24} style={{ flex: 1, padding: 16 }}>
                 <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: t.chartOther + '2E' }}>
@@ -144,13 +146,13 @@ export default function StatisticsScreen() {
                 <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', marginTop: 10 }} numberOfLines={1}>
                   {formatShort(stats.avgSeconds)}
                 </Text>
-                <Text style={{ color: t.secondary, fontSize: 12 }}>Avg length</Text>
+                <Text style={{ color: t.secondary, fontSize: 12 }}>{tr('Avg length')}</Text>
               </Glass>
             </View>
 
             {/* busiest days */}
             <Card>
-              <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>Busiest days</Text>
+              <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>{tr('Busiest days')}</Text>
               {peak ? <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>Peak around {peak}</Text> : null}
               <View style={{ marginTop: 16 }}>
                 <Bars
@@ -172,7 +174,7 @@ export default function StatisticsScreen() {
             {/* most called */}
             {stats.topContacts.length ? (
               <Card>
-                <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>Most called</Text>
+                <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>{tr('Most called')}</Text>
                 <View style={{ marginTop: 6 }}>
                   {stats.topContacts.map((p, i) => {
                     const contact = byNumber.get(p.key) || null;

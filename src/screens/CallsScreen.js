@@ -16,6 +16,7 @@ import { RecentRow } from './RecentsScreen';
 import ContactCard from '../components/ContactCard';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { computeStats, formatDuration } from '../stats';
+import { useT } from '../i18n';
 
 const FILTERS = [
   { value: 'all', label: 'All Calls', icon: 'call-outline' },
@@ -77,6 +78,7 @@ function DayMessage({ icon, text }) {
 }
 
 export default function CallsScreen() {
+  const tr = useT();
   const t = useTheme();
   const nav = useNav();
   const insets = useSafeAreaInsets();
@@ -113,15 +115,15 @@ export default function CallsScreen() {
 
   const chooseFilter = () =>
     sheet.show({
-      title: 'Show',
-      options: FILTERS.map((f) => ({ text: `${f.label}${f.value === filter ? '  ✓' : ''}`, onPress: () => setFilter(f.value) })),
+      title: tr('Show'),
+      options: FILTERS.map((f) => ({ text: `${tr(f.label)}${f.value === filter ? '  ✓' : ''}`, onPress: () => setFilter(f.value) })),
     });
 
   const clear = () =>
-    Alert.alert('Clear Calls?', 'This removes these calls from your history.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(tr('Clear Calls?'), tr('This removes these calls from your history.'), [
+      { text: tr('Cancel'), style: 'cancel' },
       {
-        text: 'Clear',
+        text: tr('Clear'),
         style: 'destructive',
         onPress: () => {
           deleteCalls(list.flatMap((g) => g.calls));
@@ -132,16 +134,16 @@ export default function CallsScreen() {
 
   const header = (
     <LargeHeader
-      title={filter === 'all' ? 'Calls' : current.label}
+      title={filter === 'all' ? tr('Calls') : tr(current.label)}
       left={<IconButton glass name="filter" onPress={chooseFilter} color={filter === 'all' ? t.text : t.blue} />}
       right={
         editing ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TextButton glass title="Clear" color={t.red} onPress={clear} disabled={!list.length} />
-            <TextButton prominent title="Done" onPress={() => setEditing(false)} />
+            <TextButton glass title={tr('Clear')} color={t.red} onPress={clear} disabled={!list.length} />
+            <TextButton prominent title={tr('Done')} onPress={() => setEditing(false)} />
           </View>
         ) : (
-          <TextButton glass title="Edit" onPress={() => setEditing(true)} disabled={!list.length} />
+          <TextButton glass title={tr('Edit')} onPress={() => setEditing(true)} disabled={!list.length} />
         )
       }
     >
@@ -153,7 +155,7 @@ export default function CallsScreen() {
                 <Ionicons name="stats-chart" size={19} color="#fff" />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }}>Statistics</Text>
+                <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }}>{tr('Statistics')}</Text>
                 <Text style={{ color: t.secondary, fontSize: 12 }} numberOfLines={1}>{statsLine}</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
@@ -163,7 +165,7 @@ export default function CallsScreen() {
       ) : null}
       {filter === 'all' && !editing ? (
         <View style={{ marginBottom: 8 }}>
-          {favorites.length ? <Text style={[styles.section, { color: t.text }]}>Favorites</Text> : null}
+          {favorites.length ? <Text style={[styles.section, { color: t.text }]}>{tr('Favorites')}</Text> : null}
           <FavoritesRow />
         </View>
       ) : null}
@@ -172,13 +174,13 @@ export default function CallsScreen() {
           {({ pressed }) => (
             <Glass radius={22} pressed={pressed} style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
               <Ionicons name="recording" size={22} color={t.blue} />
-              <Text style={{ color: t.text, fontSize: 17, marginLeft: 10, flex: 1 }}>Call Voicemail</Text>
+              <Text style={{ color: t.text, fontSize: 17, marginLeft: 10, flex: 1 }}>{tr('Call Voicemail')}</Text>
               <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
             </Glass>
           )}
         </Pressable>
       ) : null}
-      <Text style={[styles.section, { color: t.text }]}>Recent</Text>
+      <Text style={[styles.section, { color: t.text }]}>{tr('Recent')}</Text>
       <DateStrip value={day} onChange={setDay} marked={marked} />
       <View style={{ height: 8 }} />
     </LargeHeader>
@@ -196,13 +198,13 @@ export default function CallsScreen() {
         renderItem={({ item }) => <RecentRow group={item} showTime editing={editing} onDelete={() => deleteCalls(item.calls)} />}
         ListEmptyComponent={
           isFuture ? (
-            <DayMessage icon="sparkles" text="Looking forward to what the future brings ♡" />
+            <DayMessage icon="sparkles" text={tr('Looking forward to what the future brings ♡')} />
           ) : isToday ? (
-            <EmptyState icon={current.icon} title={filter === 'all' ? 'No Calls Yet Today' : `No ${current.label} Today`} message={filter === 'all' ? 'Calls you make and receive today will appear here.' : undefined} />
+            <EmptyState icon={current.icon} title={filter === 'all' ? tr('No Calls Yet Today') : `${tr('No')} ${tr(current.label)}`} message={filter === 'all' ? tr('Calls you make and receive today will appear here.') : undefined} />
           ) : filter === 'all' ? (
-            <DayMessage icon="leaf" text="A quiet day, I hope you learnt something from the past" />
+            <DayMessage icon="leaf" text={tr('A quiet day, I hope you learnt something from the past')} />
           ) : (
-            <EmptyState icon={current.icon} title={`No ${current.label}`} message="Nothing like that on this day." />
+            <EmptyState icon={current.icon} title={`${tr('No')} ${tr(current.label)}`} message={tr('Nothing like that on this day.')} />
           )
         }
         contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}

@@ -15,6 +15,7 @@ import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '
 import { Glass } from '../components/Glass';
 import { gradientFor } from '../gradients';
 import { useActionSheet } from '../components/ActionSheet';
+import { useT } from '../i18n';
 
 // ---------------------------------------------------------------------------
 // Look & feel
@@ -292,6 +293,7 @@ function CallButton({ icon, label, onPress, on, disabled, color, size = 76, icon
 
 // Wide red "End" key from the layout.
 function EndKey({ onPress }) {
+  const tr = useT();
   return (
     <Pressable onPress={onPress} style={{ width: COL, alignItems: 'center' }}>
       {({ pressed }) => (
@@ -299,7 +301,7 @@ function EndKey({ onPress }) {
           <Glass dark radius={26} pressed={pressed} tint={RED} tintOpacity={0.95} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="call" size={32} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
           </Glass>
-          <Text style={{ color: WHITE, fontSize: 13, marginTop: 7, fontWeight: '500' }}>End</Text>
+          <Text style={{ color: WHITE, fontSize: 13, marginTop: 7, fontWeight: '500' }}>{tr('End')}</Text>
         </>
       )}
     </Pressable>
@@ -326,6 +328,7 @@ function SmallPill({ icon, label, onPress }) {
 // ---------------------------------------------------------------------------
 
 export default function CallScreen() {
+  const tr = useT();
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const sheet = useActionSheet();
@@ -376,9 +379,9 @@ export default function CallScreen() {
       const key = c.id + ':' + c.postDialWait;
       if (c.postDialWait && !askedPostDial.current[key]) {
         askedPostDial.current[key] = true;
-        Alert.alert('Send the following tones?', c.postDialWait, [
-          { text: 'No', style: 'cancel', onPress: () => Dialer.postDialContinue(c.id, false) },
-          { text: 'Send', onPress: () => Dialer.postDialContinue(c.id, true) },
+        Alert.alert(tr('Send the following tones?'), c.postDialWait, [
+          { text: tr('No'), style: 'cancel', onPress: () => Dialer.postDialContinue(c.id, false) },
+          { text: tr('Send'), onPress: () => Dialer.postDialContinue(c.id, true) },
         ]);
       }
     });
@@ -417,11 +420,11 @@ export default function CallScreen() {
   if (ringing && !primary) {
     const reply = () =>
       sheet.show({
-        title: 'Reply with Message',
+        title: tr('Reply with Message'),
         options: [
           ...QUICK_REPLIES.map((m) => ({ text: m, onPress: () => Dialer.reject(ringing.id, m) })),
           {
-            text: 'Custom…',
+            text: tr('Custom…'),
             onPress: () => {
               Dialer.reject(ringing.id, null);
               if (ringing.number) sendMessage(ringing.number);
@@ -445,13 +448,13 @@ export default function CallScreen() {
         {front}
         <View style={{ flex: 1 }} />
         <View style={styles.pillRow}>
-          <SmallPill icon="notifications-off" label="Silence" onPress={() => Dialer.silenceRinger && Dialer.silenceRinger()} />
-          <SmallPill icon="chatbubble" label="Message" onPress={reply} />
+          <SmallPill icon="notifications-off" label={tr('Silence')} onPress={() => Dialer.silenceRinger && Dialer.silenceRinger()} />
+          <SmallPill icon="chatbubble" label={tr('Message')} onPress={reply} />
         </View>
         <View style={styles.answerRow}>
           <CallButton
             icon="call"
-            label="Decline"
+            label={tr('Decline')}
             color={RED}
             size={80}
             iconSize={34}
@@ -463,7 +466,7 @@ export default function CallScreen() {
           />
           <CallButton
             icon="call"
-            label="Accept"
+            label={tr('Accept')}
             color={GREEN}
             size={80}
             iconSize={34}
@@ -499,7 +502,7 @@ export default function CallScreen() {
     if (supported & ROUTE.WIRED) opts.push({ text: `Headphones${mark(ROUTE.WIRED)}`, onPress: () => Dialer.setAudioRoute(ROUTE.WIRED) });
     if (supported & ROUTE.EARPIECE) opts.push({ text: `Phone${mark(ROUTE.EARPIECE)}`, onPress: () => Dialer.setAudioRoute(ROUTE.EARPIECE) });
     opts.push({ text: `Speaker${mark(ROUTE.SPEAKER)}`, onPress: () => Dialer.setAudioRoute(ROUTE.SPEAKER) });
-    sheet.show({ title: 'Audio', options: opts });
+    sheet.show({ title: tr('Audio'), options: opts });
   };
 
   const minimizeTo = (tab) => {
@@ -547,7 +550,7 @@ export default function CallScreen() {
         </Pressable>
         {primary.isConference ? (
           <Glass dark radius={16} style={{ paddingHorizontal: 12, height: 32, justifyContent: 'center' }}>
-            <Text style={{ color: WHITE, fontSize: 13, fontWeight: '600' }}>Conference</Text>
+            <Text style={{ color: WHITE, fontSize: 13, fontWeight: '600' }}>{tr('Conference')}</Text>
           </Glass>
         ) : null}
       </View>
@@ -595,14 +598,14 @@ export default function CallScreen() {
       {/* call waiting card */}
       {ringing ? (
         <Glass dark radius={28} style={styles.waiting}>
-          <Text style={{ color: DIM, fontSize: 13 }}>Incoming call</Text>
+          <Text style={{ color: DIM, fontSize: 13 }}>{tr('Incoming call')}</Text>
           <Text style={{ color: WHITE, fontSize: 22, fontWeight: '600', marginTop: 2 }} numberOfLines={1}>
             {identify(ringing).name}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: 14 }}>
-            <CallButton size={56} icon="close" label="End & Accept" color={RED} onPress={() => Dialer.endAndAnswer(ringing.id)} />
-            <CallButton size={56} icon="call" hangup label="Decline" color="rgba(255,255,255,0.24)" onPress={() => Dialer.reject(ringing.id, null)} />
-            {primary.canHold ? <CallButton size={56} icon="pause" label="Hold & Accept" color={GREEN} onPress={() => Dialer.holdAndAnswer(ringing.id)} /> : null}
+            <CallButton size={56} icon="close" label={tr('End & Accept')} color={RED} onPress={() => Dialer.endAndAnswer(ringing.id)} />
+            <CallButton size={56} icon="call" hangup label={tr('Decline')} color="rgba(255,255,255,0.24)" onPress={() => Dialer.reject(ringing.id, null)} />
+            {primary.canHold ? <CallButton size={56} icon="pause" label={tr('Hold & Accept')} color={GREEN} onPress={() => Dialer.holdAndAnswer(ringing.id)} /> : null}
           </View>
         </Glass>
       ) : null}
@@ -650,8 +653,8 @@ export default function CallScreen() {
       ) : (
         <View style={styles.grid}>
           <View style={styles.gridRow}>
-            <CallButton size={KEY} icon="person" label="Contact" onPress={openContact} disabled={!primary.number || primary.isConference} />
-            <CallButton size={KEY} icon="chatbubble" label="Message" onPress={() => sendMessage(primary.number)} disabled={!primary.number} />
+            <CallButton size={KEY} icon="person" label={tr('Contact')} onPress={openContact} disabled={!primary.number || primary.isConference} />
+            <CallButton size={KEY} icon="chatbubble" label={tr('Message')} onPress={() => sendMessage(primary.number)} disabled={!primary.number} />
             <CallButton
               size={KEY}
               icon="radio-button-on"
@@ -674,7 +677,7 @@ export default function CallScreen() {
             <CallButton
               size={KEY}
               icon={muted ? 'mic-off' : 'mic-off-outline'}
-              label="Mute"
+              label={tr('Mute')}
               on={muted}
               onPress={() => {
                 tap();
@@ -706,13 +709,13 @@ export default function CallScreen() {
         {keypad ? (
           <Pressable onPress={() => setKeypad(false)} hitSlop={12} style={{ width: COL, alignItems: 'center', paddingTop: 18 }}>
             <Glass dark radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center' }}>
-              <Text style={{ color: WHITE, fontSize: 15, fontWeight: '600' }}>Hide</Text>
+              <Text style={{ color: WHITE, fontSize: 15, fontWeight: '600' }}>{tr('Hide')}</Text>
             </Glass>
           </Pressable>
         ) : primary.state === 'select_account' ? (
           <View style={{ width: COL }} />
         ) : (
-          <CallButton size={KEY} icon="keypad" label="Keypad" onPress={() => setKeypad(true)} disabled={!connected} />
+          <CallButton size={KEY} icon="keypad" label={tr('Keypad')} onPress={() => setKeypad(true)} disabled={!connected} />
         )}
       </View>
       )}

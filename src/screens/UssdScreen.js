@@ -9,6 +9,7 @@ import { useNav } from '../nav';
 import Dialer, { getPhoneAccounts } from '../dialer';
 import { placeCall } from '../phone';
 import { IconButton, Segmented, SheetHeader } from '../components/ui';
+import { useT } from '../i18n';
 
 const FAILURES = {
   '-1': 'The network couldn’t complete this request.',
@@ -20,6 +21,7 @@ const FAILURES = {
 const looksLikeMenu = (text) => /(^|\n)\s*\d{1,2}\s*[.):-]/.test(text || '');
 
 export default function UssdScreen({ route }) {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -115,14 +117,14 @@ export default function UssdScreen({ route }) {
               <Pressable onPress={() => run(account)} style={{ flex: 1 }}>
                 {({ pressed }) => (
                   <View style={{ backgroundColor: t.card, borderRadius: 14, paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.6 : 1 }}>
-                    <Text style={{ color: t.blue, fontSize: 17 }}>Run Again</Text>
+                    <Text style={{ color: t.blue, fontSize: 17 }}>{tr('Run Again')}</Text>
                   </View>
                 )}
               </Pressable>
               <Pressable onPress={() => Clipboard.setStringAsync(message)} disabled={!message} style={{ flex: 1 }}>
                 {({ pressed }) => (
                   <View style={{ backgroundColor: t.card, borderRadius: 14, paddingVertical: 14, alignItems: 'center', opacity: pressed || !message ? 0.6 : 1 }}>
-                    <Text style={{ color: t.blue, fontSize: 17 }}>Copy</Text>
+                    <Text style={{ color: t.blue, fontSize: 17 }}>{tr('Copy')}</Text>
                   </View>
                 )}
               </Pressable>

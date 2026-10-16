@@ -8,8 +8,10 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName } from '../phone';
 import { Avatar, EmptyState, IconButton, LargeHeader, TextButton } from '../components/ui';
+import { useT } from '../i18n';
 
 export default function FavoritesScreen() {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -27,7 +29,7 @@ export default function FavoritesScreen() {
         stickyHeaderIndices={[0]}
         ListHeaderComponent={
           <LargeHeader
-            title="Favorites"
+            title={tr('Favorites')}
             left={<TextButton glass={!editing} prominent={editing} title={editing ? 'Done' : 'Edit'} onPress={() => setEditing(!editing)} disabled={!favorites.length && !editing} />}
             right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'pickFavorite' })} />}
           />
@@ -75,9 +77,9 @@ export default function FavoritesScreen() {
         ListEmptyComponent={
           <EmptyState
             icon="star-outline"
-            title="No Favorites"
-            message="Add the people you call most for one-tap calling."
-            action={<TextButton title="Add Favorite" bold onPress={() => nav.push({ name: 'pickFavorite' })} />}
+            title={tr('No Favorites')}
+            message={tr('Add the people you call most for one-tap calling.')}
+            action={<TextButton title={tr('Add Favorite')} bold onPress={() => nav.push({ name: 'pickFavorite' })} />}
           />
         }
         contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}

@@ -11,6 +11,7 @@ import { contactName, formatNumber, numberKey } from '../phone';
 import { EmptyState, IconButton, SheetHeader } from '../components/ui';
 import { Glass } from '../components/Glass';
 import Dialer from '../dialer';
+import { useT } from '../i18n';
 
 export function loadRecordings() {
   if (!Dialer || !Dialer.listRecordings) return [];
@@ -32,6 +33,7 @@ function dateLabel(ts) {
 }
 
 export default function RecordingsScreen({ route }) {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -67,17 +69,17 @@ export default function RecordingsScreen({ route }) {
         player.play();
         setCurrent(rec.name);
       } catch (e) {
-        Alert.alert('Couldn’t Play Recording', String((e && e.message) || e));
+        Alert.alert(tr('Couldn’t Play Recording'), String((e && e.message) || e));
       }
     },
     [current, status.playing, player]
   );
 
   const remove = (rec) =>
-    Alert.alert('Delete Recording?', 'This recording will be removed from this phone.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(tr('Delete Recording?'), tr('This recording will be removed from this phone.'), [
+      { text: tr('Cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: tr('Delete'),
         style: 'destructive',
         onPress: () => {
           if (current === rec.name) {
@@ -96,7 +98,7 @@ export default function RecordingsScreen({ route }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <SheetHeader title="Recordings" left={<IconButton glass name="chevron-back" onPress={nav.pop} />} />
+      <SheetHeader title={tr('Recordings')} left={<IconButton glass name="chevron-back" onPress={nav.pop} />} />
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}
@@ -104,7 +106,7 @@ export default function RecordingsScreen({ route }) {
         data={list}
         keyExtractor={(r) => r.name}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40, gap: 10 }}
-        ListEmptyComponent={<EmptyState icon="radio-button-on" title="No Recordings" message="Tap Record during a call to save it here." />}
+        ListEmptyComponent={<EmptyState icon="radio-button-on" title={tr('No Recordings')} message={tr('Tap Record during a call to save it here.')} />}
         renderItem={({ item }) => {
           const match = item.number && item.number !== 'unknown' ? resolve(item.number) : null;
           const title = match ? contactName(match.contact) : item.number && item.number !== 'unknown' ? formatNumber(item.number) : 'Unknown';

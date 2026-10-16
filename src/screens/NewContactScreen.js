@@ -11,6 +11,7 @@ import { useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { Avatar, IconButton, SheetHeader } from '../components/ui';
+import { useT } from '../i18n';
 
 const PHONE_LABELS = ['mobile', 'home', 'work', 'main', 'other'];
 const EMAIL_LABELS = ['home', 'work', 'other'];
@@ -64,6 +65,7 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
 }
 
 export default function NewContactScreen({ route }) {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -93,11 +95,11 @@ export default function NewContactScreen({ route }) {
 
   const choosePhoto = () => {
     const options = [
-      { text: 'Choose Photo', onPress: () => pick(false) },
-      { text: 'Take Photo', onPress: () => pick(true) },
+      { text: tr('Choose Photo'), onPress: () => pick(false) },
+      { text: tr('Take Photo'), onPress: () => pick(true) },
     ];
-    if (photo) options.push({ text: 'Remove Photo', destructive: true, onPress: () => setPhoto(null) });
-    sheet.show({ title: 'Contact Photo', options });
+    if (photo) options.push({ text: tr('Remove Photo'), destructive: true, onPress: () => setPhoto(null) });
+    sheet.show({ title: tr('Contact Photo'), options });
   };
 
   const canSave = !!(firstName.trim() || lastName.trim() || company.trim() || phones.some((p) => p.value.trim()));
@@ -129,7 +131,7 @@ export default function NewContactScreen({ route }) {
       await refreshContacts(false);
       nav.pop();
     } catch (e) {
-      Alert.alert('Couldn’t Save Contact', e && e.message ? e.message : 'Please try again.');
+      Alert.alert(tr('Couldn’t Save Contact'), e && e.message ? e.message : 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -137,7 +139,7 @@ export default function NewContactScreen({ route }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <SheetHeader title="New Contact" left={<IconButton glass name="close" onPress={nav.pop} />} right={<IconButton prominent name="checkmark" onPress={save} disabled={!canSave || saving} />} />
+      <SheetHeader title={tr('New Contact')} left={<IconButton glass name="close" onPress={nav.pop} />} right={<IconButton prominent name="checkmark" onPress={save} disabled={!canSave || saving} />} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
@@ -150,17 +152,17 @@ export default function NewContactScreen({ route }) {
           </View>
           <View style={[styles.group, { backgroundColor: t.card }]}>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
-              <Field value={firstName} onChangeText={setFirst} placeholder="First name" autoFocus={!route.number} />
+              <Field value={firstName} onChangeText={setFirst} placeholder={tr('First name')} autoFocus={!route.number} />
             </View>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
-              <Field value={lastName} onChangeText={setLast} placeholder="Last name" />
+              <Field value={lastName} onChangeText={setLast} placeholder={tr('Last name')} />
             </View>
             <View style={[styles.fieldRow, { borderBottomWidth: 0 }]}>
-              <Field value={company} onChangeText={setCompany} placeholder="Company" />
+              <Field value={company} onChangeText={setCompany} placeholder={tr('Company')} />
             </View>
           </View>
-          <MultiRows items={phones} setItems={setPhones} labels={PHONE_LABELS} placeholder="Phone" keyboardType="phone-pad" addTitle="add phone" />
-          <MultiRows items={emails} setItems={setEmails} labels={EMAIL_LABELS} placeholder="Email" keyboardType="email-address" addTitle="add email" />
+          <MultiRows items={phones} setItems={setPhones} labels={PHONE_LABELS} placeholder={tr('Phone')} keyboardType="phone-pad" addTitle="add phone" />
+          <MultiRows items={emails} setItems={setEmails} labels={EMAIL_LABELS} placeholder={tr('Email')} keyboardType="email-address" addTitle="add email" />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -15,6 +15,7 @@ import { Glass } from '../components/Glass';
 import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
 import { useCalls } from '../CallContext';
 import { load, save } from '../storage';
+import { useT } from '../i18n';
 
 const KEYS = [
   ['1', ''], ['2', 'ABC'], ['3', 'DEF'],
@@ -60,6 +61,7 @@ function Key({ digit, letters, size, onDown, onLong }) {
 }
 
 export default function KeypadScreen({ prefill }) {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -130,12 +132,12 @@ export default function KeypadScreen({ prefill }) {
     if (settings.haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     if (isSecretCode(num)) {
       const ok = Dialer && Dialer.sendSpecialCode(num);
-      if (!ok) Alert.alert('Can’t Run Code', 'Set Phone as your default phone app to use this code.');
+      if (!ok) Alert.alert(tr('Can’t Run Code'), tr('Set Phone as your default phone app to use this code.'));
       update('');
       return;
     }
     if (isImeiCode(num)) {
-      Alert.alert('IMEI', 'Android doesn’t share the IMEI with phone apps. You’ll find it in Settings › About phone.');
+      Alert.alert('IMEI', tr('Android doesn’t share the IMEI with phone apps. You’ll find it in Settings › About phone.'));
       update('');
       return;
     }
@@ -152,10 +154,10 @@ export default function KeypadScreen({ prefill }) {
   const onNumberLongPress = async () => {
     const clip = await Clipboard.getStringAsync().catch(() => '');
     const buttons = [];
-    if (num) buttons.push({ text: 'Copy', onPress: () => Clipboard.setStringAsync(num) });
-    if (cleanNumber(clip)) buttons.push({ text: 'Paste', onPress: () => update(cleanNumber(clip).slice(0, 40)) });
+    if (num) buttons.push({ text: tr('Copy'), onPress: () => Clipboard.setStringAsync(num) });
+    if (cleanNumber(clip)) buttons.push({ text: tr('Paste'), onPress: () => update(cleanNumber(clip).slice(0, 40)) });
     if (!buttons.length) return;
-    buttons.push({ text: 'Cancel', style: 'cancel' });
+    buttons.push({ text: tr('Cancel'), style: 'cancel' });
     Alert.alert(num ? formatNumber(num) : 'Clipboard', undefined, buttons);
   };
 
@@ -174,8 +176,8 @@ export default function KeypadScreen({ prefill }) {
       {available && !isDefault && !hideBanner ? (
         <View style={[styles.banner, { backgroundColor: t.dark ? '#1C1C1E' : '#F2F2F7' }]}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Make Phone your default</Text>
-            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>Use this call screen for every call.</Text>
+            <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>{tr('Make Phone your default')}</Text>
+            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{tr('Use this call screen for every call.')}</Text>
           </View>
           <Pressable
             testID="set-default"
@@ -186,7 +188,7 @@ export default function KeypadScreen({ prefill }) {
             hitSlop={6}
             style={[styles.bannerButton, { backgroundColor: t.blue }]}
           >
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Set Default</Text>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{tr('Set Default')}</Text>
           </Pressable>
           <Pressable
             onPress={() => {
@@ -221,7 +223,7 @@ export default function KeypadScreen({ prefill }) {
             </Pressable>
           ) : num ? (
             <Pressable onPress={() => nav.push({ name: 'newContact', number: num })} hitSlop={6}>
-              <Text style={{ color: t.blue, fontSize: 16 }}>Add Number</Text>
+              <Text style={{ color: t.blue, fontSize: 16 }}>{tr('Add Number')}</Text>
             </Pressable>
           ) : null}
         </View>

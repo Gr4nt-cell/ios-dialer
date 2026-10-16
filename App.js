@@ -29,6 +29,7 @@ import Dialer from './src/dialer';
 import CallsScreen from './src/screens/CallsScreen';
 import StatisticsScreen from './src/screens/StatisticsScreen';
 import Aurora from './src/components/Aurora';
+import { I18nProvider } from './src/i18n';
 import SearchScreen from './src/screens/SearchScreen';
 
 const ROUTES = {
@@ -176,6 +177,7 @@ function Main() {
   }
 
   return (
+    <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
       <GlassModeContext.Provider value={settings.glass === 'tinted' ? 'tinted' : 'clear'}>
       <GlassTargetContext.Provider value={blurTarget}>
@@ -216,6 +218,7 @@ function Main() {
       </GlassTargetContext.Provider>
       </GlassModeContext.Provider>
     </NavContext.Provider>
+    </I18nProvider>
   );
 }
 

@@ -8,6 +8,7 @@ import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, timeLabel } from '../phone';
 import { Avatar, EmptyState, LargeHeader, Segmented, TextButton } from '../components/ui';
+import { useT } from '../i18n';
 
 export function RecentRow({ group, editing, onDelete, showTime }) {
   const t = useTheme();
@@ -66,6 +67,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
 }
 
 export default function RecentsScreen() {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { recents, markRecentsSeen, deleteCalls, callLogPerm, refreshCallLog } = useData();
@@ -80,8 +82,8 @@ export default function RecentsScreen() {
   const list = filter === 'missed' ? recents.filter((g) => isMissedType(g.type)) : recents;
 
   const clearAll = () =>
-    Alert.alert('Clear Recents?', 'This removes your call history.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(tr('Clear Recents?'), tr('This removes your call history.'), [
+      { text: tr('Cancel'), style: 'cancel' },
       {
         text: filter === 'missed' ? 'Clear Missed Calls' : 'Clear All Recents',
         style: 'destructive',
@@ -100,20 +102,20 @@ export default function RecentsScreen() {
 
   const header = (
     <LargeHeader
-      title="Recents"
-      left={editing ? <TextButton glass title="Clear" color={t.red} onPress={clearAll} disabled={!list.length} /> : <TextButton glass title="Edit" onPress={() => setEditing(true)} disabled={!recents.length} />}
-      center={<Segmented options={[{ label: 'All', value: 'all' }, { label: 'Missed', value: 'missed' }]} value={filter} onChange={setFilter} />}
-      right={editing ? <TextButton prominent title="Done" onPress={() => setEditing(false)} /> : null}
+      title={tr('Recents')}
+      left={editing ? <TextButton glass title={tr('Clear')} color={t.red} onPress={clearAll} disabled={!list.length} /> : <TextButton glass title={tr('Edit')} onPress={() => setEditing(true)} disabled={!recents.length} />}
+      center={<Segmented options={[{ label: tr('All'), value: 'all' }, { label: tr('Missed'), value: 'missed' }]} value={filter} onChange={setFilter} />}
+      right={editing ? <TextButton prominent title={tr('Done')} onPress={() => setEditing(false)} /> : null}
     >
       {callLogPerm === 'denied' ? (
         <View style={[styles.banner, { backgroundColor: t.dark ? '#1C1C1E' : '#F2F2F7' }]}>
           <Ionicons name="time-outline" size={22} color={t.blue} />
           <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Show your full call history</Text>
-            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>Allow access so calls made from any app appear here.</Text>
+            <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>{tr('Show your full call history')}</Text>
+            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{tr('Allow access so calls made from any app appear here.')}</Text>
           </View>
           <TextButton
-            title="Allow"
+            title={tr('Allow')}
             bold
             onPress={async () => {
               await refreshCallLog(true);

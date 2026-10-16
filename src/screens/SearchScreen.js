@@ -8,8 +8,10 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, prettyLabel, timeLabel } from '../phone';
 import { Avatar, EmptyState, LargeHeader, SearchBar } from '../components/ui';
+import { useT } from '../i18n';
 
 export default function SearchScreen() {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -39,8 +41,8 @@ export default function SearchScreen() {
     if (digits.length >= 3 && digits.length === query.replace(/[\s+()-]/g, '').length) {
       out.push({ title: '', data: [{ kind: 'dial', id: 'dial', number: cleanNumber(q) }] });
     }
-    if (people.length) out.push({ title: 'Contacts', data: people });
-    if (calls.length) out.push({ title: 'Recent Calls', data: calls });
+    if (people.length) out.push({ title: tr('Contacts'), data: people });
+    if (calls.length) out.push({ title: tr('Recent Calls'), data: calls });
     return out;
   }, [q, contacts, recents, resolve]);
 
@@ -90,8 +92,8 @@ export default function SearchScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <LargeHeader title="Search">
-        <SearchBar value={q} onChangeText={setQ} placeholder="Contacts, calls or a number" autoFocus />
+      <LargeHeader title={tr('Search')}>
+        <SearchBar value={q} onChangeText={setQ} placeholder={tr('Contacts, calls or a number')} autoFocus />
       </LargeHeader>
       <SectionList
         sections={sections}
@@ -102,7 +104,7 @@ export default function SearchScreen() {
         renderSectionHeader={({ section }) =>
           section.title ? <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.bg }}>{section.title}</Text> : null
         }
-        ListEmptyComponent={q ? <EmptyState icon="search" title="No Results" message={`Nothing matches “${q}”.`} /> : <EmptyState icon="search" title="Search" message="Find people, recent calls, or type a number to call it." />}
+        ListEmptyComponent={q ? <EmptyState icon="search" title={tr('No Results')} message={`Nothing matches “${q}”.`} /> : <EmptyState icon="search" title={tr('Search')} message={tr('Find people, recent calls, or type a number to call it.')} />}
         contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}
       />
     </View>

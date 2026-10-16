@@ -17,6 +17,7 @@ import CallPicker, { callAccounts } from '../components/CallPicker';
 import { useActionSheet } from '../components/ActionSheet';
 import Dialer from '../dialer';
 import { loadRecordings } from './RecordingsScreen';
+import { useT } from '../i18n';
 
 function Action({ icon, label, onPress, disabled, color }) {
   const t = useTheme();
@@ -32,14 +33,14 @@ function Action({ icon, label, onPress, disabled, color }) {
   );
 }
 
-function openWhatsApp(contactId, number, kind) {
+function openWhatsApp(tr, contactId, number, kind) {
   if (!Dialer || !Dialer.openWhatsApp) {
     Linking.openURL('https://wa.me/' + (number || '').replace(/\D/g, '')).catch(() => {});
     return;
   }
   const res = Dialer.openWhatsApp(contactId || null, number, kind);
-  if (res === 'notInstalled') Alert.alert('WhatsApp Not Installed', 'Install WhatsApp to message or call this contact there.');
-  else if (res === 'error') Alert.alert('Couldn’t Open WhatsApp');
+  if (res === 'notInstalled') Alert.alert(tr('WhatsApp Not Installed'), tr('Install WhatsApp to message or call this contact there.'));
+  else if (res === 'error') Alert.alert(tr('Couldn’t Open WhatsApp'));
 }
 
 function SmallIcon({ name, onPress }) {
@@ -73,6 +74,7 @@ function callTypeLabel(type) {
 }
 
 export default function ContactDetailScreen({ route }) {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -177,25 +179,25 @@ export default function ContactDetailScreen({ route }) {
       sheet.show({
         title: `WhatsApp · ${formatNumber(p.number)}`,
         options: [
-          { text: 'Message', onPress: () => openWhatsApp(contact && contact.id, p.number, 'chat') },
-          { text: 'Voice Call', onPress: () => openWhatsApp(contact && contact.id, p.number, 'voice') },
-          { text: 'Video Call', onPress: () => openWhatsApp(contact && contact.id, p.number, 'video') },
+          { text: tr('Message'), onPress: () => openWhatsApp(tr, contact && contact.id, p.number, 'chat') },
+          { text: tr('Voice Call'), onPress: () => openWhatsApp(tr, contact && contact.id, p.number, 'voice') },
+          { text: tr('Video Call'), onPress: () => openWhatsApp(tr, contact && contact.id, p.number, 'video') },
         ],
       })
     );
 
   const applyPhoto = async (uri) => {
     if (!Dialer || !Dialer.setContactPhoto) {
-      Alert.alert('Not Available', 'Install the app build to change contact photos.');
+      Alert.alert(tr('Not Available'), tr('Install the app build to change contact photos.'));
       return;
     }
     setPhotoBusy(true);
     try {
       const ok = await Dialer.setContactPhoto(String(contact.id), uri, null);
-      if (!ok) Alert.alert('Couldn’t Save Photo', 'This contact is stored in an account that doesn’t allow photos to be changed.');
+      if (!ok) Alert.alert(tr('Couldn’t Save Photo'), tr('This contact is stored in an account that doesn’t allow photos to be changed.'));
       await refreshContacts(false);
     } catch (e) {
-      Alert.alert('Couldn’t Save Photo', String((e && e.message) || e));
+      Alert.alert(tr('Couldn’t Save Photo'), String((e && e.message) || e));
     } finally {
       setPhotoBusy(false);
     }
@@ -206,9 +208,9 @@ export default function ContactDetailScreen({ route }) {
       if (camera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          Alert.alert('Camera Access Needed', 'Allow camera access to take a contact photo.', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Settings', onPress: () => Linking.openSettings() },
+          Alert.alert(tr('Camera Access Needed'), tr('Allow camera access to take a contact photo.'), [
+            { text: tr('Cancel'), style: 'cancel' },
+            { text: tr('Settings'), onPress: () => Linking.openSettings() },
           ]);
           return;
         }
@@ -218,18 +220,18 @@ export default function ContactDetailScreen({ route }) {
       if (res.canceled || !res.assets || !res.assets[0]) return;
       await applyPhoto(res.assets[0].uri);
     } catch (e) {
-      Alert.alert('Couldn’t Open Photos', String((e && e.message) || e));
+      Alert.alert(tr('Couldn’t Open Photos'), String((e && e.message) || e));
     }
   };
 
   const editPhoto = () => {
     if (!contact) return;
     const options = [
-      { text: 'Choose Photo', onPress: () => pick(false) },
-      { text: 'Take Photo', onPress: () => pick(true) },
+      { text: tr('Choose Photo'), onPress: () => pick(false) },
+      { text: tr('Take Photo'), onPress: () => pick(true) },
     ];
-    if (image) options.push({ text: 'Remove Photo', destructive: true, onPress: () => applyPhoto(null) });
-    sheet.show({ title: 'Contact Photo', options });
+    if (image) options.push({ text: tr('Remove Photo'), destructive: true, onPress: () => applyPhoto(null) });
+    sheet.show({ title: tr('Contact Photo'), options });
   };
 
   const toggleFavorite = () => {
@@ -243,17 +245,17 @@ export default function ContactDetailScreen({ route }) {
       phones.forEach((p) => unblock(p.number));
       return;
     }
-    Alert.alert('Block this Caller', 'You won’t get calls or texts from this number. With this app as your default phone app, the block applies to the whole phone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Block Contact', style: 'destructive', onPress: () => phones.forEach((p) => block(p.number)) },
+    Alert.alert(tr('Block this Caller'), 'You won’t get calls or texts from this number. With this app as your default phone app, the block applies to the whole phone.', [
+      { text: tr('Cancel'), style: 'cancel' },
+      { text: tr('Block Contact'), style: 'destructive', onPress: () => phones.forEach((p) => block(p.number)) },
     ]);
   };
 
   const confirmDelete = () =>
-    Alert.alert('Delete Contact', `Delete ${name} from your contacts?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(tr('Delete Contact'), `Delete ${name} from your contacts?`, [
+      { text: tr('Cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: tr('Delete'),
         style: 'destructive',
         onPress: async () => {
           await deleteContact(contact.id);
@@ -277,7 +279,7 @@ export default function ContactDetailScreen({ route }) {
         <Aurora variant="sheet" />
       <View style={[styles.nav, { paddingTop: insets.top }]}>
         <IconButton glass name="chevron-back" onPress={nav.pop} />
-        {contact ? <TextButton glass title="Edit" onPress={edit} /> : null}
+        {contact ? <TextButton glass title={tr('Edit')} onPress={edit} /> : null}
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
@@ -338,7 +340,7 @@ export default function ContactDetailScreen({ route }) {
                 value={formatNumber(p.number)}
                 color={t.blue}
                 onPress={() => startCall(p)}
-                onLongPress={() => Clipboard.setStringAsync(p.number).then(() => Alert.alert('Copied', formatNumber(p.number)))}
+                onLongPress={() => Clipboard.setStringAsync(p.number).then(() => Alert.alert(tr('Copied'), formatNumber(p.number)))}
                 right={isBlocked(p.number) ? <Ionicons name="hand-left" size={16} color={t.red} /> : null}
               >
                 {lastCalled && lastCalled.key === numberKey(p.number) ? (
@@ -359,12 +361,12 @@ export default function ContactDetailScreen({ route }) {
                 key={'wa' + (p.id || i)}
                 label="WhatsApp"
                 value={formatNumber(p.number)}
-                onPress={() => openWhatsApp(contact && contact.id, p.number, 'chat')}
+                onPress={() => openWhatsApp(tr, contact && contact.id, p.number, 'chat')}
                 right={
                   <View style={{ flexDirection: 'row' }}>
-                    <SmallIcon name="chatbubble" onPress={() => openWhatsApp(contact && contact.id, p.number, 'chat')} />
-                    <SmallIcon name="call" onPress={() => openWhatsApp(contact && contact.id, p.number, 'voice')} />
-                    <SmallIcon name="videocam" onPress={() => openWhatsApp(contact && contact.id, p.number, 'video')} />
+                    <SmallIcon name="chatbubble" onPress={() => openWhatsApp(tr, contact && contact.id, p.number, 'chat')} />
+                    <SmallIcon name="call" onPress={() => openWhatsApp(tr, contact && contact.id, p.number, 'voice')} />
+                    <SmallIcon name="videocam" onPress={() => openWhatsApp(tr, contact && contact.id, p.number, 'video')} />
                   </View>
                 }
               />
@@ -390,7 +392,7 @@ export default function ContactDetailScreen({ route }) {
 
         {contact ? (
           <Group>
-            <Cell value="Delete Contact" color={t.red} onPress={confirmDelete} />
+            <Cell value={tr('Delete Contact')} color={t.red} onPress={confirmDelete} />
           </Group>
         ) : null}
       </ScrollView>

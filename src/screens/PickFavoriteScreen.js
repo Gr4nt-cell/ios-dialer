@@ -8,8 +8,10 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, prettyLabel } from '../phone';
 import { Avatar, EmptyState, IconButton, SearchBar, SheetHeader } from '../components/ui';
+import { useT } from '../i18n';
 
 export default function PickFavoriteScreen() {
+  const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -32,7 +34,7 @@ export default function PickFavoriteScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <SheetHeader title="Add Favorite" left={<IconButton glass name="close" onPress={nav.pop} />} />
+      <SheetHeader title={tr('Add Favorite')} left={<IconButton glass name="close" onPress={nav.pop} />} />
       <View style={{ backgroundColor: t.grouped, paddingTop: 4 }}>
         <SearchBar value={query} onChangeText={setQuery} />
       </View>
@@ -74,7 +76,7 @@ export default function PickFavoriteScreen() {
           );
         }}
         ItemSeparatorComponent={() => <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.separator, marginLeft: 64 }} />}
-        ListEmptyComponent={<EmptyState icon="people-outline" title="No Contacts" message="Contacts with phone numbers appear here." />}
+        ListEmptyComponent={<EmptyState icon="people-outline" title={tr('No Contacts')} message={tr('Contacts with phone numbers appear here.')} />}
         contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
       />
     </View>
