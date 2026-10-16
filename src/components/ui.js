@@ -99,7 +99,7 @@ export function LargeHeader({ title, left, right, center, children, compact }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: insets.top, backgroundColor: t.bg }}>
+    <View style={{ paddingTop: insets.top }}>
       <View style={styles.bar}>
         <View style={styles.barLeft}>{left}</View>
         {center ? <View style={styles.barCenter}>{center}</View> : <View style={{ flex: 1 }} />}
@@ -227,7 +227,7 @@ export function SheetHeader({ title, left, right }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: insets.top + 6, backgroundColor: t.grouped }}>
+    <View style={{ paddingTop: insets.top + 6 }}>
       <View style={styles.bar}>
         <View style={styles.barSide}>{left}</View>
         <View style={styles.barCenter}>

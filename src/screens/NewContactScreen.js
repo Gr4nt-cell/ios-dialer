@@ -136,7 +136,7 @@ export default function NewContactScreen({ route }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.grouped }}>
+    <View style={{ flex: 1 }}>
       <SheetHeader title="New Contact" left={<IconButton glass name="close" onPress={nav.pop} />} right={<IconButton prominent name="checkmark" onPress={save} disabled={!canSave || saving} />} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>

@@ -129,7 +129,7 @@ export default function RecentsScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1 }}>
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}

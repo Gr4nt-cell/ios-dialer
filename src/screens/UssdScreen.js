@@ -68,7 +68,7 @@ export default function UssdScreen({ route }) {
   const menu = status === 'done' && looksLikeMenu(message);
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.grouped }}>
+    <View style={{ flex: 1 }}>
       <SheetHeader title={code} right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}>
         {accounts.length > 1 ? (

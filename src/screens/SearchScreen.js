@@ -89,7 +89,7 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1 }}>
       <LargeHeader title="Search">
         <SearchBar value={q} onChangeText={setQ} placeholder="Contacts, calls or a number" autoFocus />
       </LargeHeader>

@@ -181,7 +181,7 @@ export default function ContactsScreen() {
 
   if (contactsPerm === 'denied') {
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <View style={{ flex: 1 }}>
         {header}
         <EmptyState
           icon="people-outline"
@@ -194,7 +194,7 @@ export default function ContactsScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1 }}>
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}

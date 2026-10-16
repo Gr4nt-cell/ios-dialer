@@ -15,6 +15,7 @@ import { useActionSheet } from '../components/ActionSheet';
 import { RecentRow } from './RecentsScreen';
 import ContactCard from '../components/ContactCard';
 import DateStrip, { startOfDay } from '../components/DateStrip';
+import { computeStats, formatDuration } from '../stats';
 
 const FILTERS = [
   { value: 'all', label: 'All Calls', icon: 'call-outline' },
@@ -77,6 +78,7 @@ function DayMessage({ icon, text }) {
 
 export default function CallsScreen() {
   const t = useTheme();
+  const nav = useNav();
   const insets = useSafeAreaInsets();
   const sheet = useActionSheet();
   const { recents, resolve, markRecentsSeen, deleteCalls, callVoicemail, favorites } = useData();
@@ -102,6 +104,12 @@ export default function CallsScreen() {
   const isToday = day.getTime() === today.getTime();
 
   const current = FILTERS.find((f) => f.value === filter);
+
+  // headline figures for the Statistics button
+  const statsLine = useMemo(() => {
+    const month = computeStats(recents.flatMap((g) => g.calls), 'month');
+    return `${month.total} calls · ${formatDuration(month.talkSeconds)} this month`;
+  }, [recents]);
 
   const chooseFilter = () =>
     sheet.show({
@@ -138,6 +146,22 @@ export default function CallsScreen() {
       }
     >
       {filter === 'all' && !editing ? (
+        <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ marginHorizontal: 16, marginBottom: 12 }}>
+          {({ pressed }) => (
+            <Glass radius={22} blur pressed={pressed} style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
+              <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: t.chartOther, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="stats-chart" size={19} color="#fff" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }}>Statistics</Text>
+                <Text style={{ color: t.secondary, fontSize: 12 }} numberOfLines={1}>{statsLine}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
+            </Glass>
+          )}
+        </Pressable>
+      ) : null}
+      {filter === 'all' && !editing ? (
         <View style={{ marginBottom: 8 }}>
           {favorites.length ? <Text style={[styles.section, { color: t.text }]}>Favorites</Text> : null}
           <FavoritesRow />
@@ -161,7 +185,7 @@ export default function CallsScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1 }}>
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}

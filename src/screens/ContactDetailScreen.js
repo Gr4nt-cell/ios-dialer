@@ -12,6 +12,7 @@ import { useNav } from '../nav';
 import { contactName, contactPhoto, durationLabel, formatNumber, numberKey, prettyLabel, sendMessage, timeLabel } from '../phone';
 import { Avatar, Cell, Group, IconButton, TextButton } from '../components/ui';
 import { BlurTargetView, Glass } from '../components/Glass';
+import Aurora from '../components/Aurora';
 import CallPicker, { callAccounts } from '../components/CallPicker';
 import { useActionSheet } from '../components/ActionSheet';
 import Dialer from '../dialer';
@@ -271,8 +272,9 @@ export default function ContactDetailScreen({ route }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.grouped }}>
-      <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.grouped }}>
+    <View style={{ flex: 1 }}>
+      <BlurTargetView ref={blurTarget} style={{ flex: 1 }}>
+        <Aurora variant="sheet" />
       <View style={[styles.nav, { paddingTop: insets.top }]}>
         <IconButton glass name="chevron-back" onPress={nav.pop} />
         {contact ? <TextButton glass title="Edit" onPress={edit} /> : null}

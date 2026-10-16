@@ -95,7 +95,7 @@ export default function RecordingsScreen({ route }) {
     ]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.grouped }}>
+    <View style={{ flex: 1 }}>
       <SheetHeader title="Recordings" left={<IconButton glass name="chevron-back" onPress={nav.pop} />} />
       <FlatList
         removeClippedSubviews

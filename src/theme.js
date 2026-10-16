@@ -20,6 +20,13 @@ const light = {
   avatar: ['#A5ABB6', '#858A94'],
   glass: 'rgba(250,250,252,0.94)',
   glassBorder: 'rgba(0,0,0,0.06)',
+  // chart hues are their own palette, checked for colour-blind separation
+  // and contrast against this scheme's surface
+  chartIncoming: '#0A84FF',
+  chartOutgoing: '#2FB869',
+  chartMissed: '#C02A1F',
+  chartOther: '#7A5CFF',
+  chartTrack: 'rgba(20,23,31,0.08)',
 };
 
 const dark = {
@@ -42,6 +49,11 @@ const dark = {
   avatar: ['#6C6C72', '#4C4C52'],
   glass: 'rgba(38,38,40,0.94)',
   glassBorder: 'rgba(255,255,255,0.08)',
+  chartIncoming: '#3B93F0',
+  chartOutgoing: '#1DB069',
+  chartMissed: '#C73A2E',
+  chartOther: '#8A67E8',
+  chartTrack: 'rgba(255,255,255,0.10)',
 };
 
 export function useTheme() {

@@ -31,7 +31,7 @@ export default function PickFavoriteScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1 }}>
       <SheetHeader title="Add Favorite" left={<IconButton glass name="close" onPress={nav.pop} />} />
       <View style={{ backgroundColor: t.grouped, paddingTop: 4 }}>
         <SearchBar value={query} onChangeText={setQuery} />

@@ -17,7 +17,7 @@ export default function VoicemailScreen() {
   const voicemailCalls = recents.filter((g) => g.type === 'voicemail').slice(0, 20);
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
+    <View style={{ flex: 1, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
       <LargeHeader title="Voicemail" right={<IconButton glass name="settings-outline" onPress={() => nav.push({ name: 'settings' })} />} />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36 }}>
         <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center' }}>

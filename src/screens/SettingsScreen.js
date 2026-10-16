@@ -170,7 +170,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.grouped }}>
+    <View style={{ flex: 1 }}>
       <SheetHeader title="Settings" right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 10 }}>
         <SectionTitle>Default Phone App</SectionTitle>

@@ -27,6 +27,8 @@ import RecordingsScreen from './src/screens/RecordingsScreen';
 import CallScreen from './src/screens/CallScreen';
 import Dialer from './src/dialer';
 import CallsScreen from './src/screens/CallsScreen';
+import StatisticsScreen from './src/screens/StatisticsScreen';
+import Aurora from './src/components/Aurora';
 import SearchScreen from './src/screens/SearchScreen';
 
 const ROUTES = {
@@ -36,6 +38,7 @@ const ROUTES = {
   pickFavorite: PickFavoriteScreen,
   ussd: UssdScreen,
   recordings: RecordingsScreen,
+  statistics: StatisticsScreen,
 };
 
 function islandOn() {
@@ -179,6 +182,7 @@ function Main() {
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
         <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
+          <Aurora />
           {screen}
         </BlurTargetView>
         <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
@@ -190,7 +194,8 @@ function Main() {
         return (
           <Modal key={route.key} visible animationType="slide" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
             <SafeAreaProvider>
-              <View style={{ flex: 1, backgroundColor: t.grouped }}>
+              <View style={{ flex: 1, backgroundColor: t.bg }}>
+                <Aurora variant="sheet" />
                 <Screen route={route} />
               </View>
             </SafeAreaProvider>

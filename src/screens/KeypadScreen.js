@@ -165,7 +165,7 @@ export default function KeypadScreen({ prefill }) {
   const display = formatNumber(num);
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg, paddingTop: insets.top, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
       <View style={styles.topBar}>
         <View style={{ flex: 1 }} />
         <IconButton glass name="settings-outline" onPress={() => nav.push({ name: 'settings' })} />
