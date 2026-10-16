@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Dialer, { ROUTE, isRinging } from '../dialer';
+import { depthTransform, useDepth } from '../depth';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
 import { useTheme } from '../theme';
@@ -103,35 +104,6 @@ function statusText(c, who) {
 // Pieces
 // ---------------------------------------------------------------------------
 
-// Cut-out of the person in a contact photo, cached per photo (see DialerModule.prepareDepth).
-const depthCache = new Map();
-
-function useDepth(image, enabled) {
-  const [depth, setDepth] = useState(() => (image && depthCache.get(image)) || null);
-  useEffect(() => {
-    let alive = true;
-    if (!image || !enabled || !Dialer || !Dialer.prepareDepth) {
-      setDepth(null);
-      return undefined;
-    }
-    if (depthCache.has(image)) {
-      setDepth(depthCache.get(image));
-      return undefined;
-    }
-    setDepth(null);
-    Dialer.prepareDepth(image)
-      .then((r) => {
-        if (r && r.base && r.foreground) depthCache.set(image, r);
-        if (alive) setDepth(r && r.base && r.foreground ? r : null);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [image, enabled]);
-  return depth;
-}
-
 // Very slow push-in shared by the photo and its cut-out so they stay aligned.
 function useZoom() {
   const zoom = useRef(new Animated.Value(0)).current;
@@ -207,15 +179,17 @@ function Poster({ photo, palette, zoomStyle }) {
 }
 
 // The person, drawn in front of their name — the "depth" effect.
-function DepthLayer({ uri, zoomStyle }) {
+function DepthLayer({ uri, zoomStyle, adjust }) {
   const fade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 450, useNativeDriver: true }).start();
   }, [fade, uri]);
   if (!uri) return null;
+  // one transform list: the slow push-in first, then the user's offset and size
+  const transform = [...((zoomStyle && zoomStyle.transform) || []), ...depthTransform(adjust)];
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Animated.Image source={{ uri }} resizeMode="cover" style={[StyleSheet.absoluteFill, zoomStyle, { opacity: fade }]} />
+      <Animated.Image source={{ uri }} resizeMode="cover" style={[StyleSheet.absoluteFill, { transform, opacity: fade }]} />
     </View>
   );
 }
@@ -362,7 +336,7 @@ export default function CallScreen() {
   const zoomStyle = useZoom();
   const nameStyle = usePhoto ? styles.posterName : styles.name;
   // depth layer goes right after the name so the person overlaps it
-  const front = usePhoto && depth && !keypad ? <DepthLayer uri={depth.foreground} zoomStyle={zoomStyle} /> : null;
+  const front = usePhoto && depth && !keypad ? <DepthLayer uri={depth.foreground} zoomStyle={zoomStyle} adjust={settings} /> : null;
 
   useTicker(live.some((c) => c.state === 'active'));
 
