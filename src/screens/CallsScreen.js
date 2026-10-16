@@ -8,7 +8,7 @@ import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, sameDay } from '../phone';
 import { EmptyState, IconButton, LargeHeader, TextButton } from '../components/ui';
-import { Glass } from '../components/Glass';
+import { EXTENDED_BLUR, Glass } from '../components/Glass';
 import { useActionSheet } from '../components/ActionSheet';
 import { RecentRow } from './RecentsScreen';
 import ContactCard from '../components/ContactCard';
@@ -160,7 +160,7 @@ export default function CallsScreen() {
       center={
         <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ flex: 1 }}>
           {({ pressed }) => (
-            <Glass radius={20} pressed={pressed} style={styles.statsPill}>
+            <Glass radius={20} pressed={pressed} blur={EXTENDED_BLUR} vivid intensity={90} style={styles.statsPill}>
               <View style={[styles.statsIcon, { backgroundColor: t.chartOther }]}>
                 <Ionicons name="stats-chart" size={14} color="#fff" />
               </View>

@@ -10,7 +10,7 @@ import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, prettyLabel } from '../phone';
 import { load, save } from '../storage';
 import { Avatar, EmptyState, IconButton, LargeHeader, SearchBar, TextButton } from '../components/ui';
-import { Glass } from '../components/Glass';
+import { EXTENDED_BLUR, Glass } from '../components/Glass';
 import ContactCard from '../components/ContactCard';
 import { useT } from '../i18n';
 
@@ -146,7 +146,7 @@ export default function ContactsScreen() {
       right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}>
       <SearchBar value={query} onChangeText={setQuery} />
       {!query && contacts.length ? (
-        <Glass radius={20} strong style={styles.filter}>
+        <Glass radius={20} strong blur={EXTENDED_BLUR} vivid intensity={90} style={styles.filter}>
           <Pressable onPress={() => pick('all')} style={{ alignSelf: 'flex-start', marginBottom: 4 }}>
             {({ pressed }) => (
               <View

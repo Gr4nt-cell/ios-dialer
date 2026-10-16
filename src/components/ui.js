@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { initials } from '../phone';
-import { Glass } from './Glass';
+import { EXTENDED_BLUR, Glass } from './Glass';
 
 // ---------- Avatar ----------
 
@@ -116,7 +116,7 @@ export function LargeHeader({ title, left, right, center, children, compact }) {
 export function SearchBar({ value, onChangeText, placeholder = 'Search', autoFocus }) {
   const t = useTheme();
   return (
-    <Glass radius={20} style={styles.search}>
+    <Glass radius={20} blur={EXTENDED_BLUR} vivid intensity={85} style={styles.search}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingHorizontal: 12, gap: 6 }}>
         <Ionicons name="search" size={17} color={t.secondary} />
         <TextInput

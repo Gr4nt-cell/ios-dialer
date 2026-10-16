@@ -12,6 +12,15 @@ const { BlurView } = ExpoBlur;
 export const BlurTargetView = ExpoBlur.BlurTargetView || View;
 const HAS_TARGET_API = !!ExpoBlur.BlurTargetView;
 
+/**
+ * Real background blur costs a live snapshot of the view behind each surface,
+ * and stacking too many of them has crashed this app before. These are the
+ * surfaces allowed to use it: at most a few per screen, never inside a list.
+ * Flip this to false to fall back to the translucent fill everywhere but the
+ * tab bar.
+ */
+export const EXTENDED_BLUR = true;
+
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted'
 

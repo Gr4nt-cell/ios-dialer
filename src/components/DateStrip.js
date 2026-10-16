@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from './Touch';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../theme';
-import { Glass } from './Glass';
+import { EXTENDED_BLUR, Glass } from './Glass';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -51,7 +51,7 @@ export default function DateStrip({ value, onChange, marked }) {
   const monthLabel = (d) => MONTHS[d.getMonth()] + (d.getFullYear() !== today.getFullYear() ? ` ’${String(d.getFullYear()).slice(2)}` : '');
 
   return (
-    <Glass radius={21} strong style={{ marginHorizontal: 16, paddingTop: 8, paddingBottom: 7 }}>
+    <Glass radius={21} strong blur={EXTENDED_BLUR} vivid intensity={90} style={{ marginHorizontal: 16, paddingTop: 8, paddingBottom: 7 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 22, marginBottom: 7 }}>
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10}>
           <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '500' }}>{monthLabel(prev)}</Text>
