@@ -62,24 +62,28 @@ export default function DepthPreview({ image, name, settings, enabled = true, on
 
       {base ? <Image source={{ uri: base }} resizeMode="cover" style={StyleSheet.absoluteFill} /> : null}
 
-      {/* keeps the name readable, as on the call screen */}
+      {/* keeps the name readable over a bright photo, as on the call screen */}
       <LinearGradient
-        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']}
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: H * 0.55 }}
+        colors={['rgba(0,0,0,0.38)', 'rgba(0,0,0,0)']}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, height: H * 0.46 }}
       />
+
+      {/* The name sits high, the way the call screen draws it, so the person
+          can overlap it from below — that overlap is the whole effect. */}
+      <View style={styles.nameWrap}>
+        <Text style={styles.status} numberOfLines={1}>
+          mobile
+        </Text>
+        <Text style={styles.name} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+          {name || 'Jane Appleseed'}
+        </Text>
+      </View>
 
       {!base ? (
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials(name) || '?'}</Text>
         </View>
       ) : null}
-
-      <View style={styles.nameWrap}>
-        <Text style={styles.status}>mobile</Text>
-        <Text style={styles.name} numberOfLines={2}>
-          {name || 'Jane Appleseed'}
-        </Text>
-      </View>
 
       {/* the person, in front of the name */}
       {depth && enabled ? (
@@ -104,20 +108,23 @@ export const DEPTH_PREVIEW_WIDTH = W;
 
 const styles = StyleSheet.create({
   frame: { width: W, height: H, borderRadius: 26, overflow: 'hidden', borderWidth: 1, backgroundColor: '#1C1C1E' },
-  nameWrap: { position: 'absolute', left: 0, right: 0, bottom: 26, paddingHorizontal: 10 },
-  status: { color: 'rgba(255,255,255,0.75)', fontSize: 10, textAlign: 'center' },
+  // same proportions as the call screen's poster name, scaled to the frame
+  nameWrap: { position: 'absolute', left: 0, right: 0, top: 18, paddingHorizontal: 8 },
+  status: { color: 'rgba(255,255,255,0.78)', fontSize: 9, fontWeight: '500', textAlign: 'center' },
   name: {
     color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    lineHeight: 25,
+    fontWeight: '700',
+    letterSpacing: -0.2,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 1,
     textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowRadius: 6,
   },
   avatar: {
     position: 'absolute',
-    top: 54,
+    top: 96,
     alignSelf: 'center',
     width: 56,
     height: 56,
@@ -127,5 +134,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  hint: { position: 'absolute', top: 10, right: 10, opacity: 0.8 },
+  hint: { position: 'absolute', bottom: 10, right: 10, opacity: 0.8 },
 });
