@@ -1,21 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, FlatList, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Touch';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_SPACE, useTheme } from '../theme';
 import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
-import { contactName, contactPhoto, formatNumber, initials, sameDay } from '../phone';
-import { gradientFor } from '../gradients';
+import { contactName, contactPhoto, formatNumber, sameDay } from '../phone';
 import { EmptyState, IconButton, LargeHeader, TextButton } from '../components/ui';
 import { Glass } from '../components/Glass';
 import { useActionSheet } from '../components/ActionSheet';
 import { RecentRow } from './RecentsScreen';
 import ContactCard from '../components/ContactCard';
 import DateStrip, { startOfDay } from '../components/DateStrip';
-import { computeStats, formatDuration } from '../stats';
+import Wheel from '../components/Wheel';
 import { useT } from '../i18n';
 
 const FILTERS = [
@@ -25,42 +23,70 @@ const FILTERS = [
   { value: 'unknown', label: 'Unknown Callers', icon: 'help-circle-outline' },
 ];
 
-const CARD_W = 104;
-const CARD_H = 140;
+// Favourite cards match the contact grid card: four across, same proportions.
+const SIDE = 16;
+const GRID_GAP = 12;
+const COLUMNS = 4;
+const cardWidth = (w) => Math.floor((w - SIDE * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS);
 
 function FavoritesRow() {
   const t = useTheme();
   const nav = useNav();
+  const tr = useT();
+  const { width } = useWindowDimensions();
   const { favorites, findContact, call } = useData();
+
+  const CARD_W = cardWidth(width);
+  const CARD_H = Math.round(CARD_W * 1.32);
+  const SLOT = CARD_W + 14;          // card plus the gap either side
+  const ROW_H = CARD_H + 16;
+
+  if (!favorites.length) {
+    return (
+      <View style={{ paddingHorizontal: SIDE }}>
+        <Pressable onPress={() => nav.push({ name: 'pickFavorite' })}>
+          {({ pressed }) => (
+            <Glass radius={22} pressed={pressed} style={{ width: CARD_W, height: CARD_H, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="add" size={28} color={t.blue} />
+              <Text style={{ color: t.secondary, fontSize: 12, marginTop: 4 }}>{tr('Favorites')}</Text>
+            </Glass>
+          )}
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, gap: 10 }}>
-      {favorites.map((f) => {
-        const contact = f.contactId ? findContact(f.contactId) : null;
-        const name = contact ? contactName(contact) : f.name || formatNumber(f.number);
-        return (
-          <ContactCard
-            key={f.id}
-            overlay
-            width={CARD_W}
-            height={CARD_H}
-            name={name}
-            label={f.label || 'phone'}
-            image={contactPhoto(contact, true)}
-            colorKey={contact ? contact.id : f.number}
-            onPress={() => call(f.number)}
-            onLongPress={() => nav.push({ name: 'contact', contactId: contact ? contact.id : null, number: f.number })}
-          />
-        );
-      })}
-      <Pressable onPress={() => nav.push({ name: 'pickFavorite' })}>
-        {({ pressed }) => (
-          <Glass radius={22} pressed={pressed} style={{ width: favorites.length ? 64 : CARD_W, height: CARD_H, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="add" size={30} color={t.blue} />
-            <Text style={{ color: t.secondary, fontSize: 12, marginTop: 4 }}>{favorites.length ? 'Add' : 'Favorites'}</Text>
-          </Glass>
-        )}
-      </Pressable>
-    </ScrollView>
+    <View style={{ height: ROW_H }}>
+      <Wheel
+        horizontal
+        data={favorites}
+        itemSize={SLOT}
+        viewport={width}
+        initialIndex={0}
+        scaleRange={[0.66, 0.84, 1, 0.84, 0.66]}
+        opacityRange={[0.55, 0.85, 1, 0.85, 0.55]}
+        renderItem={({ item, animated }) => {
+          const contact = item.contactId ? findContact(item.contactId) : null;
+          const name = contact ? contactName(contact) : item.name || formatNumber(item.number);
+          return (
+            <Animated.View style={[{ width: SLOT, alignItems: 'center', justifyContent: 'center', height: ROW_H }, animated]}>
+              <ContactCard
+                overlay
+                width={CARD_W}
+                height={CARD_H}
+                name={name}
+                label={item.label || 'phone'}
+                image={contactPhoto(contact, true)}
+                colorKey={contact ? contact.id : item.number}
+                onPress={() => call(item.number)}
+                onLongPress={() => nav.push({ name: 'contact', contactId: contact ? contact.id : null, number: item.number })}
+              />
+            </Animated.View>
+          );
+        }}
+      />
+    </View>
   );
 }
 
@@ -83,7 +109,7 @@ export default function CallsScreen() {
   const nav = useNav();
   const insets = useSafeAreaInsets();
   const sheet = useActionSheet();
-  const { recents, resolve, markRecentsSeen, deleteCalls, callVoicemail, favorites } = useData();
+  const { recents, resolve, markRecentsSeen, deleteCalls, callVoicemail } = useData();
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState(false);
   const [day, setDay] = useState(() => startOfDay(new Date()));
@@ -107,12 +133,6 @@ export default function CallsScreen() {
 
   const current = FILTERS.find((f) => f.value === filter);
 
-  // headline figures for the Statistics button
-  const statsLine = useMemo(() => {
-    const month = computeStats(recents.flatMap((g) => g.calls), 'month');
-    return `${month.total} calls · ${formatDuration(month.talkSeconds)} this month`;
-  }, [recents]);
-
   const chooseFilter = () =>
     sheet.show({
       title: tr('Show'),
@@ -132,10 +152,25 @@ export default function CallsScreen() {
       },
     ]);
 
+  // Compact top row: filter, the Statistics pill, then Edit.
   const header = (
     <LargeHeader
-      title={filter === 'all' ? tr('Calls') : tr(current.label)}
+      compact
       left={<IconButton glass name="filter" onPress={chooseFilter} color={filter === 'all' ? t.text : t.blue} />}
+      center={
+        <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ flex: 1 }}>
+          {({ pressed }) => (
+            <Glass radius={20} pressed={pressed} style={styles.statsPill}>
+              <View style={[styles.statsIcon, { backgroundColor: t.chartOther }]}>
+                <Ionicons name="stats-chart" size={14} color="#fff" />
+              </View>
+              <Text style={{ color: t.text, fontSize: 15, fontWeight: '600', marginLeft: 8 }} numberOfLines={1}>
+                {tr('Statistics')}
+              </Text>
+            </Glass>
+          )}
+        </Pressable>
+      }
       right={
         editing ? (
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -148,24 +183,8 @@ export default function CallsScreen() {
       }
     >
       {filter === 'all' && !editing ? (
-        <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ marginHorizontal: 16, marginBottom: 12 }}>
-          {({ pressed }) => (
-            <Glass radius={22} pressed={pressed} style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
-              <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: t.chartOther, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="stats-chart" size={19} color="#fff" />
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }}>{tr('Statistics')}</Text>
-                <Text style={{ color: t.secondary, fontSize: 12 }} numberOfLines={1}>{statsLine}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
-            </Glass>
-          )}
-        </Pressable>
-      ) : null}
-      {filter === 'all' && !editing ? (
-        <View style={{ marginBottom: 8 }}>
-          {favorites.length ? <Text style={[styles.section, { color: t.text }]}>{tr('Favorites')}</Text> : null}
+        <View style={{ marginBottom: 6 }}>
+          <Text style={[styles.section, { color: t.text }]}>{tr('Favorites')}</Text>
           <FavoritesRow />
         </View>
       ) : null}
@@ -188,13 +207,13 @@ export default function CallsScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      {header}
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}
         updateCellsBatchingPeriod={30}
         data={list}
         keyExtractor={(g) => g.id}
-        ListHeaderComponent={header}
         renderItem={({ item }) => <RecentRow group={item} showTime editing={editing} onDelete={() => deleteCalls(item.calls)} />}
         ListEmptyComponent={
           isFuture ? (
@@ -214,8 +233,7 @@ export default function CallsScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { width: CARD_W, height: CARD_H, borderRadius: 22, overflow: 'hidden', backgroundColor: '#222' },
-  cardShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 },
-  cardText: { position: 'absolute', left: 10, right: 8, bottom: 9 },
   section: { fontSize: 20, fontWeight: '700', paddingHorizontal: 16, marginBottom: 8, marginTop: 4 },
+  statsPill: { flex: 1, height: 38, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
+  statsIcon: { width: 26, height: 26, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
 });

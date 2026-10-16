@@ -7,7 +7,7 @@ import { Glass } from './Glass';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const DAY_W = 44;
+const DAY_W = 37;            // 15% tighter than before
 
 export const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -51,19 +51,19 @@ export default function DateStrip({ value, onChange, marked }) {
   const monthLabel = (d) => MONTHS[d.getMonth()] + (d.getFullYear() !== today.getFullYear() ? ` ’${String(d.getFullYear()).slice(2)}` : '');
 
   return (
-    <Glass radius={24} strong style={{ marginHorizontal: 16, paddingTop: 10, paddingBottom: 8 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 26, marginBottom: 8 }}>
+    <Glass radius={21} strong style={{ marginHorizontal: 16, paddingTop: 8, paddingBottom: 7 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 22, marginBottom: 7 }}>
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10}>
-          <Text style={{ color: t.secondary, fontSize: 14, fontWeight: '500' }}>{monthLabel(prev)}</Text>
+          <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '500' }}>{monthLabel(prev)}</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: t.text, fontSize: 18, fontWeight: '700' }}>
+          <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '700' }}>
             {monthLabel(value)}
           </Text>
-          <View style={{ height: 2.5, width: 26, borderRadius: 2, backgroundColor: t.blue, marginTop: 2 }} />
+          <View style={{ height: 2, width: 22, borderRadius: 2, backgroundColor: t.blue, marginTop: 2 }} />
         </View>
         <Pressable onPress={() => shiftMonth(1)} hitSlop={10}>
-          <Text style={{ color: t.secondary, fontSize: 14, fontWeight: '500' }}>{monthLabel(next)}</Text>
+          <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '500' }}>{monthLabel(next)}</Text>
         </Pressable>
       </View>
       <ScrollView
@@ -80,12 +80,12 @@ export default function DateStrip({ value, onChange, marked }) {
           const has = marked && marked.has(d.toDateString());
           return (
             <Pressable key={d.getDate()} onPress={() => select(d)} style={{ width: DAY_W, alignItems: 'center' }}>
-              <Text style={{ color: t.tertiary, fontSize: 11, fontWeight: '600', marginBottom: 3 }}>{WEEKDAYS[d.getDay()]}</Text>
+              <Text style={{ color: t.tertiary, fontSize: 9.5, fontWeight: '600', marginBottom: 3 }}>{WEEKDAYS[d.getDay()]}</Text>
               <View
                 style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
+                  width: 29,
+                  height: 29,
+                  borderRadius: 14.5,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: selected ? t.blue : 'transparent',
@@ -96,14 +96,14 @@ export default function DateStrip({ value, onChange, marked }) {
                 <Text
                   style={{
                     color: selected ? '#fff' : isToday ? t.blue : future ? t.tertiary : t.text,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: selected || isToday ? '700' : '500',
                   }}
                 >
                   {d.getDate()}
                 </Text>
               </View>
-              <View style={{ width: 5, height: 5, borderRadius: 2.5, marginTop: 4, backgroundColor: has && !selected ? t.blue : 'transparent' }} />
+              <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, marginTop: 3, backgroundColor: has && !selected ? t.blue : 'transparent' }} />
             </Pressable>
           );
         })}

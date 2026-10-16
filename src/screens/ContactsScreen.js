@@ -134,7 +134,7 @@ export default function ContactsScreen() {
 
   const cardW = Math.floor((width - SIDE * 2 - GAP * (COLUMNS - 1)) / COLUMNS);
   const cardH = Math.round(cardW * 1.32);
-  const keySize = Math.min(30, Math.floor((width - SIDE * 2 - 16) / 14));
+  const keySize = Math.min(25.5, Math.floor((width - SIDE * 2 - 16) / 14) * 0.85);
 
   const pick = (l) => {
     Haptics.selectionAsync().catch(() => {});
@@ -146,7 +146,7 @@ export default function ContactsScreen() {
       right={<IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}>
       <SearchBar value={query} onChangeText={setQuery} />
       {!query && contacts.length ? (
-        <Glass radius={24} strong style={styles.filter}>
+        <Glass radius={20} strong style={styles.filter}>
           <Pressable onPress={() => pick('all')} style={{ alignSelf: 'flex-start', marginBottom: 4 }}>
             {({ pressed }) => (
               <View
@@ -155,7 +155,7 @@ export default function ContactsScreen() {
                   { backgroundColor: letter === 'all' ? t.blue : pressed ? (t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)') : 'transparent' },
                 ]}
               >
-                <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: 15, fontWeight: '600' }}>
+                <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: 13, fontWeight: '600' }}>
                   {tr('All')} <Text style={{ fontWeight: '400', color: letter === 'all' ? 'rgba(255,255,255,0.85)' : t.secondary }}>({contacts.length})</Text>
                 </Text>
               </View>
@@ -197,6 +197,7 @@ export default function ContactsScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      {header}
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}
@@ -205,7 +206,6 @@ export default function ContactsScreen() {
         key={mode}
         numColumns={mode === 'grid' ? COLUMNS : 1}
         keyExtractor={(c) => c.id}
-        ListHeaderComponent={header}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         initialNumToRender={24}
@@ -259,8 +259,8 @@ export default function ContactsScreen() {
 }
 
 const styles = StyleSheet.create({
-  filter: { marginHorizontal: SIDE, marginTop: 10, paddingHorizontal: 8, paddingTop: 8, paddingBottom: 4 },
-  allChip: { paddingHorizontal: 12, height: 30, borderRadius: 15, justifyContent: 'center' },
+  filter: { marginHorizontal: SIDE, marginTop: 9, paddingHorizontal: 7, paddingTop: 7, paddingBottom: 3 },
+  allChip: { paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: 'center' },
   letterRow: { flexDirection: 'row', justifyContent: 'space-between' },
   row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
   rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingRight: 16, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 64 },

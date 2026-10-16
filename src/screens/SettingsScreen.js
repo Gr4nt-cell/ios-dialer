@@ -11,8 +11,8 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber } from '../phone';
 import { Cell, Group, IconButton, Segmented, SheetHeader, TextButton } from '../components/ui';
-import { useActionSheet } from '../components/ActionSheet';
 import { LANGS, deviceLanguage, useT } from '../i18n';
+import LanguageWheel from '../components/LanguageWheel';
 import { useCalls } from '../CallContext';
 import Dialer from '../dialer';
 
@@ -107,7 +107,7 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
 export default function SettingsScreen() {
   const t = useTheme();
   const tr = useT();
-  const sheet = useActionSheet();
+  const [langOpen, setLangOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const { settings, updateSettings, blocked, block, unblock, resolve, callLogPerm, refreshCallLog, contactsPerm, refreshContacts } = useData();
@@ -156,17 +156,7 @@ export default function SettingsScreen() {
   const previewColors = bg === 'auto' ? gradientFor('Jane Appleseed') : gradientFor('', bg);
 
   const current = settings.language || 'system';
-  const chooseLanguage = () =>
-    sheet.show({
-      title: tr('Language'),
-      options: [
-        { text: `${tr('System')}${current === 'system' ? '  ✓' : ''}`, onPress: () => updateSettings({ language: 'system' }) },
-        ...LANGS.map((l) => ({
-          text: `${l.name}${current === l.code ? '  ✓' : ''}`,
-          onPress: () => updateSettings({ language: l.code }),
-        })),
-      ],
-    });
+  const activeLang = current === 'system' ? deviceLanguage() : current;
 
   const toggle = (key) => <Switch value={!!settings[key]} onValueChange={(v) => updateSettings({ [key]: v })} trackColor={{ true: t.green }} thumbColor="#fff" />;
 
@@ -220,10 +210,10 @@ export default function SettingsScreen() {
           <Cell value="Glass" right={<Segmented options={[{ label: tr('Clear'), value: 'clear' }, { label: tr('Tinted'), value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
           <Cell
             value={tr('Language')}
-            onPress={chooseLanguage}
+            onPress={() => setLangOpen(true)}
             right={
               <Text style={{ color: t.secondary, fontSize: 15 }}>
-                {(LANGS.find((l) => l.code === (settings.language === 'system' || !settings.language ? deviceLanguage() : settings.language)) || LANGS[0]).name}
+                {(LANGS.find((l) => l.code === activeLang) || LANGS[0]).name}
               </Text>
             }
           />
@@ -380,6 +370,14 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{tr('If a permission was turned off, re-enable it in app settings.')}</Footer>
       </ScrollView>
+
+      <LanguageWheel
+        visible={langOpen}
+        options={LANGS}
+        value={activeLang}
+        onChange={(code) => updateSettings({ language: code })}
+        onClose={() => setLangOpen(false)}
+      />
     </View>
   );
 }
