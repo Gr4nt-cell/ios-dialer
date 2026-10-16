@@ -134,7 +134,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <GlassShadow radius={32} style={{ flex: 1 }}>
-        <Glass blur outline radius={32} intensity={70} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62 }}>
+        <Glass blur vivid outline radius={32} intensity={100} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62 }}>
           {itemW > 0 ? (
             <Animated.View
               pointerEvents="none"

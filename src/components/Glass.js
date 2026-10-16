@@ -36,6 +36,7 @@ export function Glass({
   onLayout,
   outline = false, // stronger edge, e.g. the floating tab bar
   strong = false, // clearly visible edge, e.g. the date strip and letter panel
+  vivid = false, // wide blur that lets the colour behind bleed through (tab bar)
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
@@ -48,7 +49,11 @@ export function Glass({
   // fill strength: stronger when there's no real blur behind it, and in Tinted mode
   // Light mode is kept very clear (mostly see-through, defined by its rim);
   // dark mode needs a little more body to read on black.
-  const alpha = dark
+  // "vivid" keeps the fill barely there so the blurred colour stays saturated
+  // instead of being washed out by a milky layer.
+  const alpha = vivid && realBlur
+    ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
+    : dark
     ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.86 : 0.58
     : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;
   const fill = tint ? tint : dark ? `rgba(44,44,48,${alpha})` : `rgba(255,255,255,${alpha})`;
@@ -59,7 +64,11 @@ export function Glass({
     ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
     : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
   const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
-  const highlight = tint ? 'rgba(255,255,255,0.3)' : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)';
+  const highlight = tint
+    ? 'rgba(255,255,255,0.3)'
+    : vivid
+    ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.55)'
+    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)';
 
   return (
     <View
@@ -74,7 +83,9 @@ export function Glass({
         <BlurView
           {...bp}
           intensity={intensity}
-          tint={dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
+          // the material tints add a heavy desaturated wash; the plain ones
+          // keep the colour behind the glass
+          tint={vivid ? (dark ? 'dark' : 'light') : dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
           style={StyleSheet.absoluteFill}
         />
       ) : null}
