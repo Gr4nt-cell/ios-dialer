@@ -35,10 +35,6 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      # let Expo choose the version that matches this SDK rather than pinning one
-      - name: Add react-native-svg
-        run: npx expo install react-native-svg
-
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
         env:

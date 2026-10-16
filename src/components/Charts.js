@@ -1,58 +1,63 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 import { useTheme } from '../theme';
 
-const TAU = Math.PI * 2;
+// Plain-View charts — no drawing library, so nothing new loads at launch.
 
-function arc(cx, cy, rOut, rIn, a0, a1) {
-  const pt = (r, a) => `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
-  const large = a1 - a0 > Math.PI ? 1 : 0;
-  return [
-    `M${pt(rOut, a0)}`,
-    `A${rOut} ${rOut} 0 ${large} 1 ${pt(rOut, a1)}`,
-    `L${pt(rIn, a1)}`,
-    `A${rIn} ${rIn} 0 ${large} 0 ${pt(rIn, a0)}`,
-    'Z',
-  ].join(' ');
-}
-
-// Part-to-whole ring. Segments carry a 2px gap so neighbouring colours never
-// touch, and every value is also written out in the legend beside it.
-export function Donut({ slices, size = 156, thickness = 30, children }) {
+// 100% stacked bar: the whole width is the total, each band a share of it.
+// Bands are separated by a 2px gap so neighbouring colours never touch, and
+// every value is written out in the legend beside it.
+export function StackedBar({ slices, height = 16 }) {
   const t = useTheme();
   const total = slices.reduce((s, x) => s + x.value, 0);
-  const r = size / 2;
-  const rIn = r - thickness;
-  const mid = (r + rIn) / 2;
-  const gap = total > 0 ? Math.min(0.09, 2 / mid) : 0;
+  if (total <= 0) {
+    return <View style={{ height, borderRadius: height / 2, backgroundColor: t.chartTrack }} />;
+  }
   const live = slices.filter((s) => s.value > 0);
-
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} style={{ position: 'absolute' }}>
-        <G>
-          <Circle cx={r} cy={r} r={mid} stroke={t.chartTrack} strokeWidth={thickness} fill="none" />
-          {total > 0 && live.length === 1 ? (
-            <Circle cx={r} cy={r} r={mid} stroke={live[0].color} strokeWidth={thickness} fill="none" />
-          ) : null}
-          {total > 0 && live.length > 1
-            ? live.map((s, i) => {
-                const before = live.slice(0, i).reduce((a, x) => a + x.value, 0) / total;
-                const a0 = -Math.PI / 2 + before * TAU + gap / 2;
-                const a1 = a0 + (s.value / total) * TAU - gap;
-                if (a1 <= a0) return null;
-                return <Path key={s.key} d={arc(r, r, r, rIn, a0, a1)} fill={s.color} />;
-              })
-            : null}
-        </G>
-      </Svg>
-      {children}
+    <View style={{ height, borderRadius: height / 2, overflow: 'hidden', flexDirection: 'row', backgroundColor: t.chartTrack }}>
+      {live.map((s, i) => (
+        <View
+          key={s.key}
+          style={{
+            flex: s.value,
+            backgroundColor: s.color,
+            marginLeft: i === 0 ? 0 : 2,
+          }}
+        />
+      ))}
     </View>
   );
 }
 
-// Vertical bars on a recessive track, rounded ends, one gutter between each.
+// A ring would need a drawing library; this reads the same way at a glance:
+// the share each type takes, stacked, with the total called out above it.
+export function ShareRows({ slices, total, textColor, mutedColor }) {
+  const t = useTheme();
+  return (
+    <View style={{ gap: 12 }}>
+      {slices.map((s) => {
+        const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+        return (
+          <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: s.color, marginRight: 10 }} />
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                {s.labelNode}
+                {s.valueNode}
+              </View>
+              <View style={{ height: 6, borderRadius: 3, backgroundColor: t.chartTrack, marginTop: 5, overflow: 'hidden' }}>
+                <View style={{ width: `${Math.max(pct, 1)}%`, height: 6, borderRadius: 3, backgroundColor: s.color }} />
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+// Vertical bars on a recessive track, rounded ends.
 export function Bars({ data, height = 74, color, highlightColor }) {
   const t = useTheme();
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -62,10 +67,9 @@ export function Bars({ data, height = 74, color, highlightColor }) {
         const h = Math.max(6, Math.round((d.value / max) * height));
         return (
           <View key={i} style={{ flex: 1, alignItems: 'center' }}>
-            <Svg width={26} height={height}>
-              <Rect x={1} y={0} width={24} height={height} rx={12} fill={t.chartTrack} />
-              <Rect x={1} y={height - h} width={24} height={h} rx={12} fill={d.highlight ? highlightColor : color} />
-            </Svg>
+            <View style={{ width: 24, height, borderRadius: 12, backgroundColor: t.chartTrack, justifyContent: 'flex-end', overflow: 'hidden' }}>
+              <View style={{ width: 24, height: h, borderRadius: 12, backgroundColor: d.highlight ? highlightColor : color }} />
+            </View>
             <View style={{ height: 6 }} />
             {d.label}
           </View>
@@ -78,10 +82,10 @@ export function Bars({ data, height = 74, color, highlightColor }) {
 // Horizontal magnitude bar, used in the most-called list.
 export function Meter({ value, max, color }) {
   const t = useTheme();
-  const pct = max > 0 ? Math.max(0.04, Math.min(1, value / max)) : 0;
+  const pct = max > 0 ? Math.max(4, Math.min(100, (value / max) * 100)) : 0;
   return (
     <View style={{ height: 8, borderRadius: 4, backgroundColor: t.chartTrack, overflow: 'hidden' }}>
-      <View style={{ width: `${pct * 100}%`, height: 8, borderRadius: 4, backgroundColor: color }} />
+      <View style={{ width: `${pct}%`, height: 8, borderRadius: 4, backgroundColor: color }} />
     </View>
   );
 }

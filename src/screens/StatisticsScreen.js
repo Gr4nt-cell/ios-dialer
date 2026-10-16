@@ -10,7 +10,7 @@ import { contactName, contactPhoto, numberKey } from '../phone';
 import { Avatar, IconButton, LargeHeader, Segmented } from '../components/ui';
 import { Glass } from '../components/Glass';
 import Aurora from '../components/Aurora';
-import { Bars, Donut, Meter } from '../components/Charts';
+import { Bars, Meter, ShareRows, StackedBar } from '../components/Charts';
 import { computeStats, formatDuration, formatHour, formatShort } from '../stats';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -106,27 +106,24 @@ export default function StatisticsScreen() {
             <Card>
               <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>Call breakdown</Text>
               {trend ? <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{trend}</Text> : null}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14 }}>
-                <Donut slices={slices} size={150} thickness={28}>
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: t.text, fontSize: 28, fontWeight: '700' }}>{stats.total}</Text>
-                    <Text style={{ color: t.secondary, fontSize: 12 }}>total calls</Text>
-                  </View>
-                </Donut>
-                <View style={{ flex: 1, marginLeft: 16, gap: 12 }}>
-                  {slices.map((s) => (
-                    <View key={s.key} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: s.color, marginRight: 10 }} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ color: t.text, fontSize: 15 }} numberOfLines={1}>{s.label}</Text>
-                        <Text style={{ color: t.secondary, fontSize: 12 }}>
-                          {s.value} · {Math.round((s.value / stats.total) * 100)}%
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
+              <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 18 }}>
+                <Text style={{ color: t.text, fontSize: 44, fontWeight: '700', letterSpacing: -0.5 }}>{stats.total}</Text>
+                <Text style={{ color: t.secondary, fontSize: 13 }}>total calls</Text>
               </View>
+              <StackedBar slices={slices} />
+              <View style={{ height: 18 }} />
+              <ShareRows
+                slices={slices.map((s) => ({
+                  ...s,
+                  labelNode: <Text style={{ color: t.text, fontSize: 15 }}>{s.label}</Text>,
+                  valueNode: (
+                    <Text style={{ color: t.secondary, fontSize: 13 }}>
+                      {s.value} · {Math.round((s.value / stats.total) * 100)}%
+                    </Text>
+                  ),
+                }))}
+                total={stats.total}
+              />
             </Card>
 
             {/* talk time + average */}
