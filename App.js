@@ -12,7 +12,7 @@ import { useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { CLASSIC_TABS, UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, GlassModeContext, GlassTargetContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -187,6 +187,7 @@ function Main() {
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
+      <FlatBackdropContext.Provider value={settings.appBackground === 'plain'}>
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -225,6 +226,7 @@ function Main() {
         </Modal>
       ) : null}
       </GlassTargetContext.Provider>
+      </FlatBackdropContext.Provider>
       </GlassModeContext.Provider>
     </NavContext.Provider>
     </I18nProvider>

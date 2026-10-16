@@ -27,6 +27,22 @@ export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
+// True when the app background is Plain. Glass relies on the colour field
+// behind it to show its shape; over flat white or flat black there is nothing
+// to refract, so panels need a crisp edge and a shadow to read at all.
+export const FlatBackdropContext = createContext(false);
+
+/** Edge and shadow that lift a panel off a flat background. */
+function lift(dark) {
+  return {
+    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
+    shadowColor: '#000',
+    shadowOpacity: dark ? 0.55 : 0.16,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  };
+}
 
 function blurProps(target) {
   if (Platform.OS !== 'android') return {};
@@ -54,9 +70,15 @@ export function Glass({
   const t = useTheme();
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
+  const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
   const plain = mode === 'plain';
-  const bp = blur && !plain ? blurProps(target) : null;
+  // Android draws a shadow only for a view that has its own background, so a
+  // lifted panel is opaque — over a flat backdrop there is nothing to see
+  // through to anyway.
+  const lifted = flat ? lift(dark) : null;
+  // a lifted panel is opaque, so a live blur behind it would never show
+  const bp = blur && !plain && !flat ? blurProps(target) : null;
   const realBlur = !!bp;
   const tinted = mode === 'tinted';
 
@@ -73,9 +95,10 @@ export function Glass({
             overflow: 'hidden',
             backgroundColor: tint || (dark ? t.card : selected ? t.fill : t.card),
             opacity: tint ? tintOpacity : 1,
-            borderWidth: StyleSheet.hairlineWidth,
+            borderWidth: flat ? 1 : StyleSheet.hairlineWidth,
             borderColor: t.separator,
             transform: [{ scale: pressed ? 1.02 : 1 }],
+            ...(lifted || {}),
           },
           style,
         ]}
@@ -105,15 +128,25 @@ export function Glass({
     : dark
     ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.86 : 0.58
     : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;
-  const fill = tint ? tint : dark ? `rgba(44,44,48,${alpha})` : `rgba(255,255,255,${alpha})`;
+  // Over a flat backdrop a translucent fill just shows more of the same white
+  // or black, so the panel is given its own solid surface instead.
+  const fill = tint
+    ? tint
+    : flat
+    ? dark ? '#1C1C1E' : '#FFFFFF'
+    : dark ? `rgba(44,44,48,${alpha})` : `rgba(255,255,255,${alpha})`;
   const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
-  const rim = strong
+  const rim = flat
+    ? lifted.borderColor
+    : strong
     ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
     : outline
     ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
     : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
   const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
-  const highlight = tint
+  const highlight = flat
+    ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
+    : tint
     ? 'rgba(255,255,255,0.3)'
     : vivid
     ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.55)'
@@ -125,6 +158,7 @@ export function Glass({
       onLayout={onLayout}
       style={[
         { borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] },
+        lifted ? { backgroundColor: fill, ...lifted } : null,
         style,
       ]}
     >
@@ -158,14 +192,16 @@ export function Glass({
       {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
-      <LinearGradient
-        pointerEvents="none"
-        colors={[rimTop, 'rgba(255,255,255,0)']}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.12 }}
-        style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
-      />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: flat ? (strong || outline ? 1.4 : 1) : strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
+      {flat ? null : (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[rimTop, 'rgba(255,255,255,0)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.12 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
+        />
+      )}
       {children}
     </View>
   );
