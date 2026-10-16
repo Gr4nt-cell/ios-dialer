@@ -167,7 +167,7 @@ export default function CallsScreen() {
       compact
       left={<IconButton glass name="filter" onPress={chooseFilter} color={filter === 'all' ? t.text : t.blue} />}
       center={
-        <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ flex: 1 }}>
+        <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ alignSelf: 'stretch', justifyContent: 'center' }}>
           {({ pressed }) => (
             <Glass radius={20} pressed={pressed} blur={EXTENDED_BLUR} vivid intensity={90} style={styles.statsPill}>
               <View style={[styles.statsIcon, { backgroundColor: t.chartOther }]}>
@@ -243,6 +243,7 @@ export default function CallsScreen() {
 
 const styles = StyleSheet.create({
   section: { fontSize: 20, fontWeight: '700', paddingHorizontal: 16, marginBottom: 8, marginTop: 4 },
-  statsPill: { flex: 1, height: 38, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
+  // fills the header row between the filter button and Edit
+  statsPill: { width: '100%', height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
   statsIcon: { width: 26, height: 26, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
 });
