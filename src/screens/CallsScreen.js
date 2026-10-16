@@ -93,6 +93,8 @@ function FavoritesRow() {
         // a carousel should fling like the lists elsewhere, not step card by card
         oneAtATime={false}
         liveCentre={false}
+        // a further 30% off the shared tick strength
+        haptics={0.42}
         renderItem={renderCard}
       />
     </View>

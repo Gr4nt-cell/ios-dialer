@@ -256,9 +256,9 @@ const styles = StyleSheet.create({
   bar: { height: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
   barSide: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   // large-title bars: buttons keep their natural width, right ones sit flush with the right edge
-  // the gap sits to the left of the centre item, not to its right
+  // equal gutters either side of the centre item
   barLeft: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, marginRight: 8 },
-  barRight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0 },
+  barRight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0, marginLeft: 8 },
   barCenter: { flex: 2, alignItems: 'center' },
   largeTitle: { fontSize: 34, fontWeight: '700', letterSpacing: 0.37, paddingHorizontal: 16, marginBottom: 8 },
   search: { marginHorizontal: 16, marginBottom: 10, height: 40 },
