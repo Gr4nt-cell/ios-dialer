@@ -186,7 +186,7 @@ function Main() {
   return (
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
-      <GlassModeContext.Provider value={settings.glass === 'tinted' ? 'tinted' : 'clear'}>
+      <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>

@@ -218,7 +218,30 @@ export default function SettingsScreen() {
         <Group>
           <Cell value="Theme" right={<Segmented options={[{ label: tr('System'), value: 'system' }, { label: tr('Light'), value: 'light' }, { label: tr('Dark'), value: 'dark' }]} value={settings.theme || 'system'} onChange={(v) => updateSettings({ theme: v })} />} />
           <Cell value="Layout" right={<Segmented options={[{ label: tr('Unified'), value: 'unified' }, { label: tr('Classic'), value: 'classic' }]} value={settings.layout || 'unified'} onChange={(v) => updateSettings({ layout: v })} />} />
-          <Cell value="Glass" right={<Segmented options={[{ label: tr('Clear'), value: 'clear' }, { label: tr('Tinted'), value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
+          <Cell
+            value="Background"
+            right={
+              <Segmented
+                options={[{ label: tr('Gradient'), value: 'gradient' }, { label: tr('Plain'), value: 'plain' }]}
+                value={settings.appBackground || 'gradient'}
+                onChange={(v) => updateSettings({ appBackground: v })}
+              />
+            }
+          />
+          <Cell
+            value="Liquid Glass"
+            right={
+              <Switch
+                value={settings.liquidGlass !== false}
+                onValueChange={(v) => updateSettings({ liquidGlass: v })}
+                trackColor={{ true: t.green }}
+                thumbColor="#fff"
+              />
+            }
+          />
+          {settings.liquidGlass !== false ? (
+            <Cell value="Glass" right={<Segmented options={[{ label: tr('Clear'), value: 'clear' }, { label: tr('Tinted'), value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
+          ) : null}
           <Cell
             value={tr('Language')}
             onPress={() => setLangOpen(true)}
@@ -229,7 +252,7 @@ export default function SettingsScreen() {
             }
           />
         </Group>
-        <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Tinted makes glass more opaque and easier to read. The call screen always stays dark.</Footer>
+        <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Gradient paints the soft colour field behind every screen; Plain uses white, or black in dark mode. Liquid Glass off replaces the frosted panels with solid cards, which is easier to read and lighter to draw. Tinted makes glass more opaque. The call screen always stays dark.</Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>

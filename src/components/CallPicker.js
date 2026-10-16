@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './Touch';
 import * as ExpoBlur from 'expo-blur';
@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { formatNumber, numberKey, prettyLabel } from '../phone';
 import { getPhoneAccounts } from '../dialer';
-import { Glass } from './Glass';
+import { Glass, GlassModeContext } from './Glass';
 
 const { BlurView } = ExpoBlur;
 const HAS_TARGET_API = !!ExpoBlur.BlurTargetView;
@@ -22,8 +22,10 @@ export function callAccounts() {
 
 function Backdrop({ target, onClose }) {
   const t = useTheme();
+  // no blur when Liquid Glass is switched off
+  const plain = useContext(GlassModeContext) === 'plain';
   const blurProps =
-    Platform.OS !== 'android' ? {} : HAS_TARGET_API ? (target ? { blurTarget: target, blurMethod: 'dimezisBlurViewSdk31Plus' } : null) : { experimentalBlurMethod: 'dimezisBlurView' };
+    plain || Platform.OS !== 'android' ? {} : HAS_TARGET_API ? (target ? { blurTarget: target, blurMethod: 'dimezisBlurViewSdk31Plus' } : null) : { experimentalBlurMethod: 'dimezisBlurView' };
   return (
     <Pressable feedback="none" style={StyleSheet.absoluteFill} onPress={onClose}>
       {blurProps ? (

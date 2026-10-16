@@ -26,7 +26,7 @@ const HAS_TARGET_API = !!ExpoBlur.BlurTargetView;
 export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
-export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted'
+export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
 
 function blurProps(target) {
   if (Platform.OS !== 'android') return {};
@@ -55,9 +55,41 @@ export function Glass({
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
   const dark = forceDark ?? t.dark;
-  const bp = blur ? blurProps(target) : null;
+  const plain = mode === 'plain';
+  const bp = blur && !plain ? blurProps(target) : null;
   const realBlur = !!bp;
   const tinted = mode === 'tinted';
+
+  // Liquid Glass turned off: a solid card with a hairline edge, and none of
+  // the blur, washes or specular highlights.
+  if (plain) {
+    return (
+      <View
+        pointerEvents={pointerEvents}
+        onLayout={onLayout}
+        style={[
+          {
+            borderRadius: radius,
+            overflow: 'hidden',
+            backgroundColor: tint || (dark ? t.card : selected ? t.fill : t.card),
+            opacity: tint ? tintOpacity : 1,
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: t.separator,
+            transform: [{ scale: pressed ? 1.02 : 1 }],
+          },
+          style,
+        ]}
+      >
+        {pressed ? (
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' }]} />
+        ) : null}
+        {selected && !tint ? (
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }]} />
+        ) : null}
+        {children}
+      </View>
+    );
+  }
 
   // fill strength: stronger when there's no real blur behind it, and in Tinted mode
   // Light mode is kept very clear (mostly see-through, defined by its rim);

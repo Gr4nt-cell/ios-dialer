@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
+import { useData } from '../DataContext';
 
 // Soft colour field behind every screen. The glass material blurs whatever sits
 // behind it, so without this there is nothing for it to refract — flat white or
@@ -33,6 +34,9 @@ const DARK = {
 
 export default function Aurora({ variant = 'default' }) {
   const t = useTheme();
+  const { settings } = useData();
+  // 'plain' drops the colour field entirely, leaving the theme background
+  if (settings.appBackground === 'plain') return null;
   const p = t.dark ? DARK : LIGHT;
   // Pushed screens sit a little calmer than the tab screens.
   const damp = variant === 'sheet' ? 0.65 : 1;
