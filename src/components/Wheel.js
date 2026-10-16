@@ -28,6 +28,15 @@ export default function Wheel({
   scaleRange = [0.6, 0.82, 1, 0.82, 0.6],
   opacityRange = [0.4, 0.75, 1, 0.75, 0.4],
   haptics = true,
+  /**
+   * Re-style items as they pass the middle. The language wheel wants it (the
+   * centred row is bolder); a carousel of photo cards does not — restyling on
+   * every tick re-renders every visible card mid-fling, which is what makes
+   * the scroll feel heavy. When off, the centre is only settled at the end.
+   */
+  liveCentre = true,
+  /** Lock a swipe to a single item (a picker) instead of letting it fling. */
+  oneAtATime = true,
   style,
 }) {
   const list = useRef(null);
@@ -58,11 +67,11 @@ export default function Wheel({
       const i = Math.round(axis / itemSize);
       if (i !== lastIndex.current) {
         lastIndex.current = i;
-        setCentre(i);
+        if (liveCentre) setCentre(i);
         if (haptics) Haptics.selectionAsync().catch(() => {});
       }
     },
-    [horizontal, itemSize, haptics]
+    [horizontal, itemSize, haptics, liveCentre]
   );
 
   const settle = useCallback(
@@ -85,8 +94,14 @@ export default function Wheel({
     [horizontal, itemSize, n, loops, middle, offset, onCentre, data]
   );
 
-  const renderRow = useCallback(
-    ({ item, index }) => {
+  // One interpolation pair per slot, kept across re-renders so a cell that
+  // re-mounts during a fling doesn't rebuild its animation.
+  const styleCache = useMemo(() => new Map(), [itemSize, transform, offset]);
+
+  const animatedFor = useCallback(
+    (index) => {
+      const hit = styleCache.get(index);
+      if (hit) return hit;
       const input = [
         (index - 2) * itemSize,
         (index - 1) * itemSize,
@@ -94,15 +109,20 @@ export default function Wheel({
         (index + 1) * itemSize,
         (index + 2) * itemSize,
       ];
-      const s = offset.interpolate({ inputRange: input, outputRange: scaleRange, extrapolate: 'clamp' });
-      const o = offset.interpolate({ inputRange: input, outputRange: opacityRange, extrapolate: 'clamp' });
-      const animated = {
-        opacity: o,
-        transform: [transform === 'scaleX' ? { scaleX: s } : { scale: s }],
-      };
-      return renderItem({ item, index, isCentre: index === centre, animated });
+      const sc = offset.interpolate({ inputRange: input, outputRange: scaleRange, extrapolate: 'clamp' });
+      const op = offset.interpolate({ inputRange: input, outputRange: opacityRange, extrapolate: 'clamp' });
+      const made = { opacity: op, transform: [transform === 'scaleX' ? { scaleX: sc } : { scale: sc }] };
+      styleCache.set(index, made);
+      return made;
     },
-    [itemSize, offset, scaleRange, opacityRange, transform, renderItem, centre]
+    // scaleRange/opacityRange are literals at the call sites, so they are
+    // deliberately not dependencies — they never change for a given wheel.
+    [itemSize, offset, transform, styleCache] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const renderRow = useCallback(
+    ({ item, index }) => renderItem({ item, index, isCentre: index === centre, animated: animatedFor(index) }),
+    [renderItem, animatedFor, centre]
   );
 
   if (!n) return null;
@@ -117,14 +137,16 @@ export default function Wheel({
       getItemLayout={getItemLayout}
       initialScrollIndex={start}
       initialNumToRender={9}
-      windowSize={5}
+      windowSize={7}
       maxToRenderPerBatch={9}
-      removeClippedSubviews
+      // Android drops horizontal cells it shouldn't when this is on, which
+      // shows up as cards flashing blank mid-fling.
+      removeClippedSubviews={!horizontal}
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       snapToInterval={itemSize}
-      disableIntervalMomentum
-      decelerationRate="fast"
+      disableIntervalMomentum={oneAtATime}
+      decelerationRate={oneAtATime ? 'fast' : 'normal'}
       scrollEventThrottle={16}
       contentContainerStyle={horizontal ? { paddingHorizontal: pad } : { paddingVertical: pad }}
       onMomentumScrollEnd={settle}

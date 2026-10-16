@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Animated, FlatList, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,6 +41,30 @@ function FavoritesRow() {
   const SLOT = CARD_W + 14;          // card plus the gap either side
   const ROW_H = CARD_H + 16;
 
+  // Stable across renders, so scrolling never re-renders the cards.
+  const renderCard = useCallback(
+    ({ item, animated }) => {
+      const contact = item.contactId ? findContact(item.contactId) : null;
+      const name = contact ? contactName(contact) : item.name || formatNumber(item.number);
+      return (
+        <Animated.View style={[{ width: SLOT, alignItems: 'center', justifyContent: 'center', height: ROW_H }, animated]}>
+          <ContactCard
+            overlay
+            width={CARD_W}
+            height={CARD_H}
+            name={name}
+            label={item.label || 'phone'}
+            image={contactPhoto(contact, true)}
+            colorKey={contact ? contact.id : item.number}
+            onPress={() => call(item.number)}
+            onLongPress={() => nav.push({ name: 'contact', contactId: contact ? contact.id : null, number: item.number })}
+          />
+        </Animated.View>
+      );
+    },
+    [SLOT, ROW_H, CARD_W, CARD_H, findContact, call, nav]
+  );
+
   if (!favorites.length) {
     return (
       <View style={{ paddingHorizontal: SIDE }}>
@@ -66,25 +90,11 @@ function FavoritesRow() {
         initialIndex={0}
         scaleRange={[0.66, 0.84, 1, 0.84, 0.66]}
         opacityRange={[0.55, 0.85, 1, 0.85, 0.55]}
-        renderItem={({ item, animated }) => {
-          const contact = item.contactId ? findContact(item.contactId) : null;
-          const name = contact ? contactName(contact) : item.name || formatNumber(item.number);
-          return (
-            <Animated.View style={[{ width: SLOT, alignItems: 'center', justifyContent: 'center', height: ROW_H }, animated]}>
-              <ContactCard
-                overlay
-                width={CARD_W}
-                height={CARD_H}
-                name={name}
-                label={item.label || 'phone'}
-                image={contactPhoto(contact, true)}
-                colorKey={contact ? contact.id : item.number}
-                onPress={() => call(item.number)}
-                onLongPress={() => nav.push({ name: 'contact', contactId: contact ? contact.id : null, number: item.number })}
-              />
-            </Animated.View>
-          );
-        }}
+        // a carousel should fling like the lists elsewhere, not step card by card
+        oneAtATime={false}
+        liveCentre={false}
+        haptics={false}
+        renderItem={renderCard}
       />
     </View>
   );
