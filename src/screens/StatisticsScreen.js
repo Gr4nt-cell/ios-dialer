@@ -23,7 +23,7 @@ const PERIOD_OPTIONS = [
 
 function Card({ children, style }) {
   return (
-    <Glass radius={28} blur style={[{ marginHorizontal: 16, marginTop: 14, padding: 20 }, style]}>
+    <Glass radius={28} style={[{ marginHorizontal: 16, marginTop: 14, padding: 20 }, style]}>
       {children}
     </Glass>
   );
@@ -128,7 +128,7 @@ export default function StatisticsScreen() {
 
             {/* talk time + average */}
             <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 14, gap: 13 }}>
-              <Glass radius={24} blur style={{ flex: 1, padding: 16 }}>
+              <Glass radius={24} style={{ flex: 1, padding: 16 }}>
                 <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: t.chartOutgoing + '2E' }}>
                   <Ionicons name="time-outline" size={17} color={t.chartOutgoing} />
                 </View>
@@ -137,7 +137,7 @@ export default function StatisticsScreen() {
                 </Text>
                 <Text style={{ color: t.secondary, fontSize: 12 }}>Talk time</Text>
               </Glass>
-              <Glass radius={24} blur style={{ flex: 1, padding: 16 }}>
+              <Glass radius={24} style={{ flex: 1, padding: 16 }}>
                 <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: t.chartOther + '2E' }}>
                   <Ionicons name="call-outline" size={16} color={t.chartOther} />
                 </View>

@@ -148,7 +148,7 @@ export default function CallsScreen() {
       {filter === 'all' && !editing ? (
         <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ marginHorizontal: 16, marginBottom: 12 }}>
           {({ pressed }) => (
-            <Glass radius={22} blur pressed={pressed} style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
+            <Glass radius={22} pressed={pressed} style={{ flexDirection: 'row', alignItems: 'center', padding: 12 }}>
               <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: t.chartOther, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name="stats-chart" size={19} color="#fff" />
               </View>
