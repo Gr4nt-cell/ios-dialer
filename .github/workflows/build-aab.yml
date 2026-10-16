@@ -1,14 +1,20 @@
-# Builds an Android App Bundle (.aab) and publishes it to the "latest" release.
+# Builds a signed Android App Bundle (.aab) and publishes it to the "latest"
+# release: https://github.com/Gr4nt-cell/ios-dialer/releases/tag/latest
 #
-# Run on demand only — the bundle carries every CPU architecture, so it takes
+# Run on demand — the bundle carries every CPU architecture, so it takes
 # noticeably longer than the APK build that runs on each push:
 #   gh workflow run build-aab.yml
 #
-# SIGNING: `expo prebuild` wires the release build to the debug keystore, so the
-# bundle this produces is debug-signed. That is fine for internal testing, but
-# Google Play rejects it. To publish, add an upload keystore as repository
-# secrets (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
-# ANDROID_KEY_PASSWORD) and sign with those instead.
+# SIGNING: needs four repository secrets (Settings › Secrets and variables ›
+# Actions). Without them the run fails rather than quietly producing a
+# debug-signed bundle, which Play only rejects after upload:
+#   ANDROID_KEYSTORE_BASE64    the upload keystore, base64 encoded
+#   ANDROID_KEYSTORE_PASSWORD  its password
+#   ANDROID_KEY_ALIAS          upload
+#   ANDROID_KEY_PASSWORD       the key password (same as the store password)
+#
+# Keep the keystore itself somewhere safe: Play ties the app to this key for
+# good, unless Play App Signing is on, which allows an upload key reset.
 name: Build AAB
 
 on:
@@ -39,6 +45,18 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Restore the upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not set — add the four signing secrets listed at the top of .github/workflows/build-aab.yml"
+            exit 1
+          fi
+          # outside the repo, so `expo prebuild` can't wipe it
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          test -s "$RUNNER_TEMP/upload.keystore"
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
@@ -47,11 +65,29 @@ jobs:
         env:
           CI: 1
 
+      # prebuild wires release to the debug key; this repoints it
+      - name: Sign release builds with the upload key
+        run: node scripts/use-upload-key.js
+
       # All four architectures: Play splits the bundle per device, so leaving
       # any out means those devices simply can't install the app.
       - name: Build release bundle
         working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew bundleRelease --no-daemon
+
+      - name: Check who signed it
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify -verbose:summary -certs "$AAB" | grep -E "^ *X\.509|jar verified" || true
+          if jarsigner -verify -certs "$AAB" | grep -q "Android Debug"; then
+            echo "::error::the bundle is still signed with the debug key"
+            exit 1
+          fi
 
       - name: Publish to the "latest" release
         env:
