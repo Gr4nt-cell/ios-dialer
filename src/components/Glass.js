@@ -18,8 +18,12 @@ const HAS_TARGET_API = !!ExpoBlur.BlurTargetView;
  * surfaces allowed to use it: at most a few per screen, never inside a list.
  * Flip this to false to fall back to the translucent fill everywhere but the
  * tab bar.
+ *
+ * Off: three live blurs on the Calls tab (tab bar, date strip, Statistics
+ * pill) took the app down on device. The tab bar keeps the only real blur;
+ * the rest get the vivid translucent fill below, which costs nothing.
  */
-export const EXTENDED_BLUR = true;
+export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted'
@@ -60,8 +64,12 @@ export function Glass({
   // dark mode needs a little more body to read on black.
   // "vivid" keeps the fill barely there so the blurred colour stays saturated
   // instead of being washed out by a milky layer.
-  const alpha = vivid && realBlur
-    ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
+  // Without real blur, "vivid" still stays well clear of the milky default so
+  // the colour of the background washes keeps coming through.
+  const alpha = vivid
+    ? realBlur
+      ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
+      : dark ? (tinted ? 0.66 : 0.38) : tinted ? 0.58 : 0.2
     : dark
     ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.86 : 0.58
     : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;

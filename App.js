@@ -13,6 +13,7 @@ import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { CLASSIC_TABS, UNIFIED_TABS } from './src/components/TabBar';
 import { BlurTargetView, GlassModeContext, GlassTargetContext } from './src/components/Glass';
+import Boundary from './src/components/Boundary';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import RecentsScreen from './src/screens/RecentsScreen';
 import ContactsScreen from './src/screens/ContactsScreen';
@@ -185,7 +186,7 @@ function Main() {
       <View style={{ flex: 1, backgroundColor: t.bg }}>
         <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
           <Aurora />
-          {screen}
+          <Boundary resetKey={shownTab}>{screen}</Boundary>
         </BlurTargetView>
         <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
         <ReturnToCall />
@@ -198,7 +199,9 @@ function Main() {
             <SafeAreaProvider>
               <View style={{ flex: 1, backgroundColor: t.bg }}>
                 <Aurora variant="sheet" />
-                <Screen route={route} />
+                <Boundary resetKey={route.key}>
+                  <Screen route={route} />
+                </Boundary>
               </View>
             </SafeAreaProvider>
           </Modal>
