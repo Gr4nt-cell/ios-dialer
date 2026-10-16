@@ -65,13 +65,24 @@ export function TextButton({ title, onPress, color, bold, disabled, style, glass
   );
 }
 
-export function IconButton({ name, onPress, color, size = 24, style, filled, glass, prominent, disabled }) {
+export function IconButton({ name, onPress, color, size = 24, style, filled, glass, prominent, disabled, wide }) {
   const t = useTheme();
   if (glass || prominent) {
     return (
       <Pressable onPress={onPress} hitSlop={8} style={style} disabled={disabled}>
         {({ pressed }) => (
-          <Glass radius={18} pressed={pressed} tint={prominent ? t.blue : undefined} tintOpacity={0.92} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.45 : 1 }}>
+          <Glass
+            radius={18}
+            pressed={pressed}
+            tint={prominent ? t.blue : undefined}
+            tintOpacity={0.92}
+            // `wide` matches the glass TextButton's metrics, so an icon button
+            // can sit beside Edit as the same shape and size
+            style={[
+              { height: 36, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.45 : 1 },
+              wide ? { minWidth: 62, paddingHorizontal: 15 } : { width: 36 },
+            ]}
+          >
             <Ionicons name={name} size={size - 4} color={prominent ? '#fff' : color || t.text} />
           </Glass>
         )}

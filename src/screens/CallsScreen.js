@@ -165,7 +165,7 @@ export default function CallsScreen() {
   const header = (
     <LargeHeader
       compact
-      left={<IconButton glass name="filter" onPress={chooseFilter} color={filter === 'all' ? t.text : t.blue} />}
+      left={<IconButton glass wide name="filter" onPress={chooseFilter} color={filter === 'all' ? t.text : t.blue} />}
       center={
         <Pressable onPress={() => nav.push({ name: 'statistics' })} style={{ alignSelf: 'stretch', justifyContent: 'center' }}>
           {({ pressed }) => (
