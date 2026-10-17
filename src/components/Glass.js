@@ -43,7 +43,7 @@ function lift(dark, soft) {
   return {
     borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
     shadowColor: '#000',
-    shadowOpacity: soft ? (dark ? 0.3 : 0.08) : dark ? 0.55 : 0.16,
+    shadowOpacity: soft ? (dark ? 0.21 : 0.056) : dark ? 0.385 : 0.112,
     shadowRadius: soft ? 4 : 9,
     shadowOffset: { width: 0, height: soft ? 1 : 3 },
     elevation: soft ? 1 : 4,

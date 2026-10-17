@@ -29,6 +29,18 @@ const GRID_GAP = 12;
 const COLUMNS = 4;
 const cardWidth = (w) => Math.floor((w - SIDE * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS);
 
+// The carousel shows exactly five cards, and the two outer ones end flush with
+// the date strip below. Cards sit centred in slots of SLOT, so the outer card's
+// centre is 2 slots from the middle and it is drawn at OUTER_SCALE:
+//
+//   viewport/2 - 2*SLOT = OUTER_SCALE * CARD_W / 2   (its left edge at 0)
+//   => SLOT = (viewport - OUTER_SCALE * CARD_W) / 4
+//
+// The slots themselves overflow the viewport; the shrunken cards inside them do
+// not, which is what makes the outer edges land on the strip's edges.
+const OUTER_SCALE = 0.66;
+const slotWidth = (viewport, card) => (viewport - OUTER_SCALE * card) / 4;
+
 function FavoritesRow() {
   const t = useTheme();
   const nav = useNav();
@@ -36,9 +48,10 @@ function FavoritesRow() {
   const { width } = useWindowDimensions();
   const { favorites, findContact, call } = useData();
 
+  const VIEWPORT = width - SIDE * 2;  // exactly the date strip's width
   const CARD_W = cardWidth(width);
   const CARD_H = Math.round(CARD_W * 1.32);
-  const SLOT = CARD_W + 14;          // card plus the gap either side
+  const SLOT = slotWidth(VIEWPORT, CARD_W);
   const ROW_H = CARD_H + 16;
 
   // Stable across renders, so scrolling never re-renders the cards.
@@ -87,9 +100,9 @@ function FavoritesRow() {
         horizontal
         data={favorites}
         itemSize={SLOT}
-        viewport={width - SIDE * 2}
+        viewport={VIEWPORT}
         initialIndex={0}
-        scaleRange={[0.66, 0.84, 1, 0.84, 0.66]}
+        scaleRange={[OUTER_SCALE, 0.84, 1, 0.84, OUTER_SCALE]}
         opacityRange={[0.55, 0.85, 1, 0.85, 0.55]}
         // a carousel should fling like the lists elsewhere, not step card by card
         oneAtATime={false}
