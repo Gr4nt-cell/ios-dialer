@@ -99,7 +99,7 @@ export function Glass({
         style={[
           {
             borderRadius: radius,
-            overflow: 'hidden',
+            // no overflow clip here either, for the same outline reason
             backgroundColor: tint || (dark ? t.card : selected ? t.fill : t.card),
             opacity: tint ? tintOpacity : 1,
             borderWidth: flat ? 1 : StyleSheet.hairlineWidth,
@@ -111,10 +111,10 @@ export function Glass({
         ]}
       >
         {pressed ? (
-          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' }]} />
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, backgroundColor: dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)' }]} />
         ) : null}
         {selected && !tint ? (
-          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }]} />
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }]} />
         ) : null}
         {children}
       </View>
@@ -159,16 +159,13 @@ export function Glass({
     ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.55)'
     : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)';
 
-  return (
-    <View
-      pointerEvents={pointerEvents}
-      onLayout={onLayout}
-      style={[
-        { borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] },
-        lifted ? { backgroundColor: fill, ...lifted } : null,
-        style,
-      ]}
-    >
+  // Android derives an elevation shadow from the view's outline, and a view
+  // that also clips its children can hand it a coarse polygon instead of the
+  // rounded shape — a circular key then casts a hexagon. So when a shadow is in
+  // play the outer view is left plain (background, radius, shadow, nothing
+  // else) and the clipping moves to a layer inside it.
+  const decoration = (
+    <>
       {realBlur ? (
         <BlurView
           {...bp}
@@ -198,8 +195,10 @@ export function Glass({
       />
       {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
-      {/* rim light: bright on top, softer around */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: flat ? (strong || outline ? 1.4 : 1) : strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
+      {/* rim light: bright on top, softer around (on the outer view when lifted) */}
+      {lifted ? null : (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
+      )}
       {flat ? null : (
         <LinearGradient
           pointerEvents="none"
@@ -209,6 +208,40 @@ export function Glass({
           style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
         />
       )}
+    </>
+  );
+
+  if (lifted) {
+    return (
+      <View
+        pointerEvents={pointerEvents}
+        onLayout={onLayout}
+        style={[
+          {
+            borderRadius: radius,
+            backgroundColor: fill,
+            borderWidth: strong || outline ? 1.4 : 1,
+            transform: [{ scale: pressed ? 1.04 : 1 }],
+          },
+          lifted,
+          style,
+        ]}
+      >
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
+          {decoration}
+        </View>
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <View
+      pointerEvents={pointerEvents}
+      onLayout={onLayout}
+      style={[{ borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] }, style]}
+    >
+      {decoration}
       {children}
     </View>
   );
