@@ -517,7 +517,7 @@ export default function CallScreen() {
       <View style={styles.topRow}>
         <Pressable onPress={() => setMinimized(true)} hitSlop={12}>
           {({ pressed }) => (
-            <Glass dark vivid outline radius={19} pressed={pressed} style={styles.topBtn}>
+            <Glass dark vivid outline fillScale={0.7} radius={19} pressed={pressed} style={styles.topBtn}>
               <Ionicons name="chevron-down" size={20} color={WHITE} />
             </Glass>
           )}

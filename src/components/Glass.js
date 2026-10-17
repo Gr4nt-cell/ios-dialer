@@ -76,6 +76,7 @@ export function Glass({
   strong = false, // clearly visible edge, e.g. the date strip and letter panel
   vivid = false, // wide blur that lets the colour behind bleed through (tab bar)
   soft = false, // shallower shadow on a flat background, for small repeated controls
+  fillScale = 1, // thins the fill further, e.g. a button over a photo
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
@@ -140,11 +141,12 @@ export function Glass({
     : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;
   // Over a flat backdrop a translucent fill just shows more of the same white
   // or black, so the panel is given its own solid surface instead.
+  const a = alpha * fillScale;
   const fill = tint
     ? tint
     : flat
     ? dark ? '#1C1C1E' : '#FFFFFF'
-    : dark ? `rgba(44,44,48,${alpha})` : `rgba(255,255,255,${alpha})`;
+    : dark ? `rgba(44,44,48,${a})` : `rgba(255,255,255,${a})`;
   const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
   const rim = flat
     ? lifted.borderColor
