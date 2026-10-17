@@ -40,13 +40,16 @@ export const FlatBackdropContext = createContext(false);
  * they get a shallower one and end up looking like the date strip.
  */
 function lift(dark, soft) {
+  // boxShadow, not elevation: Android's elevation shadow is traced from a
+  // polygonal approximation of the view's outline, which turned the round keys
+  // into decagons. boxShadow follows the border radius exactly, so a circle
+  // casts a circle. (React Native 0.76+ on Android.)
+  const a = soft ? (dark ? 0.21 : 0.056) : dark ? 0.385 : 0.112;
+  const y = soft ? 1 : 3;
+  const blur = soft ? 4 : 9;
   return {
     borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
-    shadowColor: '#000',
-    shadowOpacity: soft ? (dark ? 0.21 : 0.056) : dark ? 0.385 : 0.112,
-    shadowRadius: soft ? 4 : 9,
-    shadowOffset: { width: 0, height: soft ? 1 : 3 },
-    elevation: soft ? 1 : 4,
+    boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
 

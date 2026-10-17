@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import Dialer from '../dialer';
-import { Glass, GlassShadow } from './Glass';
+import { FlatBackdropContext, Glass, GlassShadow } from './Glass';
 import { useT } from '../i18n';
 
 // 60% lighter than the system selection tick
@@ -147,7 +147,18 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 transform: [{ translateX: Animated.multiply(pos, itemW) }, { scaleX: lensScale }, { scaleY: lensScaleY }],
               }}
             >
-              <Glass radius={27} selected soft style={{ flex: 1 }} tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'} tintOpacity={1} />
+              {/* the pill sits on the tab bar, not on the page, so it keeps the
+                  glass material in every background mode and carries a shadow
+                  40% lighter than the one small controls get */}
+              <FlatBackdropContext.Provider value={false}>
+                <Glass
+                  radius={27}
+                  selected
+                  style={{ flex: 1, boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }}
+                  tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'}
+                  tintOpacity={0.9}
+                />
+              </FlatBackdropContext.Provider>
             </Animated.View>
           ) : null}
           <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: 4 }} {...responder.panHandlers}>
