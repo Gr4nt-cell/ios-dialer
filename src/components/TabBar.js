@@ -147,7 +147,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 transform: [{ translateX: Animated.multiply(pos, itemW) }, { scaleX: lensScale }, { scaleY: lensScaleY }],
               }}
             >
-              <Glass radius={27} selected style={{ flex: 1 }} tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'} tintOpacity={1} />
+              <Glass radius={27} selected soft style={{ flex: 1 }} tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'} tintOpacity={1} />
             </Animated.View>
           ) : null}
           <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: 4 }} {...responder.panHandlers}>

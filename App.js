@@ -221,7 +221,11 @@ function Main() {
             else if (live.length) setMinimized(true);
           }} statusBarTranslucent navigationBarTranslucent>
           <SafeAreaProvider>
-            <CallScreen />
+            {/* the call screen has its own photo or gradient behind the glass,
+                so it never wants the flat-background treatment */}
+            <FlatBackdropContext.Provider value={false}>
+              <CallScreen />
+            </FlatBackdropContext.Provider>
           </SafeAreaProvider>
         </Modal>
       ) : null}
