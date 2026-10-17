@@ -24,7 +24,6 @@ import ContactDetailScreen from './src/screens/ContactDetailScreen';
 import NewContactScreen from './src/screens/NewContactScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import PickFavoriteScreen from './src/screens/PickFavoriteScreen';
-import UssdScreen from './src/screens/UssdScreen';
 import RecordingsScreen from './src/screens/RecordingsScreen';
 import CallScreen from './src/screens/CallScreen';
 import Dialer from './src/dialer';
@@ -38,7 +37,6 @@ const ROUTES = {
   newContact: NewContactScreen,
   settings: SettingsScreen,
   pickFavorite: PickFavoriteScreen,
-  ussd: UssdScreen,
   recordings: RecordingsScreen,
   statistics: StatisticsScreen,
 };

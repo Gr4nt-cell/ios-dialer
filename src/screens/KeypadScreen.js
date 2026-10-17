@@ -143,8 +143,9 @@ export default function KeypadScreen({ prefill }) {
       return;
     }
     if (isUssdCode(num)) {
-      if (Dialer) nav.push({ name: 'ussd', code: num });
-      else call(num);
+      // placed like any other call, so the network's own dialog handles it on
+      // the default SIM — that dialog copes with long menus and replies
+      call(num);
       update('');
       return;
     }
