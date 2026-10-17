@@ -8,7 +8,7 @@ import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import Dialer, { getPhoneAccounts } from '../dialer';
 import { placeCall } from '../phone';
-import { IconButton, Segmented, SheetHeader } from '../components/ui';
+import { IconButton, SheetHeader } from '../components/ui';
 import { useT } from '../i18n';
 
 const FAILURES = {
@@ -26,8 +26,9 @@ export default function UssdScreen({ route }) {
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const code = route.code;
+  // always the default network; picking a SIM per code was more friction than help
   const { accounts, defaultKey } = useMemo(() => getPhoneAccounts(), []);
-  const [account, setAccount] = useState(defaultKey || (accounts[0] && accounts[0].key) || null);
+  const account = defaultKey || (accounts[0] && accounts[0].key) || null;
   const [status, setStatus] = useState('running');
   const [message, setMessage] = useState('');
 
@@ -73,19 +74,6 @@ export default function UssdScreen({ route }) {
     <View style={{ flex: 1 }}>
       <SheetHeader title={code} right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}>
-        {accounts.length > 1 ? (
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
-            <Segmented
-              options={accounts.slice(0, 3).map((a) => ({ label: a.label, value: a.key }))}
-              value={account}
-              onChange={(k) => {
-                setAccount(k);
-                run(k);
-              }}
-            />
-          </View>
-        ) : null}
-
         <View style={{ backgroundColor: t.card, borderRadius: 16, padding: 18, minHeight: 140, justifyContent: 'center' }}>
           {status === 'running' ? (
             <View style={{ alignItems: 'center' }}>

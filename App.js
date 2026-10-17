@@ -11,7 +11,7 @@ import { NavContext } from './src/nav';
 import { useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
-import TabBar, { CLASSIC_TABS, UNIFIED_TABS } from './src/components/TabBar';
+import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
 import { BlurTargetView, FlatBackdropContext, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
@@ -30,7 +30,6 @@ import CallScreen from './src/screens/CallScreen';
 import Dialer from './src/dialer';
 import CallsScreen from './src/screens/CallsScreen';
 import StatisticsScreen from './src/screens/StatisticsScreen';
-import Aurora from './src/components/Aurora';
 import { I18nProvider } from './src/i18n';
 import SearchScreen from './src/screens/SearchScreen';
 
@@ -97,8 +96,7 @@ function Main() {
   const t = useTheme();
   const { missedCount, settings } = useData();
   const blurTarget = useRef(null);
-  const unified = settings.layout !== 'classic';
-  const tabs = unified ? UNIFIED_TABS : CLASSIC_TABS;
+  const tabs = UNIFIED_TABS;
   const { showScreen, live, setMinimized } = useCalls();
   const [tab, setTabState] = useState('keypad');
   const [stack, setStack] = useState([]);
@@ -154,10 +152,8 @@ function Main() {
 
   const nav = useMemo(() => ({ push, pop, setTab }), [push, pop, setTab]);
 
-  // map tabs between layouts (e.g. "recents" ⇄ "calls")
-  const shownTab = unified
-    ? { favorites: 'calls', recents: 'calls', voicemail: 'calls' }[tab] || tab
-    : { calls: 'recents' }[tab] || tab;
+  // favourites, recents and voicemail all live in Calls
+  const shownTab = { favorites: 'calls', recents: 'calls', voicemail: 'calls' }[tab] || tab;
 
   let screen;
   switch (shownTab) {
@@ -187,12 +183,12 @@ function Main() {
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
-      <FlatBackdropContext.Provider value={settings.appBackground === 'plain'}>
+      {/* the app always uses the plain backdrop now */}
+      <FlatBackdropContext.Provider value>
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
         <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
-          <Aurora />
           <Boundary resetKey={shownTab}>{screen}</Boundary>
         </BlurTargetView>
         <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
@@ -205,7 +201,6 @@ function Main() {
           <Modal key={route.key} visible animationType="slide" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
             <SafeAreaProvider>
               <View style={{ flex: 1, backgroundColor: t.bg }}>
-                <Aurora variant="sheet" />
                 <Boundary resetKey={route.key}>
                   <Screen route={route} />
                 </Boundary>

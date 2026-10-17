@@ -217,17 +217,6 @@ export default function SettingsScreen() {
         <SectionTitle>{tr('Appearance')}</SectionTitle>
         <Group>
           <Cell value="Theme" right={<Segmented options={[{ label: tr('System'), value: 'system' }, { label: tr('Light'), value: 'light' }, { label: tr('Dark'), value: 'dark' }]} value={settings.theme || 'system'} onChange={(v) => updateSettings({ theme: v })} />} />
-          <Cell value="Layout" right={<Segmented options={[{ label: tr('Unified'), value: 'unified' }, { label: tr('Classic'), value: 'classic' }]} value={settings.layout || 'unified'} onChange={(v) => updateSettings({ layout: v })} />} />
-          <Cell
-            value="Background"
-            right={
-              <Segmented
-                options={[{ label: tr('Gradient'), value: 'gradient' }, { label: tr('Plain'), value: 'plain' }]}
-                value={settings.appBackground || 'gradient'}
-                onChange={(v) => updateSettings({ appBackground: v })}
-              />
-            }
-          />
           <Cell
             value="Liquid Glass"
             right={
@@ -252,7 +241,7 @@ export default function SettingsScreen() {
             }
           />
         </Group>
-        <Footer>Unified puts favorites and recents together in Calls with a search button; Classic shows separate Favorites, Recents and Voicemail tabs. Gradient paints the soft colour field behind every screen; Plain uses white, or black in dark mode. Liquid Glass off replaces the frosted panels with solid cards, which is easier to read and lighter to draw. Tinted makes glass more opaque. The call screen always stays dark.</Footer>
+        <Footer>Liquid Glass off replaces the frosted panels with solid cards, which is easier to read and lighter to draw. Tinted makes glass more opaque. The call screen always stays dark.</Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>
@@ -420,12 +409,6 @@ export default function SettingsScreen() {
           </View>
         </Group>
         <Footer>{tr('Leave empty to use your SIM’s voicemail number.')}</Footer>
-
-        <SectionTitle>{tr('USSD Codes')}</SectionTitle>
-        <Group>
-          <Cell value="Show Replies in App" right={toggle('ussdInApp')} />
-        </Group>
-        <Footer>Codes like *124# show the network’s reply here. Turn off to always use the network’s own dialog, which works best for long menus.</Footer>
 
         <SectionTitle>{tr('Blocked Contacts')}</SectionTitle>
         <Group>

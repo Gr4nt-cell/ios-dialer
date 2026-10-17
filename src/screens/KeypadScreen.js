@@ -143,7 +143,7 @@ export default function KeypadScreen({ prefill }) {
       return;
     }
     if (isUssdCode(num)) {
-      if (settings.ussdInApp && Dialer) nav.push({ name: 'ussd', code: num });
+      if (Dialer) nav.push({ name: 'ussd', code: num });
       else call(num);
       update('');
       return;

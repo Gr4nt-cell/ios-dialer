@@ -9,7 +9,6 @@ import { useNav } from '../nav';
 import { contactName, contactPhoto, numberKey } from '../phone';
 import { Avatar, IconButton, LargeHeader, Segmented } from '../components/ui';
 import { Glass } from '../components/Glass';
-import Aurora from '../components/Aurora';
 import { Bars, Meter, ShareRows, StackedBar } from '../components/Charts';
 import { computeStats, formatDuration, formatHour, formatShort } from '../stats';
 import { useT } from '../i18n';
@@ -83,7 +82,6 @@ export default function StatisticsScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Aurora variant="sheet" />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }} showsVerticalScrollIndicator={false}>
         <LargeHeader
           title={tr('Statistics')}
