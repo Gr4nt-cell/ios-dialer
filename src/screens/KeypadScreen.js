@@ -34,6 +34,7 @@ function Key({ digit, letters, size, onDown, onLong }) {
         <Glass
           radius={size / 2}
           pressed={pressed}
+          soft
           tint={t.dark ? 'rgba(255,255,255,0.13)' : 'rgba(120,120,128,0.09)'}
           tintOpacity={1}
           style={[styles.key, { width: size, height: size }]}

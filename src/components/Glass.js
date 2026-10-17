@@ -32,15 +32,21 @@ export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 
 // to refract, so panels need a crisp edge and a shadow to read at all.
 export const FlatBackdropContext = createContext(false);
 
-/** Edge and shadow that lift a panel off a flat background. */
-function lift(dark) {
+/**
+ * Edge and shadow that lift a panel off a flat background.
+ *
+ * `soft` is for a group of small controls — a row of dial keys casting a full
+ * panel shadow each reads as far heavier than one shadow under one panel, so
+ * they get a shallower one and end up looking like the date strip.
+ */
+function lift(dark, soft) {
   return {
     borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
     shadowColor: '#000',
-    shadowOpacity: dark ? 0.55 : 0.16,
-    shadowRadius: 9,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    shadowOpacity: soft ? (dark ? 0.3 : 0.08) : dark ? 0.55 : 0.16,
+    shadowRadius: soft ? 4 : 9,
+    shadowOffset: { width: 0, height: soft ? 1 : 3 },
+    elevation: soft ? 1 : 4,
   };
 }
 
@@ -66,6 +72,7 @@ export function Glass({
   outline = false, // stronger edge, e.g. the floating tab bar
   strong = false, // clearly visible edge, e.g. the date strip and letter panel
   vivid = false, // wide blur that lets the colour behind bleed through (tab bar)
+  soft = false, // shallower shadow on a flat background, for small repeated controls
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
@@ -76,7 +83,7 @@ export function Glass({
   // Android draws a shadow only for a view that has its own background, so a
   // lifted panel is opaque — over a flat backdrop there is nothing to see
   // through to anyway.
-  const lifted = flat ? lift(dark) : null;
+  const lifted = flat ? lift(dark, soft) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
   const bp = blur && !plain && !flat ? blurProps(target) : null;
   const realBlur = !!bp;

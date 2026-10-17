@@ -81,12 +81,13 @@ function FavoritesRow() {
   }
 
   return (
-    <View style={{ height: ROW_H }}>
+    // same inset as the date strip below it, so the row lines up with it
+    <View style={{ height: ROW_H, marginHorizontal: SIDE }}>
       <Wheel
         horizontal
         data={favorites}
         itemSize={SLOT}
-        viewport={width}
+        viewport={width - SIDE * 2}
         initialIndex={0}
         scaleRange={[0.66, 0.84, 1, 0.84, 0.66]}
         opacityRange={[0.55, 0.85, 1, 0.85, 0.55]}
