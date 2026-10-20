@@ -41,7 +41,7 @@ class DialerModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("Dialer")
 
-    Events("onCallsChanged", "onScreening")
+    Events("onCallsChanged")
 
     OnCreate {
       (appContext.reactContext?.applicationContext as? Application)?.let { CallManager.hook(it) }
@@ -49,9 +49,6 @@ class DialerModule : Module() {
         CallManager.setActivity(it)
         // the module loads after the main screen has started, so record that it's on screen
         if (it.hasWindowFocus() || it.window?.decorView?.isShown == true) CallManager.markVisible(it, true)
-      }
-      CallScreener.listener = { json ->
-        try { sendEvent("onScreening", mapOf("json" to json)) } catch (_: Exception) {}
       }
       try { PrivacyPrefs.cleanup(ctx) } catch (_: Exception) {}
       CallManager.listener = { json ->
@@ -235,23 +232,16 @@ class DialerModule : Module() {
       true
     }
 
-    // ---------- call screening ----------
-
-    Function("screenCall") { id: String -> CallScreener.start(ctx, id) }
-    Function("screenSay") { text: String -> CallScreener.say(ctx, text) }
-    Function("screenPickUp") { -> CallScreener.pickUp(ctx) }
-    Function("screenHangUp") { -> CallScreener.hangUp(ctx) }
-    Function("screenClear") { -> CallScreener.clear() }
-    Function("getScreening") { -> CallScreener.snapshot() }
-    Function("screeningTranscripts") { -> CallScreener.transcripts(ctx) }
-    Function("deleteTranscript") { file: String -> CallScreener.deleteTranscript(ctx, file) }
-    Function("screeningSupport") { ->
-      val onDevice = android.os.Build.VERSION.SDK_INT >= 31 &&
-        try { android.speech.SpeechRecognizer.isOnDeviceRecognitionAvailable(ctx) } catch (_: Exception) { false }
-      mapOf(
-        "onDevice" to onDevice,
-        "online" to try { android.speech.SpeechRecognizer.isRecognitionAvailable(ctx) } catch (_: Exception) { false },
-      )
+    // Sample portrait (AI-generated, not a real person) for the depth preview in Settings,
+    // copied out of the app's assets so the depth cut-out can read it like any photo.
+    Function("previewPhotoUri") { ->
+      try {
+        val out = java.io.File(ctx.cacheDir, "preview_woman.jpg")
+        if (!out.exists() || out.length() == 0L) {
+          ctx.assets.open("preview_woman.jpg").use { input -> out.outputStream().use { input.copyTo(it) } }
+        }
+        android.net.Uri.fromFile(out).toString()
+      } catch (_: Exception) { null }
     }
 
     // ---------- privacy ----------

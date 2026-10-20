@@ -298,104 +298,6 @@ function SmallPill({ icon, label, onPress }) {
 }
 
 // ---------------------------------------------------------------------------
-// Call screening panel: transcript of what the caller says, replies, pick up / hang up
-// ---------------------------------------------------------------------------
-
-const SCREEN_REPLIES = [
-  'Who is this, please?',
-  'Can you tell me more about why you’re calling?',
-  'Is it urgent?',
-  'I’ll call you back.',
-  'Please send me a text message instead.',
-  'Sorry, I can’t talk right now.',
-  'Please remove this number from your list.',
-];
-
-function ScreeningPanel({ s, name }) {
-  const tr = useT();
-  const scroll = useRef(null);
-  const spam = (s.spam || 0) >= 0.6;
-  const status =
-    s.state === 'answering'
-      ? tr('Answering…')
-      : s.state === 'greeting'
-      ? tr('Greeting the caller…')
-      : s.state === 'speaking'
-      ? tr('Speaking…')
-      : s.state === 'listening'
-      ? tr('Listening…')
-      : s.state === 'error'
-      ? tr('Screening')
-      : tr('Screening');
-  return (
-    <View style={{ flex: 1, paddingHorizontal: 16 }}>
-      <View style={{ alignItems: 'center', marginTop: 26 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="shield-checkmark" size={14} color={GREEN} style={{ marginRight: 5 }} />
-          <Text style={styles.statusTop}>{status}</Text>
-        </View>
-        <Text style={[styles.name, { fontSize: 30 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-          {name}
-        </Text>
-        <Text style={{ color: DIM, fontSize: 12, marginTop: 2 }}>
-          {s.onDevice ? tr('Transcribed on this phone') : tr('Online speech recognition')}
-        </Text>
-      </View>
-
-      {s.summary ? (
-        <Glass dark radius={16} tint={spam ? 'rgba(255,59,48,0.32)' : undefined} tintOpacity={1} style={{ marginTop: 14, paddingHorizontal: 12, paddingVertical: 9 }}>
-          <Text style={{ color: WHITE, fontSize: 14, fontWeight: '600' }} numberOfLines={2}>
-            {s.summary}
-          </Text>
-        </Glass>
-      ) : null}
-
-      <ScrollView
-        ref={scroll}
-        style={{ flex: 1, marginTop: 12 }}
-        contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
-        onContentSizeChange={() => scroll.current && scroll.current.scrollToEnd({ animated: true })}
-      >
-        {(s.lines || []).map((l, i) => (
-          <View
-            key={i}
-            style={[
-              styles.bubble,
-              l.who === 'caller' ? { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.18)' } : { alignSelf: 'flex-end', backgroundColor: 'rgba(10,132,255,0.85)' },
-            ]}
-          >
-            <Text style={{ color: WHITE, fontSize: 15 }}>{l.text}</Text>
-          </View>
-        ))}
-        {s.partial ? (
-          <View style={[styles.bubble, { alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-            <Text style={{ color: DIM, fontSize: 15, fontStyle: 'italic' }}>{s.partial}</Text>
-          </View>
-        ) : null}
-        {s.state === 'error' && s.note ? <Text style={{ color: '#FFD60A', fontSize: 13, textAlign: 'center', marginTop: 6 }}>{s.note}</Text> : null}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
-        {SCREEN_REPLIES.map((r) => (
-          <Pressable key={r} onPress={() => Dialer.screenSay && Dialer.screenSay(tr(r))}>
-            {({ pressed }) => (
-              <Glass dark radius={18} pressed={pressed} style={{ paddingHorizontal: 14, height: 36, justifyContent: 'center' }}>
-                <Text style={{ color: WHITE, fontSize: 14 }}>{tr(r)}</Text>
-              </Glass>
-            )}
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      <View style={styles.answerRow}>
-        <CallButton icon="call" label={tr('Hang Up')} color={RED} size={72} iconSize={30} hangup onPress={() => Dialer.screenHangUp && Dialer.screenHangUp()} />
-        <CallButton icon="call" label={tr('Pick Up')} color={GREEN} size={72} iconSize={30} onPress={() => Dialer.screenPickUp && Dialer.screenPickUp()} />
-      </View>
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
@@ -404,7 +306,7 @@ export default function CallScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const sheet = useActionSheet();
-  const { live, audio, ended, setMinimized, recording, startRecording, stopRecording, screening } = useCalls();
+  const { live, audio, ended, setMinimized, recording, startRecording, stopRecording } = useCalls();
   const { settings, resolve } = useData();
   const t = useTheme();
   const identify = useIdentity();
@@ -521,7 +423,6 @@ export default function CallScreen() {
         <View style={{ flex: 1 }} />
         <View style={styles.pillRow}>
           <SmallPill icon="notifications-off" label={tr('Silence')} onPress={() => Dialer.silenceRinger && Dialer.silenceRinger()} />
-          <SmallPill icon="shield-checkmark" label={tr('Screen')} onPress={() => Dialer.screenCall && Dialer.screenCall(ringing.id)} />
           <SmallPill icon="chatbubble" label={tr('Message')} onPress={reply} />
         </View>
         <View style={styles.answerRow}>
@@ -552,10 +453,6 @@ export default function CallScreen() {
       </>
     );
   }
-
-  // ---------- being screened ----------
-  const screen = screening && primary && screening.callId === primary.id && !['ended', 'idle'].includes(screening.state) ? screening : null;
-  if (screen) return wrap(<ScreeningPanel s={screen} name={who.name} />);
 
   // ---------- active / dialling / on hold ----------
   const muted = !!(audio && audio.muted);
@@ -824,8 +721,7 @@ const styles = StyleSheet.create({
   grid: { alignItems: 'center' },
   gridRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginBottom: 16 },
   answerRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 36 },
-  pillRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 28, marginBottom: 34 },
-  bubble: { maxWidth: '86%', paddingHorizontal: 13, paddingVertical: 8, borderRadius: 18 },
+  pillRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 44, marginBottom: 34 },
   dtmfKey: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
   simTile: { width: 102, paddingVertical: 9, paddingHorizontal: 7, alignItems: 'center' },
   simBadge: { width: 18, height: 18, borderRadius: 5.5, alignItems: 'center', justifyContent: 'center' },
