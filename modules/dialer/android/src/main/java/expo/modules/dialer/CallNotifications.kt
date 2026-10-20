@@ -71,7 +71,7 @@ object CallNotifications {
     val audio = CallManager.service?.callAudioState
     try {
       if (ringing != null) {
-        val key = "in:" + CallManager.idOf(ringing) + ":" + IslandOverlay.serviceOn() + ":" + isLocked(ctx)
+        val key = "in:" + CallManager.idOf(ringing) + ":" + IslandOverlay.serviceOn() + ":" + isLocked(ctx) + ":" + CallManager.topLevelCalls().size + ":" + PrivacyPrefs.hideOnLockScreen(ctx)
         if (key != lastKey) post(ctx, build(ctx, ringing, incoming = true, callStyle = true)) { build(ctx, ringing, incoming = true, callStyle = false) }
         lastKey = key
       } else if (ongoing != null) {
@@ -141,12 +141,20 @@ object CallNotifications {
       flags()
     )
 
-  private fun answerIntent(ctx: Context, id: String): PendingIntent =
+  /** mode: "" answer, "hold" hold the current call and answer, "end" end the current call and answer */
+  private fun answerIntent(ctx: Context, id: String, mode: String = ""): PendingIntent =
     PendingIntent.getActivity(
-      ctx, 3,
-      Intent(ctx, AnswerActivity::class.java).putExtra("id", id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+      ctx, when (mode) { "hold" -> 8; "end" -> 9; else -> 3 },
+      Intent(ctx, AnswerActivity::class.java).putExtra("id", id).putExtra("mode", mode).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
       flags()
     )
+
+  /** Another call is in progress while this one rings (call waiting). */
+  private fun otherCallActive(call: Call): Call? = CallManager.topLevelCalls().firstOrNull {
+    it != call && CallManager.stateOf(it).let { s ->
+      s == Call.STATE_ACTIVE || s == Call.STATE_HOLDING || s == Call.STATE_DIALING || s == Call.STATE_CONNECTING
+    }
+  }
 
   fun title(ctx: Context, call: Call): String {
     val number = call.details.handle?.schemeSpecificPart ?: ""
@@ -168,8 +176,12 @@ object CallNotifications {
     val mute = broadcast(ctx, ACTION_MUTE, id, 6)
     val spk = broadcast(ctx, ACTION_SPEAKER, id, 7)
     val answer = answerIntent(ctx, id)
+    val current = if (incoming) otherCallActive(call) else null
+    val waiting = current != null
+    val canHold = current != null && current.details.can(Call.Details.CAPABILITY_HOLD)
 
     val text = when {
+      waiting -> "Incoming call · you're on a call"
       incoming -> "Incoming call"
       state == Call.STATE_HOLDING -> "On hold"
       state == Call.STATE_ACTIVE -> if (muted) "Ongoing call · muted" else "Ongoing call"
@@ -202,7 +214,25 @@ object CallNotifications {
       if (state == Call.STATE_ACTIVE && connected > 0) b.setWhen(connected).setShowWhen(true).setUsesChronometer(true)
     }
 
-    if (callStyle) {
+    // privacy: hide who's calling on the lock screen
+    if (PrivacyPrefs.hideOnLockScreen(ctx)) {
+      b.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+      b.setPublicVersion(
+        NotificationCompat.Builder(ctx, if (incoming && !islandTakesOver) CH_INCOMING else CH_ONGOING)
+          .setSmallIcon(android.R.drawable.sym_action_call)
+          .setContentTitle(if (incoming) "Incoming call" else "Ongoing call")
+          .setCategory(NotificationCompat.CATEGORY_CALL)
+          .setColor(0xFF34C759.toInt())
+          .build(),
+      )
+    }
+
+    if (waiting) {
+      // call waiting: the three choices, like on the call screen
+      b.addAction(0, "Decline", decline)
+      if (canHold) b.addAction(0, "Hold & answer", answerIntent(ctx, id, "hold"))
+      b.addAction(0, "End & answer", answerIntent(ctx, id, "end"))
+    } else if (callStyle) {
       val person = Person.Builder().setName(name).setImportant(true).build()
       val style = if (incoming) {
         NotificationCompat.CallStyle.forIncomingCall(person, decline, answer)

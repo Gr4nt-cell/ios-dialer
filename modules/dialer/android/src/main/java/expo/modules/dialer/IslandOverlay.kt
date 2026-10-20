@@ -581,7 +581,7 @@ object IslandOverlay {
       gravity = Gravity.CENTER_VERTICAL
       setPadding(0, maxOf(0, cameraClearPx - topPad + dpi(ctx, 4f)), 0, 0)
     }
-    fun button(iconRes: Int, bg: Int, rotate: Float = 0f, onTap: () -> Unit) {
+    fun button(iconRes: Int, bg: Int, rotate: Float = 0f, label: String? = null, onTap: () -> Unit) {
       val size = dpi(ctx, 46f)
       val img = ImageView(ctx).apply {
         setImageResource(iconRes)
@@ -596,11 +596,38 @@ object IslandOverlay {
           main.postDelayed({ render() }, 300)
         }
       }
-      buttons.addView(img, LinearLayout.LayoutParams(size, size).apply { marginStart = dpi(ctx, 10f) })
+      if (label == null) {
+        buttons.addView(img, LinearLayout.LayoutParams(size, size).apply { marginStart = dpi(ctx, 10f) })
+      } else {
+        // call waiting: the choices need words
+        val box = LinearLayout(ctx).apply {
+          orientation = LinearLayout.VERTICAL
+          gravity = Gravity.CENTER_HORIZONTAL
+        }
+        box.addView(img, LinearLayout.LayoutParams(size, size))
+        box.addView(text(ctx, label, 10f, Color.parseColor("#D1D1D6")).apply { setPadding(0, dpi(ctx, 3f), 0, 0); gravity = Gravity.CENTER })
+        buttons.addView(box, LinearLayout.LayoutParams(dpi(ctx, 58f), ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dpi(ctx, 4f) })
+      }
     }
     val ringingId = CallManager.ringingCall()?.let { CallManager.idOf(it) }
     val primaryId = CallManager.primaryCall()?.let { CallManager.idOf(it) }
-    if (i.ringing && ringingId != null) {
+    val current = CallManager.topLevelCalls().firstOrNull { c ->
+      c != CallManager.ringingCall() && CallManager.stateOf(c).let { it == Call.STATE_ACTIVE || it == Call.STATE_HOLDING || it == Call.STATE_DIALING }
+    }
+    if (i.ringing && ringingId != null && current != null) {
+      // call waiting: end & answer · hold & answer · decline
+      button(android.R.drawable.sym_action_call, red, 135f, "End & answer") {
+        CallManager.endAndAnswer(ringingId)
+        expanded = false
+      }
+      if (current.details.can(Call.Details.CAPABILITY_HOLD)) {
+        button(android.R.drawable.ic_media_pause, green, 0f, "Hold & answer") {
+          CallManager.holdAndAnswer(ringingId)
+          expanded = false
+        }
+      }
+      button(android.R.drawable.ic_menu_close_clear_cancel, gray, 0f, "Decline") { CallManager.reject(ringingId, null) }
+    } else if (i.ringing && ringingId != null) {
       button(android.R.drawable.ic_lock_silent_mode, gray) { Ringer.silence() } // silence ringtone
       button(android.R.drawable.sym_action_call, red, 135f) { CallManager.reject(ringingId, null) }
       button(android.R.drawable.sym_action_call, green) {

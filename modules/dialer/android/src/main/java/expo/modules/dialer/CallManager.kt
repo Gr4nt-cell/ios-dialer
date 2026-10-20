@@ -76,6 +76,11 @@ object CallManager {
 
   fun idOf(call: Call): String? = ids[call]
 
+  fun callById(id: String): Call? = calls[id]
+
+  /** Last 9 digits of a number, for matching the same number written different ways. */
+  fun digits(number: String): String = number.filter { it.isDigit() }.takeLast(9)
+
   private fun isIncoming(call: Call): Boolean =
     Build.VERSION.SDK_INT >= 29 && call.details.callDirection == Call.Details.DIRECTION_INCOMING
 
@@ -360,6 +365,16 @@ object CallManager {
         if (show) activity.window.addFlags(flags) else activity.window.clearFlags(flags)
       }
     } catch (_: Exception) {}
+    // privacy: keep call history, recordings and transcripts out of screenshots and the
+    // recent-apps preview
+    try {
+      if (PrivacyPrefs.blockScreenshots(activity)) activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      else activity.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    } catch (_: Exception) {}
+  }
+
+  fun refreshActivityFlags() {
+    main.post { activityRef?.get()?.let { applyFlags(it) } }
   }
 
   fun launchUi(ctx: Context) {

@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.example.iosdialer",
+      "package": "com.gr4nt.dialer",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#34C759"
@@ -27,6 +27,10 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MICROPHONE"
+      ],
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.INTERNET"
       ]
     },
     "plugins": [

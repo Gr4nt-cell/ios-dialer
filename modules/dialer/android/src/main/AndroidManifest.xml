@@ -18,6 +18,13 @@
   <queries>
     <package android:name="com.whatsapp" />
     <package android:name="com.whatsapp.w4b" />
+    <!-- call screening: the phone's speech recognition and text-to-speech -->
+    <intent>
+      <action android:name="android.speech.RecognitionService" />
+    </intent>
+    <intent>
+      <action android:name="android.intent.action.TTS_SERVICE" />
+    </intent>
   </queries>
 
   <application>
@@ -35,6 +42,16 @@
       <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" />
       <intent-filter>
         <action android:name="android.telecom.InCallService" />
+      </intent-filter>
+    </service>
+
+    <!-- Asked about each incoming call before it rings (unknown / hidden caller rules). -->
+    <service
+      android:name="expo.modules.dialer.DialerScreeningService"
+      android:exported="true"
+      android:permission="android.permission.BIND_SCREENING_SERVICE">
+      <intent-filter>
+        <action android:name="android.telecom.CallScreeningService" />
       </intent-filter>
     </service>
 

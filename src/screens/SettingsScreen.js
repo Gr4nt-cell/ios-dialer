@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { Linking, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +17,7 @@ import DepthPreview from '../components/DepthPreview';
 import { DEPTH_DEFAULTS, depthAvailable } from '../depth';
 import { useCalls } from '../CallContext';
 import Dialer from '../dialer';
+import { useActionSheet } from '../components/ActionSheet';
 
 function SectionTitle({ children }) {
   const t = useTheme();
@@ -170,6 +171,69 @@ export default function SettingsScreen() {
   const activeLang = current === 'system' ? deviceLanguage() : current;
 
   const toggle = (key) => <Switch value={!!settings[key]} onValueChange={(v) => updateSettings({ [key]: v })} trackColor={{ true: t.green }} thumbColor="#fff" />;
+
+  // ---------- privacy & call screening (stored natively, used before the app is even open) ----------
+  const sheet = useActionSheet();
+  const readPrivacy = () => {
+    try {
+      return Dialer && Dialer.getPrivacy ? Dialer.getPrivacy() : {};
+    } catch {
+      return {};
+    }
+  };
+  const [privacy, setPrivacyState] = useState(readPrivacy);
+  const [screenName, setScreenName] = useState(() => readPrivacy().screenName || '');
+  const support = useMemo(() => {
+    try {
+      return Dialer && Dialer.screeningSupport ? Dialer.screeningSupport() : { onDevice: false, online: false };
+    } catch {
+      return { onDevice: false, online: false };
+    }
+  }, []);
+  const setPrivacy = (key, value) => {
+    try {
+      if (typeof value === 'boolean') Dialer.setPrivacyBool(key, value);
+      else if (typeof value === 'number') Dialer.setPrivacyInt(key, value);
+      else Dialer.setPrivacyString(key, String(value));
+    } catch {
+      // ignore
+    }
+    setPrivacyState(readPrivacy());
+  };
+  const pToggle = (key) => (
+    <Switch value={!!privacy[key]} onValueChange={(v) => setPrivacy(key, v)} trackColor={{ true: t.green }} thumbColor="#fff" />
+  );
+  const RULES = [
+    { value: 'ring', label: tr('Ring') },
+    { value: 'silence', label: tr('Ring Silently') },
+    { value: 'screen', label: tr('Screen Automatically') },
+    { value: 'decline', label: tr('Decline') },
+  ];
+  const ruleLabel = (v) => (RULES.find((r) => r.value === v) || RULES[0]).label;
+  const chooseRule = (key, title) =>
+    sheet.show({ title, options: RULES.map((r) => ({ text: r.label + (privacy[key] === r.value ? '  ✓' : ''), onPress: () => setPrivacy(key, r.value) })) });
+  const KEEP = [
+    { value: 0, label: tr('Forever') },
+    { value: 7, label: tr('7 days') },
+    { value: 30, label: tr('30 days') },
+    { value: 90, label: tr('90 days') },
+    { value: 365, label: tr('1 year') },
+  ];
+  const keepLabel = (v) => (KEEP.find((k) => k.value === v) || KEEP[0]).label;
+  const chooseKeep = () =>
+    sheet.show({ title: tr('Keep Recordings & Transcripts'), options: KEEP.map((k) => ({ text: k.label + ((privacy.recordingDays || 0) === k.value ? '  ✓' : ''), onPress: () => setPrivacy('recordingDays', k.value) })) });
+  const wipe = () =>
+    Alert.alert(tr('Delete All Recordings & Transcripts?'), tr('Every call recording and screening transcript on this phone will be deleted. This can’t be undone.'), [
+      { text: tr('Cancel'), style: 'cancel' },
+      { text: tr('Delete All'), style: 'destructive', onPress: () => Dialer && Dialer.deleteAllPrivateData && Dialer.deleteAllPrivateData() },
+    ]);
+  const chev = <Ionicons name="chevron-forward" size={18} color={t.tertiary} />;
+  const valueRight = (txt) => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <Text style={{ color: t.secondary, fontSize: 16 }}>{txt}</Text>
+      {chev}
+    </View>
+  );
 
   const permRow = (label, status, onAsk) => (
     <Cell
@@ -384,6 +448,47 @@ export default function SettingsScreen() {
           <Cell value={tr('Recordings')} color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
         </Group>
         <Footer>Tap Record on the call screen to record a call. Android only lets the phone’s own system app hear the other side directly, so on most phones turn on Speaker while recording to capture both voices clearly. Recording laws differ by country — let people know when you record.</Footer>
+
+        <SectionTitle>{tr('Call Screening')}</SectionTitle>
+        <Group>
+          <Cell value={tr('Unknown Callers')} onPress={() => chooseRule('unknownCallers', tr('Unknown Callers'))} right={valueRight(ruleLabel(privacy.unknownCallers))} />
+          <Cell value={tr('No Caller ID')} onPress={() => chooseRule('hiddenCallers', tr('No Caller ID'))} right={valueRight(ruleLabel(privacy.hiddenCallers))} />
+          <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', minHeight: 48 }}>
+            <Text style={{ color: t.text, fontSize: 17, width: 130 }}>{tr('Your Name')}</Text>
+            <TextInput
+              value={screenName}
+              onChangeText={setScreenName}
+              onEndEditing={() => setPrivacy('screenName', screenName.trim())}
+              placeholder={tr('Optional')}
+              placeholderTextColor={t.tertiary}
+              style={{ flex: 1, color: t.text, fontSize: 17, textAlign: 'right' }}
+            />
+          </View>
+          <Cell value={tr('Screened Calls')} color={t.blue} onPress={() => nav.push({ name: 'screened' })} right={chev} />
+        </Group>
+        <Footer>
+          {tr(
+            'Tap Screen on an incoming call (or choose Screen Automatically above) and the phone answers on speaker, asks the caller who they are and why they’re calling, and shows what they say as it’s said. Tap a reply to answer them, Pick Up to talk, or Hang Up. People in your contacts always ring.'
+          )}{' '}
+          {support.onDevice
+            ? tr('Speech is transcribed on this phone.')
+            : tr('This phone has no on-device speech recognition, so you won’t see what callers say unless you allow online recognition in Privacy (replies still work).')}
+        </Footer>
+
+        <SectionTitle>{tr('Privacy')}</SectionTitle>
+        <Group>
+          <Cell value={tr('Hide Caller on Lock Screen')} right={pToggle('hideOnLockScreen')} />
+          <Cell value={tr('Block Screenshots')} right={pToggle('blockScreenshots')} />
+          <Cell value={tr('Keep Recordings & Transcripts')} onPress={chooseKeep} right={valueRight(keepLabel(privacy.recordingDays || 0))} />
+          <Cell value={tr('Save Screening Transcripts')} right={pToggle('keepTranscripts')} />
+          <Cell value={tr('Allow Online Speech Recognition')} right={pToggle('allowOnlineSpeech')} />
+          <Cell value={tr('Delete All Recordings & Transcripts')} color={t.red} onPress={wipe} />
+        </Group>
+        <Footer>
+          {tr(
+            'Your calls stay on this phone. Recordings and transcripts are kept in the app’s private storage, which other apps can’t read; they are never uploaded and are left out of phone backups. The app has no internet access. Call screening uses the phone’s own speech recognition; online recognition is off unless you turn it on.'
+          )}
+        </Footer>
 
         <SectionTitle>{tr('Sounds & Haptics')}</SectionTitle>
         <Group>

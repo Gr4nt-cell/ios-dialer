@@ -23,7 +23,14 @@ class CallActionReceiver : BroadcastReceiver() {
 class AnswerActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    intent.getStringExtra("id")?.let { CallManager.answer(it) }
+    val id = intent.getStringExtra("id")
+    if (id != null) {
+      when (intent.getStringExtra("mode")) {
+        "hold" -> CallManager.holdAndAnswer(id)
+        "end" -> CallManager.endAndAnswer(id)
+        else -> CallManager.answer(id)
+      }
+    }
     CallManager.launchUi(this)
     finish()
   }

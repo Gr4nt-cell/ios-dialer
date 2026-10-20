@@ -31,6 +31,7 @@ import CallsScreen from './src/screens/CallsScreen';
 import StatisticsScreen from './src/screens/StatisticsScreen';
 import { I18nProvider } from './src/i18n';
 import SearchScreen from './src/screens/SearchScreen';
+import ScreenedCallsScreen from './src/screens/ScreenedCallsScreen';
 
 const ROUTES = {
   contact: ContactDetailScreen,
@@ -38,6 +39,7 @@ const ROUTES = {
   settings: SettingsScreen,
   pickFavorite: PickFavoriteScreen,
   recordings: RecordingsScreen,
+  screened: ScreenedCallsScreen,
   statistics: StatisticsScreen,
 };
 

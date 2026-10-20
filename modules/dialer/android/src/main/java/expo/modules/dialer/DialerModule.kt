@@ -41,7 +41,7 @@ class DialerModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("Dialer")
 
-    Events("onCallsChanged")
+    Events("onCallsChanged", "onScreening")
 
     OnCreate {
       (appContext.reactContext?.applicationContext as? Application)?.let { CallManager.hook(it) }
@@ -50,6 +50,10 @@ class DialerModule : Module() {
         // the module loads after the main screen has started, so record that it's on screen
         if (it.hasWindowFocus() || it.window?.decorView?.isShown == true) CallManager.markVisible(it, true)
       }
+      CallScreener.listener = { json ->
+        try { sendEvent("onScreening", mapOf("json" to json)) } catch (_: Exception) {}
+      }
+      try { PrivacyPrefs.cleanup(ctx) } catch (_: Exception) {}
       CallManager.listener = { json ->
         try { sendEvent("onCallsChanged", mapOf("json" to json)) } catch (_: Exception) {}
       }
@@ -230,6 +234,33 @@ class DialerModule : Module() {
       } catch (_: Exception) {}
       true
     }
+
+    // ---------- call screening ----------
+
+    Function("screenCall") { id: String -> CallScreener.start(ctx, id) }
+    Function("screenSay") { text: String -> CallScreener.say(ctx, text) }
+    Function("screenPickUp") { -> CallScreener.pickUp(ctx) }
+    Function("screenHangUp") { -> CallScreener.hangUp(ctx) }
+    Function("screenClear") { -> CallScreener.clear() }
+    Function("getScreening") { -> CallScreener.snapshot() }
+    Function("screeningTranscripts") { -> CallScreener.transcripts(ctx) }
+    Function("deleteTranscript") { file: String -> CallScreener.deleteTranscript(ctx, file) }
+    Function("screeningSupport") { ->
+      val onDevice = android.os.Build.VERSION.SDK_INT >= 31 &&
+        try { android.speech.SpeechRecognizer.isOnDeviceRecognitionAvailable(ctx) } catch (_: Exception) { false }
+      mapOf(
+        "onDevice" to onDevice,
+        "online" to try { android.speech.SpeechRecognizer.isRecognitionAvailable(ctx) } catch (_: Exception) { false },
+      )
+    }
+
+    // ---------- privacy ----------
+
+    Function("getPrivacy") { -> PrivacyPrefs.all(ctx) }
+    Function("setPrivacyBool") { key: String, value: Boolean -> PrivacyPrefs.set(ctx, key, value) }
+    Function("setPrivacyString") { key: String, value: String -> PrivacyPrefs.set(ctx, key, value) }
+    Function("setPrivacyInt") { key: String, value: Int -> PrivacyPrefs.set(ctx, key, value) }
+    Function("deleteAllPrivateData") { -> PrivacyPrefs.deleteEverything(ctx) }
 
     Function("getIslandSize") { ->
       val z = IslandOverlay.size(ctx)

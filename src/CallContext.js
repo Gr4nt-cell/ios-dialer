@@ -30,6 +30,23 @@ export function CallProvider({ children }) {
     return () => sub.remove();
   }, []);
 
+  // call screening (answered by the app, transcript of what the caller says)
+  const [screening, setScreening] = useState(null);
+  useEffect(() => {
+    if (!Dialer || !Dialer.getScreening) return undefined;
+    const parse = (j) => {
+      try {
+        const v = JSON.parse(j);
+        return v && v.callId ? v : null;
+      } catch {
+        return null;
+      }
+    };
+    setScreening(parse(Dialer.getScreening()));
+    const sub = Dialer.addListener('onScreening', (e) => setScreening(parse(e.json)));
+    return () => sub.remove();
+  }, []);
+
   useEffect(() => {
     if (!Dialer) return undefined;
     const sub = AppState.addEventListener('change', (s) => {
@@ -162,6 +179,14 @@ export function CallProvider({ children }) {
     }
   }, [showScreen]);
 
+  // forget the screening once its call is gone
+  useEffect(() => {
+    if (!screening || !Dialer || !Dialer.screenClear) return undefined;
+    if (live.some((c) => c.id === screening.callId)) return undefined;
+    const id = setTimeout(() => Dialer.screenClear(), 1500);
+    return () => clearTimeout(id);
+  }, [screening, live]);
+
   const value = {
     available: !!Dialer,
     calls: state.calls,
@@ -176,6 +201,7 @@ export function CallProvider({ children }) {
     isDefault,
     requestDefault,
     showScreen,
+    screening: screening && live.some((c) => c.id === screening.callId) ? screening : null,
   };
 
   return <CallContext.Provider value={value}>{children}</CallContext.Provider>;

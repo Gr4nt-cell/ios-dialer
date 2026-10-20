@@ -36,6 +36,19 @@ class DialerInCallService : InCallService() {
     CallManager.service = this
     CallManager.add(call)
     val ringing = CallManager.stateOf(call) == Call.STATE_RINGING
+    // Unknown caller set to "screen automatically": answer on speaker after a moment and screen it.
+    val number = call.details.handle?.schemeSpecificPart.orEmpty()
+    if (ringing && CallScreener.shouldAutoScreen(number)) {
+      val id = CallManager.idOf(call)
+      if (id != null) {
+        android.os.Handler(mainLooper).postDelayed({
+          if (CallManager.callById(id)?.let { CallManager.stateOf(it) } == Call.STATE_RINGING) {
+            CallScreener.start(this, id)
+            CallManager.launchUi(this)
+          }
+        }, 2500)
+      }
+    }
     // Incoming calls surface through the full-screen notification (lock screen)
     // or a heads-up banner; outgoing calls open the call screen straight away.
     if (!ringing || !CallNotifications.canNotify(this)) CallManager.launchUi(this)
@@ -43,6 +56,7 @@ class DialerInCallService : InCallService() {
 
   override fun onCallRemoved(call: Call) {
     super.onCallRemoved(call)
+    CallScreener.onCallRemoved(this, CallManager.idOf(call))
     CallManager.remove(call)
     if (!CallManager.hasLiveCalls()) {
       CallNotifications.cancel(this)
