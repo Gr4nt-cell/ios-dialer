@@ -355,6 +355,13 @@ object CallManager {
 
   @Suppress("DEPRECATION")
   private fun applyFlags(activity: Activity) {
+    // Keep phones in portrait, but let large screens (tablets, foldables) rotate and resize:
+    // Android 16 ignores fixed orientations there, so the manifest no longer sets one.
+    try {
+      val small = activity.resources.configuration.smallestScreenWidthDp < 600
+      val want = if (small) android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+      if (activity.requestedOrientation != want) activity.requestedOrientation = want
+    } catch (_: Exception) {}
     val show = hasLiveCalls()
     try {
       if (Build.VERSION.SDK_INT >= 27) {

@@ -100,6 +100,7 @@ object Ringer {
   fun update(ctx: Context) {
     val ringing = CallManager.ringingCall()
     val id = ringing?.let { CallManager.idOf(it) }
+    if (ringing == null && ringingId == "preview") return // ringtone test in Settings
     if (ringing == null || id == null || id == silencedId) {
       stop()
       return
@@ -154,10 +155,53 @@ object Ringer {
         }
       } catch (_: Exception) {}
     }
+    // ringtone chosen inside the app (Settings › Ringtone), for phones whose own default won't play
+    appRingtoneUri(ctx)?.let { return it }
     simRingtone(ctx, call)?.let { return it }
     return try {
       RingtoneManager.getActualDefaultRingtoneUri(ctx, RingtoneManager.TYPE_RINGTONE)
     } catch (_: Exception) { null } ?: Settings.System.DEFAULT_RINGTONE_URI
+  }
+
+  // ---------- ringtone chosen in the app ----------
+
+  private const val PREFS = "dialer_ring"
+
+  fun appRingtoneUri(ctx: Context): Uri? =
+    ctx.getSharedPreferences(PREFS, 0).getString("uri", null)?.takeIf { it.isNotBlank() }?.let {
+      try { Uri.parse(it) } catch (_: Exception) { null }
+    }
+
+  fun setAppRingtone(ctx: Context, uri: String?) {
+    // the phone's "default ringtone" entry means: follow the phone's setting again
+    val v = uri?.takeIf { it.isNotBlank() && it != Settings.System.DEFAULT_RINGTONE_URI.toString() }
+    ctx.getSharedPreferences(PREFS, 0).edit().putString("uri", v).apply()
+  }
+
+  fun appRingtoneInfo(ctx: Context): Map<String, Any?> {
+    val uri = appRingtoneUri(ctx)
+    val title = try {
+      RingtoneManager.getRingtone(ctx, uri ?: Settings.System.DEFAULT_RINGTONE_URI)?.getTitle(ctx)
+    } catch (_: Exception) { null }
+    return mapOf("uri" to uri?.toString(), "title" to title, "custom" to (uri != null))
+  }
+
+  /** Plays the ringtone for a few seconds, exactly the way an incoming call would. */
+  fun preview(ctx: Context) {
+    main.post {
+      if (ringingId != null && ringingId != "preview") return@post // a real call is ringing
+      stop()
+      ringingId = "preview"
+      val uri = appRingtoneUri(ctx) ?: try {
+        RingtoneManager.getActualDefaultRingtoneUri(ctx, RingtoneManager.TYPE_RINGTONE)
+      } catch (_: Exception) { null } ?: Settings.System.DEFAULT_RINGTONE_URI
+      play(ctx.applicationContext, uri)
+      main.postDelayed({ if (ringingId == "preview") stop() }, 6000)
+    }
+  }
+
+  fun stopPreview() {
+    main.post { if (ringingId == "preview") stop() }
   }
 
   /** Dual-SIM phones keep SIM 2's ringtone under brand-specific keys (Samsung, Xiaomi, Oppo…). */

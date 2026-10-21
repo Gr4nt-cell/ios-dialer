@@ -222,6 +222,36 @@ export default function SettingsScreen() {
     </View>
   );
 
+  const readFullScreen = () => {
+    try {
+      return Dialer && Dialer.canFullScreen ? !!Dialer.canFullScreen() : true;
+    } catch {
+      return true;
+    }
+  };
+  const [fullScreenOk, setFullScreenOk] = useState(readFullScreen);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') setFullScreenOk(readFullScreen());
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [ring, setRing] = useState(() => {
+    try {
+      return Dialer && Dialer.getAppRingtone ? Dialer.getAppRingtone() : null;
+    } catch {
+      return null;
+    }
+  });
+  const chooseRingtone = async () => {
+    try {
+      if (Dialer && Dialer.pickRingtone) setRing(await Dialer.pickRingtone());
+    } catch {
+      // ignore
+    }
+  };
+
   const permRow = (label, status, onAsk) => (
     <Cell
       value={label}
@@ -489,6 +519,20 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{tr('The app has zero tolerance for child sexual abuse and exploitation. Reports go to the developer or straight to the authorities.')}</Footer>
 
+        <SectionTitle>{tr('Ringtone')}</SectionTitle>
+        <Group>
+          <Cell
+            value={tr('Ringtone')}
+            onPress={chooseRingtone}
+            right={valueRight(ring && ring.custom ? ring.title || tr('Custom') : tr('Phone default'))}
+          />
+          <Cell value={tr('Test Ringtone')} color={t.blue} onPress={() => Dialer && Dialer.testRingtone && Dialer.testRingtone()} />
+          {ring && ring.custom ? (
+            <Cell value={tr('Use Phone Default')} color={t.red} onPress={() => Dialer && Dialer.resetAppRingtone && setRing(Dialer.resetAppRingtone())} />
+          ) : null}
+        </Group>
+        <Footer>{tr('Calls ring with the phone’s ringtone (or a contact’s own). If calls ring silently or the wrong tone plays, as on some Samsung phones, pick a ringtone here and use Test Ringtone to check it.')}</Footer>
+
         <SectionTitle>{tr('Sounds & Haptics')}</SectionTitle>
         <Group>
           <Cell value="Dial Pad Tones" right={toggle('dialTones')} />
@@ -553,9 +597,10 @@ export default function SettingsScreen() {
         <Group>
           {permRow('Contacts', contactsPerm, () => refreshContacts(true))}
           {permRow('Call History', callLogPerm, () => refreshCallLog(true))}
+          {permRow(tr('Full-Screen Incoming Calls'), fullScreenOk ? 'granted' : 'denied', () => Dialer && Dialer.openFullScreenSettings && Dialer.openFullScreenSettings())}
           <Cell value="Open App Settings" color={t.blue} onPress={() => Linking.openSettings()} />
         </Group>
-        <Footer>{tr('If a permission was turned off, re-enable it in app settings.')}</Footer>
+        <Footer>{tr('If a permission was turned off, re-enable it in app settings. Full-screen incoming calls lets a call wake the screen and show over the lock screen; on Xiaomi also allow “Show on lock screen” and “Display pop-up windows while running in the background” in the app’s settings.')}</Footer>
       </ScrollView>
 
       <LanguageWheel

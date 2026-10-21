@@ -88,6 +88,9 @@ jobs:
         env:
           CI: 1
 
+      - name: Show release shrinking settings
+        run: grep -nE "minifyEnabled|shrinkResources|enableProguard|enableShrink" android/app/build.gradle android/gradle.properties || true
+
       # prebuild wires release to the debug key; this repoints it
       - name: Sign release builds with the upload key
         if: steps.key.outputs.have == 'true'

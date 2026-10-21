@@ -25,9 +25,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 private const val REQ_ROLE = 7311
+private const val REQ_RINGTONE = 7312
 
 class DialerModule : Module() {
   private var rolePromise: Promise? = null
+  private var ringtonePromise: Promise? = null
 
   private val ctx: Context
     get() = appContext.reactContext ?: throw CodedException("Android context unavailable")
@@ -105,6 +107,64 @@ class DialerModule : Module() {
         rolePromise?.resolve(isDefault())
         rolePromise = null
       }
+      if (payload.requestCode == REQ_RINGTONE) {
+        val p = ringtonePromise
+        ringtonePromise = null
+        if (payload.resultCode == android.app.Activity.RESULT_OK) {
+          @Suppress("DEPRECATION")
+          val uri = payload.data?.getParcelableExtra<Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+          Ringer.setAppRingtone(ctx, uri?.toString())
+        }
+        p?.resolve(Ringer.appRingtoneInfo(ctx))
+      }
+    }
+
+    // ---------- ringtone (choose / test), for phones whose own ringtone won't play ----------
+
+    AsyncFunction("pickRingtone") { promise: Promise ->
+      val activity = appContext.currentActivity
+      if (activity == null) {
+        promise.resolve(Ringer.appRingtoneInfo(ctx))
+        return@AsyncFunction
+      }
+      val current = Ringer.appRingtoneUri(ctx)
+      val intent = Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER)
+        .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_RINGTONE)
+        .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+        .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+        .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_RINGTONE_URI)
+        .putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, current ?: Settings.System.DEFAULT_RINGTONE_URI)
+      ringtonePromise = promise
+      try {
+        activity.startActivityForResult(intent, REQ_RINGTONE)
+      } catch (_: Exception) {
+        ringtonePromise = null
+        promise.resolve(Ringer.appRingtoneInfo(ctx))
+      }
+    }
+
+    Function("getAppRingtone") { -> Ringer.appRingtoneInfo(ctx) }
+    Function("resetAppRingtone") { -> Ringer.setAppRingtone(ctx, null); Ringer.appRingtoneInfo(ctx) }
+    Function("testRingtone") { -> Ringer.preview(ctx) }
+    Function("stopTestRingtone") { -> Ringer.stopPreview() }
+
+    // Android 14+: incoming calls can only wake the screen full-screen when this is allowed
+    Function("canFullScreen") { ->
+      if (Build.VERSION.SDK_INT >= 34) {
+        (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).canUseFullScreenIntent()
+      } else true
+    }
+
+    Function("openFullScreenSettings") { ->
+      try {
+        if (Build.VERSION.SDK_INT >= 34) {
+          ctx.startActivity(
+            Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:" + ctx.packageName))
+              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+          )
+        }
+        true
+      } catch (_: Exception) { false }
     }
 
     Function("openDefaultAppsSettings") { ->

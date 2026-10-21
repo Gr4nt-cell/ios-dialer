@@ -36,9 +36,29 @@ class DialerInCallService : InCallService() {
     CallManager.service = this
     CallManager.add(call)
     val ringing = CallManager.stateOf(call) == Call.STATE_RINGING
+    if (ringing) wakeScreen()
     // Incoming calls surface through the full-screen notification (lock screen)
     // or a heads-up banner; outgoing calls open the call screen straight away.
     if (!ringing || !CallNotifications.canNotify(this)) CallManager.launchUi(this)
+  }
+
+  /**
+   * Some phones (Samsung, Xiaomi…) don't always turn the screen on for the full-screen call
+   * notification when the phone is asleep. Briefly wake it ourselves so the call screen shows.
+   */
+  @Suppress("DEPRECATION")
+  private fun wakeScreen() {
+    try {
+      val pm = getSystemService(POWER_SERVICE) as android.os.PowerManager
+      if (pm.isInteractive) return
+      val lock = pm.newWakeLock(
+        android.os.PowerManager.FULL_WAKE_LOCK or
+          android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP or
+          android.os.PowerManager.ON_AFTER_RELEASE,
+        "dialer:incoming",
+      )
+      lock.acquire(10_000L)
+    } catch (_: Exception) {}
   }
 
   override fun onCallRemoved(call: Call) {

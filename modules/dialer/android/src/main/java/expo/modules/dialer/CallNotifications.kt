@@ -71,7 +71,7 @@ object CallNotifications {
     val audio = CallManager.service?.callAudioState
     try {
       if (ringing != null) {
-        val key = "in:" + CallManager.idOf(ringing) + ":" + IslandOverlay.serviceOn() + ":" + isLocked(ctx) + ":" + CallManager.topLevelCalls().size + ":" + PrivacyPrefs.hideOnLockScreen(ctx)
+        val key = "in:" + CallManager.idOf(ringing) + ":" + IslandOverlay.serviceOn() + ":" + isLocked(ctx) + ":" + isScreenOn(ctx) + ":" + CallManager.topLevelCalls().size + ":" + PrivacyPrefs.hideOnLockScreen(ctx)
         if (key != lastKey) post(ctx, build(ctx, ringing, incoming = true, callStyle = true)) { build(ctx, ringing, incoming = true, callStyle = false) }
         lastKey = key
       } else if (ongoing != null) {
@@ -190,7 +190,7 @@ object CallNotifications {
 
     // With the call island on and the phone unlocked, the island shows the incoming call,
     // so the notification stays quiet (no pop-up banner on top of the island).
-    val islandTakesOver = incoming && IslandOverlay.serviceOn() && IslandOverlay.islandEnabled(ctx) && !isLocked(ctx)
+    val islandTakesOver = incoming && IslandOverlay.serviceOn() && IslandOverlay.islandEnabled(ctx) && !isLocked(ctx) && isScreenOn(ctx)
     val b = NotificationCompat.Builder(ctx, if (incoming && !islandTakesOver) CH_INCOMING else CH_ONGOING)
       .setSmallIcon(android.R.drawable.sym_action_call)
       .setContentTitle(name)
@@ -297,6 +297,10 @@ object CallNotifications {
     } catch (_: Exception) {}
     return extras
   }
+
+  private fun isScreenOn(ctx: Context): Boolean = try {
+    (ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive
+  } catch (_: Exception) { false }
 
   private fun isLocked(ctx: Context): Boolean = try {
     (ctx.getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager).isKeyguardLocked
