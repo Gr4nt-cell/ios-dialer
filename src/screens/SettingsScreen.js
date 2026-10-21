@@ -450,6 +450,45 @@ export default function SettingsScreen() {
           )}
         </Footer>
 
+        <SectionTitle>{tr('Safety')}</SectionTitle>
+        <Group>
+          <Cell
+            value={tr('Report a Child Safety Concern')}
+            color={t.red}
+            onPress={() =>
+              sheet.show({
+                title: tr('Report a Child Safety Concern'),
+                options: [
+                  {
+                    text: tr('Email the Developer'),
+                    onPress: () =>
+                      Linking.openURL(
+                        'mailto:gstephen116@gmail.com?subject=' + encodeURIComponent('Child safety concern – Phone app')
+                      ).catch(() => {}),
+                  },
+                  { text: tr('Report Abuse Material (NCMEC CyberTipline)'), onPress: () => Linking.openURL('https://report.cybertip.org').catch(() => {}) },
+                  {
+                    text: tr('Child in Danger? Call Emergency Services'),
+                    onPress: () =>
+                      Alert.alert(
+                        tr('Child in Danger'),
+                        tr('If a child is in immediate danger, call your local emergency number (for example 112, 191 or 999) or the police straight away.')
+                      ),
+                  },
+                ],
+              })
+            }
+            right={chev}
+          />
+          <Cell
+            value={tr('Child Safety Standards')}
+            color={t.blue}
+            onPress={() => Linking.openURL('https://github.com/Gr4nt-cell/ios-dialer/blob/main/CHILD_SAFETY.md').catch(() => {})}
+            right={chev}
+          />
+        </Group>
+        <Footer>{tr('The app has zero tolerance for child sexual abuse and exploitation. Reports go to the developer or straight to the authorities.')}</Footer>
+
         <SectionTitle>{tr('Sounds & Haptics')}</SectionTitle>
         <Group>
           <Cell value="Dial Pad Tones" right={toggle('dialTones')} />

@@ -32,7 +32,7 @@
       "blockedPermissions": [
         "android.permission.INTERNET"
       ],
-      "versionCode": 2
+      "versionCode": 3
     },
     "plugins": [
       [
