@@ -105,7 +105,23 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease --no-daemon
+        run: |
+          # R8 over every architecture needs more memory than the template default
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+          grep jvmargs gradle.properties || echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
+          set -o pipefail
+          ./gradlew bundleRelease --no-daemon 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+
+      # if the bundle fails, keep the end of the log on the release page so it can be read
+      - name: Publish the failure log
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          grep -nE "error|Error|FAILED|What went wrong|Exception" "$RUNNER_TEMP/gradle.log" | tail -80 > aab-build-error.txt || true
+          echo "----- last lines -----" >> aab-build-error.txt
+          tail -120 "$RUNNER_TEMP/gradle.log" >> aab-build-error.txt || true
+          gh release upload latest aab-build-error.txt --clobber || true
 
       - name: Check who signed it
         if: steps.key.outputs.have == 'true'
