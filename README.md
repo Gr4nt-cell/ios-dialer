@@ -94,3 +94,26 @@ incoming call.
 - Google Play allows call-log and phone permissions only for apps that are the
   default dialer — this app qualifies once it's set as default, but you'll need
   to fill in Play's permissions declaration form.
+
+## Google Play requirements (checked on every build)
+
+Both GitHub builds (APK on every push, AAB on demand) run `scripts/play-check.js` after
+compiling. The build **fails** if the app would be flagged by Play, and the report is published
+next to the downloads as `play-check.txt` (and on each run's summary page):
+
+| Requirement | How it's met | Checked |
+| --- | --- | --- |
+| Target SDK ≥ Play's minimum (35; 36 next) | Expo SDK default | fail below 35, warn below 36 |
+| Code obfuscation ≥ 25% ("DEX code optimisation") | R8 on, via `plugins/withReleaseOptimizations.js` | fail below 25% |
+| No orientation / resize restrictions (Android 16 large screens) | `"orientation": "default"`; phones lock portrait at runtime | fail on fixed orientation |
+| Build number always increases | `versionCode` = 100 + commit count (`app.config.js`) | fail if ≤ 1 |
+| No advertising ID | no ad / analytics SDKs | warn if present |
+| No internet (privacy policy promise) | `blockedPermissions` in app.json | warn if present |
+| Edge-to-edge | `edgeToEdgeEnabled`; app code avoids deprecated window calls | info only — remaining calls are inside React Native / AndroidX |
+
+To use the same checks in another Expo / React Native app, copy `scripts/play-check.js`,
+`plugins/withReleaseOptimizations.js`, `app.config.js` and the "Set the build number" and
+"Google Play readiness check" steps from `.github/workflows/`.
+
+When Google raises a requirement (usually the target SDK each August), update `MIN_TARGET_SDK` /
+`NEXT_TARGET_SDK` at the top of `scripts/play-check.js`, and the Expo SDK if needed.
