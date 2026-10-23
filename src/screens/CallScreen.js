@@ -569,19 +569,57 @@ export default function CallScreen() {
 
       {front}
 
-      {/* call waiting card */}
+      {/* call waiting: a liquid-glass pill with Reject and Answer */}
       {ringing ? (
-        <Glass dark radius={28} style={styles.waiting}>
-          <Text style={{ color: DIM, fontSize: 13 }}>{tr('Incoming call')}</Text>
-          <Text style={{ color: WHITE, fontSize: 22, fontWeight: '600', marginTop: 2 }} numberOfLines={1}>
-            {identify(ringing).name}
+        <View style={{ marginHorizontal: 14, marginTop: 20 }}>
+          <Glass dark radius={40} style={styles.waitingPill}>
+            <View style={{ flex: 1, paddingLeft: 8, paddingRight: 6 }}>
+              <Text style={{ color: DIM, fontSize: 12 }}>{tr('Incoming call')}</Text>
+              <Text style={{ color: WHITE, fontSize: 18, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
+                {identify(ringing).name}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                tap();
+                Dialer.reject(ringing.id, null);
+              }}
+              hitSlop={6}
+            >
+              {({ pressed }) => (
+                <View style={[styles.waitingBtn, { backgroundColor: RED, transform: [{ scale: pressed ? 0.92 : 1 }] }]}>
+                  <Ionicons name="call" size={24} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
+                </View>
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                tap();
+                // answering puts the current call on hold where the network allows it
+                if (primary.canHold) Dialer.holdAndAnswer(ringing.id);
+                else Dialer.endAndAnswer(ringing.id);
+              }}
+              onLongPress={() => {
+                tap();
+                Dialer.endAndAnswer(ringing.id);
+              }}
+              delayLongPress={450}
+              hitSlop={6}
+              style={{ marginLeft: 10 }}
+            >
+              {({ pressed }) => (
+                <View style={[styles.waitingBtn, { backgroundColor: GREEN, transform: [{ scale: pressed ? 0.92 : 1 }] }]}>
+                  <Ionicons name="call" size={24} color={WHITE} />
+                </View>
+              )}
+            </Pressable>
+          </Glass>
+          <Text style={{ color: DIM, fontSize: 12, textAlign: 'center', marginTop: 8 }}>
+            {primary.canHold
+              ? tr('Answer puts your current call on hold · hold Answer to end it instead')
+              : tr('Answering ends your current call')}
           </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: 14 }}>
-            <CallButton size={56} icon="close" label={tr('End & Accept')} color={RED} onPress={() => Dialer.endAndAnswer(ringing.id)} />
-            <CallButton size={56} icon="call" hangup label={tr('Decline')} color="rgba(255,255,255,0.24)" onPress={() => Dialer.reject(ringing.id, null)} />
-            {primary.canHold ? <CallButton size={56} icon="pause" label={tr('Hold & Accept')} color={GREEN} onPress={() => Dialer.holdAndAnswer(ringing.id)} /> : null}
-          </View>
-        </Glass>
+        </View>
       ) : null}
 
       <View style={{ flex: 1 }} />
@@ -717,7 +755,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   heldStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11 },
-  waiting: { alignItems: 'center', marginHorizontal: 16, marginTop: 22, padding: 14 },
+  waitingPill: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingLeft: 14, paddingRight: 8 },
+  waitingBtn: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
   grid: { alignItems: 'center' },
   gridRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginBottom: 16 },
   answerRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 36 },
