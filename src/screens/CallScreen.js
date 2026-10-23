@@ -236,30 +236,28 @@ function BigAvatar({ name, image, size = 104, pulse }) {
 
 function CallButton({ icon, label, onPress, on, disabled, color, size = 76, iconSize, hangup }) {
   return (
-    <Pressable onPress={onPress} disabled={disabled} style={{ alignItems: 'center', width: Math.max(COL, size + 26), opacity: disabled ? 0.35 : 1 }}>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityLabel={label}
+      style={{ alignItems: 'center', width: Math.max(COL, size + 26), opacity: disabled ? 0.35 : 1 }}
+    >
       {({ pressed }) => (
-        <>
-          <Glass
-            dark
-            radius={size / 2}
-            pressed={pressed}
-            tint={color || (on ? '#FFFFFF' : 'rgba(255,255,255,0.16)')}
-            tintOpacity={color ? 0.95 : 1}
-            style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Ionicons
-              name={icon}
-              size={iconSize || size * 0.38}
-              color={on && !color ? '#111' : WHITE}
-              style={hangup ? { transform: [{ rotate: '135deg' }] } : null}
-            />
-          </Glass>
-          {label ? (
-            <Text style={{ color: WHITE, fontSize: 13, marginTop: 7, fontWeight: '500' }} numberOfLines={1}>
-              {label}
-            </Text>
-          ) : null}
-        </>
+        <Glass
+          dark
+          radius={size / 2}
+          pressed={pressed}
+          tint={color || (on ? '#FFFFFF' : 'rgba(255,255,255,0.16)')}
+          tintOpacity={color ? 0.95 : 1}
+          style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Ionicons
+            name={icon}
+            size={iconSize || size * 0.38}
+            color={on && !color ? '#111' : WHITE}
+            style={hangup ? { transform: [{ rotate: '135deg' }] } : null}
+          />
+        </Glass>
       )}
     </Pressable>
   );
@@ -269,14 +267,11 @@ function CallButton({ icon, label, onPress, on, disabled, color, size = 76, icon
 function EndKey({ onPress }) {
   const tr = useT();
   return (
-    <Pressable onPress={onPress} style={{ width: COL, alignItems: 'center' }}>
+    <Pressable onPress={onPress} accessibilityLabel={tr('End')} style={{ width: COL, alignItems: 'center' }}>
       {({ pressed }) => (
-        <>
-          <Glass dark radius={26} pressed={pressed} tint={RED} tintOpacity={0.95} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="call" size={32} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
-          </Glass>
-          <Text style={{ color: WHITE, fontSize: 13, marginTop: 7, fontWeight: '500' }}>{tr('End')}</Text>
-        </>
+        <Glass dark radius={26} pressed={pressed} tint={RED} tintOpacity={0.95} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="call" size={32} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
+        </Glass>
       )}
     </Pressable>
   );
@@ -284,14 +279,11 @@ function EndKey({ onPress }) {
 
 function SmallPill({ icon, label, onPress }) {
   return (
-    <Pressable onPress={onPress} style={{ alignItems: 'center', width: 110 }}>
+    <Pressable onPress={onPress} accessibilityLabel={label} style={{ alignItems: 'center', width: 110 }}>
       {({ pressed }) => (
-        <>
-          <Glass dark radius={26} pressed={pressed} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name={icon} size={21} color={WHITE} />
-          </Glass>
-          <Text style={{ color: WHITE, fontSize: 13, marginTop: 6 }}>{label}</Text>
-        </>
+        <Glass dark radius={26} pressed={pressed} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={21} color={WHITE} />
+        </Glass>
       )}
     </Pressable>
   );
