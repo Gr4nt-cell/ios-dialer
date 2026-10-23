@@ -82,7 +82,7 @@ def build_zip(entries):
             padlen = (-data_at) % align
             if padlen:
                 # Android's zipalign extra field (0xd935) carries the padding
-                if padlen < 6:
+                while padlen < 6:
                     padlen += align
                 extra = struct.pack('<HHH', 0xD935, padlen - 4, align) + b'\0' * (padlen - 6)
         out += b'PK\x03\x04' + struct.pack('<HHHHHIIIHH', e['ver_need'], e['flags'], e['method'],

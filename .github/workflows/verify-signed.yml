@@ -16,8 +16,11 @@ jobs:
       - name: APK is zip-aligned
         run: $BT/zipalign -c -P 16 4 ios-dialer-signed.apk
       - name: APK signature verifies
+        if: always()
         run: $BT/apksigner verify --verbose --print-certs ios-dialer-signed.apk | tee -a "$GITHUB_STEP_SUMMARY"
       - name: APK is signed by the upload key
+        if: always()
         run: $BT/apksigner verify --print-certs ios-dialer-signed.apk | grep -q "CN=Gr4nt"
       - name: AAB signature verifies
+        if: always()
         run: jarsigner -verify -strict ios-dialer-signed.aab | tee -a "$GITHUB_STEP_SUMMARY"
