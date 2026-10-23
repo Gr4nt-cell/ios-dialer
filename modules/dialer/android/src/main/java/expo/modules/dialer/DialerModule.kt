@@ -26,6 +26,7 @@ import org.json.JSONObject
 
 private const val REQ_ROLE = 7311
 private const val REQ_RINGTONE = 7312
+private const val EXTRA_HANDLED = "expo.modules.dialer.DIAL_HANDLED"
 
 class DialerModule : Module() {
   private var rolePromise: Promise? = null
@@ -40,10 +41,39 @@ class DialerModule : Module() {
     telecom().defaultDialerPackage == ctx.packageName
   } catch (_: Exception) { false }
 
+  // the number a DIAL / VIEW tel: / CALL_BUTTON intent carries; "" opens an empty keypad,
+  // null means the intent isn't a request to dial
+  private fun dialNumber(intent: Intent): String? {
+    val action = intent.action ?: return null
+    if (action != Intent.ACTION_DIAL && action != Intent.ACTION_VIEW && action != Intent.ACTION_CALL_BUTTON) return null
+    val data = intent.data
+    if (data == null) return if (action == Intent.ACTION_VIEW) null else ""
+    if (!"tel".equals(data.scheme, ignoreCase = true)) return null
+    return (data.schemeSpecificPart ?: "").removePrefix("//").trim()
+  }
+
   override fun definition() = ModuleDefinition {
     Name("Dialer")
 
-    Events("onCallsChanged")
+    Events("onCallsChanged", "onDialIntent")
+
+    // ---------- opened to dial a number (tel: links and "call" buttons in other apps) ----------
+    // React Native's Linking only sees VIEW links; most apps send DIAL, so the module reads the
+    // intent itself, both when the app starts and when it's already open.
+    Function("takeLaunchNumber") { ->
+      val intent = appContext.currentActivity?.intent ?: return@Function null
+      if (intent.getBooleanExtra(EXTRA_HANDLED, false)) return@Function null
+      val number = dialNumber(intent) ?: return@Function null
+      intent.putExtra(EXTRA_HANDLED, true)
+      number
+    }
+
+    OnNewIntent { intent ->
+      val number = dialNumber(intent) ?: return@OnNewIntent
+      intent.putExtra(EXTRA_HANDLED, true)
+      appContext.currentActivity?.intent = intent
+      try { sendEvent("onDialIntent", mapOf("number" to number)) } catch (_: Exception) {}
+    }
 
     OnCreate {
       (appContext.reactContext?.applicationContext as? Application)?.let { CallManager.hook(it) }

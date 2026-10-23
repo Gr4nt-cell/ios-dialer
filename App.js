@@ -103,8 +103,13 @@ function Main() {
   const [prefill, setPrefill] = useState(null);
   const keyCounter = useRef(0);
 
+  // set when another app opened us to dial, so the saved tab doesn't replace the keypad
+  const openedToDial = useRef(false);
+
   useEffect(() => {
-    load('lastTab', 'keypad').then((saved) => setTabState((cur) => (cur === 'keypad' ? saved : cur)));
+    load('lastTab', 'keypad').then((saved) => {
+      if (!openedToDial.current) setTabState((cur) => (cur === 'keypad' ? saved : cur));
+    });
   }, []);
 
   // the Haptics switch in Settings also governs the ticks lists give
@@ -124,20 +129,31 @@ function Main() {
 
   const pop = useCallback(() => setStack((s) => s.slice(0, -1)), []);
 
-  // Opened from a tel: link (another app, browser, etc.)
+  // Opened to dial a number: a tapped phone number or call button in another app (DIAL / tel:).
+  // The keypad comes up with the number filled in, ready to call.
+  const latest = useRef({ live, setMinimized });
+  latest.current = { live, setMinimized };
   useEffect(() => {
-    const handle = (url) => {
-      const number = parseTelUrl(url);
-      if (number) {
-        setStack([]);
-        setTabState('keypad');
-        setPrefill({ value: number, ts: Date.now() });
-      }
+    const show = (number) => {
+      if (number == null) return;
+      openedToDial.current = true;
+      setStack([]);
+      setTab('keypad');
+      if (latest.current.live && latest.current.live.length && latest.current.setMinimized) latest.current.setMinimized(true);
+      if (number) setPrefill({ value: number, ts: Date.now() });
     };
-    Linking.getInitialURL().then(handle).catch(() => {});
-    const sub = Linking.addEventListener('url', (e) => handle(e.url));
-    return () => sub.remove();
-  }, []);
+    const subs = [];
+    if (Dialer && Dialer.takeLaunchNumber) {
+      try {
+        show(Dialer.takeLaunchNumber());
+      } catch {}
+      subs.push(Dialer.addListener('onDialIntent', (e) => show(e && e.number != null ? e.number : null)));
+    } else {
+      Linking.getInitialURL().then((url) => show(parseTelUrl(url))).catch(() => {});
+      subs.push(Linking.addEventListener('url', (e) => show(parseTelUrl(e.url))));
+    }
+    return () => subs.forEach((x) => x.remove());
+  }, [setTab]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
