@@ -1,6 +1,6 @@
 # Signed builds — Phone (com.gr4nt.dialer)
 
-Version **1.0.2**, versionCode **172**, built from commit cbbae72 (tapped numbers open on the keypad).
+Version **1.0.2**, versionCode **173**, built from commit cbbae72 (tapped numbers open on the keypad).
 
 Both files are signed with the upload key (CN=Gr4nt, OU=Phone, O=Gr4nt, C=GH,
 SHA-256 A4:A9:FD:12:7D:D7:49:62:6D:55:1A:7E:62:A3:B9:F1:1B:04:E7:51:EB:1D:8A:E2:FB:4A:75:21:00:BF:1B:7F).
