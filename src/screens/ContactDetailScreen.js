@@ -4,7 +4,6 @@ import { Pressable } from '../components/Touch';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import * as Contacts from 'expo-contacts/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { isMissedType, useData } from '../DataContext';
@@ -263,14 +262,8 @@ export default function ContactDetailScreen({ route }) {
       },
     ]);
 
-  const edit = async () => {
-    try {
-      await Contacts.presentFormAsync(contact.id);
-    } catch {
-      // ignore
-    }
-    refreshContacts(false);
-  };
+  // edited here rather than in the system contacts app
+  const edit = () => nav.push({ name: 'newContact', contactId: contact.id });
 
   return (
     <View style={{ flex: 1 }}>

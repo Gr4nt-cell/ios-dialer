@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { useActionSheet } from '../components/ActionSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { useData } from '../DataContext';
+import { contactPhoto, prettyLabel } from '../phone';
 import { useNav } from '../nav';
 import { Avatar, IconButton, SheetHeader } from '../components/ui';
 import { useT } from '../i18n';
@@ -64,19 +65,35 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
   );
 }
 
+/**
+ * New contact, and the editor for an existing one: pass route.contactId to
+ * edit. Editing in the app rather than handing off to the system contacts
+ * form keeps people here, and keeps the look consistent.
+ */
 export default function NewContactScreen({ route }) {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const nav = useNav();
-  const { refreshContacts } = useData();
-  const [firstName, setFirst] = useState('');
-  const [lastName, setLast] = useState('');
-  const [company, setCompany] = useState('');
-  const [phones, setPhones] = useState(route.number ? [{ label: 'mobile', value: route.number }] : []);
-  const [emails, setEmails] = useState([]);
+  const { refreshContacts, findContact } = useData();
+  const editing = !!route.contactId;
+  const existing = useMemo(() => (route.contactId ? findContact(route.contactId) : null), [route.contactId, findContact]);
+
+  const [firstName, setFirst] = useState(() => (existing && existing.firstName) || '');
+  const [lastName, setLast] = useState(() => (existing && existing.lastName) || '');
+  const [company, setCompany] = useState(() => (existing && existing.company) || '');
+  const [phones, setPhones] = useState(() => {
+    if (existing && existing.phoneNumbers && existing.phoneNumbers.length)
+      return existing.phoneNumbers.map((n) => ({ label: prettyLabel(n.label) || 'mobile', value: n.number || '' }));
+    return route.number ? [{ label: 'mobile', value: route.number }] : [];
+  });
+  const [emails, setEmails] = useState(() =>
+    existing && existing.emails ? existing.emails.map((e) => ({ label: prettyLabel(e.label) || 'home', value: e.email || '' })) : []
+  );
   const [saving, setSaving] = useState(false);
-  const [photo, setPhoto] = useState(null);
+  const [photo, setPhoto] = useState(() => (existing ? contactPhoto(existing, true) : null));
+  // a photo the user swapped in during this edit, so an untouched one is left alone
+  const [photoChanged, setPhotoChanged] = useState(false);
   const sheet = useActionSheet();
 
   const pick = async (camera) => {
@@ -87,7 +104,10 @@ export default function NewContactScreen({ route }) {
       }
       const opts = { mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.92 };
       const res = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
-      if (!res.canceled && res.assets && res.assets[0]) setPhoto(res.assets[0].uri);
+      if (!res.canceled && res.assets && res.assets[0]) {
+        setPhoto(res.assets[0].uri);
+        setPhotoChanged(true);
+      }
     } catch {
       // ignore
     }
@@ -98,7 +118,15 @@ export default function NewContactScreen({ route }) {
       { text: tr('Choose Photo'), onPress: () => pick(false) },
       { text: tr('Take Photo'), onPress: () => pick(true) },
     ];
-    if (photo) options.push({ text: tr('Remove Photo'), destructive: true, onPress: () => setPhoto(null) });
+    if (photo)
+      options.push({
+        text: tr('Remove Photo'),
+        destructive: true,
+        onPress: () => {
+          setPhoto(null);
+          setPhotoChanged(true);
+        },
+      });
     sheet.show({ title: tr('Contact Photo'), options });
   };
 
@@ -120,18 +148,33 @@ export default function NewContactScreen({ route }) {
       if (numbers.length) data.phoneNumbers = numbers;
       const mails = emails.filter((e) => e.value.trim()).map((e) => ({ label: e.label, email: e.value.trim() }));
       if (mails.length) data.emails = mails;
-      const id = await Contacts.addContactAsync(data);
-      if (photo && id && Dialer && Dialer.setContactPhoto) {
+
+      let id = route.contactId;
+      if (editing) {
+        // the native side replaces the fields it is given, so an emptied list
+        // has to be sent as an empty array rather than left out
+        await Contacts.updateContactAsync({
+          ...data,
+          id,
+          phoneNumbers: numbers,
+          emails: mails,
+          company: company.trim(),
+        });
+      } else {
+        id = await Contacts.addContactAsync(data);
+      }
+
+      if ((!editing ? !!photo : photoChanged) && id && Dialer && Dialer.setContactPhoto) {
         try {
           await Dialer.setContactPhoto(String(id), photo, null);
         } catch {
-          // contact is saved; photo is optional
+          // the contact itself is saved; the photo is a separate write
         }
       }
       await refreshContacts(false);
       nav.pop();
     } catch (e) {
-      Alert.alert(tr('Couldn’t Save Contact'), e && e.message ? e.message : 'Please try again.');
+      Alert.alert(editing ? tr('Couldn’t Save Changes') : tr('Couldn’t Save Contact'), e && e.message ? e.message : 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -139,7 +182,11 @@ export default function NewContactScreen({ route }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <SheetHeader title={tr('New Contact')} left={<IconButton glass name="close" onPress={nav.pop} />} right={<IconButton prominent name="checkmark" onPress={save} disabled={!canSave || saving} />} />
+      <SheetHeader
+        title={editing ? tr('Edit Contact') : tr('New Contact')}
+        left={<IconButton glass name="close" onPress={nav.pop} />}
+        right={<IconButton prominent name="checkmark" onPress={save} disabled={!canSave || saving} />}
+      />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
           <View style={{ alignItems: 'center', paddingVertical: 16 }}>
@@ -152,7 +199,7 @@ export default function NewContactScreen({ route }) {
           </View>
           <View style={[styles.group, { backgroundColor: t.card }]}>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
-              <Field value={firstName} onChangeText={setFirst} placeholder={tr('First name')} autoFocus={!route.number} />
+              <Field value={firstName} onChangeText={setFirst} placeholder={tr('First name')} autoFocus={!route.number && !editing} />
             </View>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
               <Field value={lastName} onChangeText={setLast} placeholder={tr('Last name')} />

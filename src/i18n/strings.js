@@ -178,6 +178,8 @@ export const STRINGS = {
   'Call Screen': { es: 'Pantalla de llamada', zh: '通话界面', th: 'หน้าจอโทร', pl: 'Ekran połączenia', ja: '通話画面', it: 'Schermata chiamata' },
   'Gradient': { es: 'Degradado', zh: '渐变', th: 'ไล่สี', pl: 'Gradient', ja: 'グラデーション', it: 'Sfumatura' },
   'Plain': { es: 'Liso', zh: '纯色', th: 'พื้นเรียบ', pl: 'Jednolite', ja: '単色', it: 'Tinta unita' },
+  'Edit Contact': { es: 'Editar contacto', zh: '编辑联系人', th: 'แก้ไขรายชื่อ', pl: 'Edytuj kontakt', ja: '連絡先を編集', it: 'Modifica contatto' },
+  'Couldn’t Save Changes': { es: 'No se pudieron guardar los cambios', zh: '无法保存更改', th: 'บันทึกการเปลี่ยนแปลงไม่สำเร็จ', pl: 'Nie udało się zapisać zmian', ja: '変更を保存できませんでした', it: 'Impossibile salvare le modifiche' },
   'Depth Adjustment': { es: 'Ajuste de profundidad', zh: '景深调整', th: 'ปรับความลึก', pl: 'Regulacja głębi', ja: '深度の調整', it: 'Regolazione profondità' },
   'Size': { es: 'Tamaño', zh: '大小', th: 'ขนาด', pl: 'Rozmiar', ja: 'サイズ', it: 'Dimensione' },
   'Move Up / Down': { es: 'Mover arriba / abajo', zh: '上下移动', th: 'เลื่อนขึ้น / ลง', pl: 'Przesuń w górę / w dół', ja: '上下に移動', it: 'Sposta su / giù' },
