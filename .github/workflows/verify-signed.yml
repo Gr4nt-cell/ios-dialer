@@ -1,0 +1,23 @@
+name: Verify signed builds
+
+# Checks the signed APK and AAB on the signed-builds branch with the Android SDK's own tools.
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: signed-builds
+      - name: Find build tools
+        run: echo "BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)" >> "$GITHUB_ENV"
+      - name: APK is zip-aligned
+        run: $BT/zipalign -c -P 16 4 ios-dialer-signed.apk
+      - name: APK signature verifies
+        run: $BT/apksigner verify --verbose --print-certs ios-dialer-signed.apk | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: APK is signed by the upload key
+        run: $BT/apksigner verify --print-certs ios-dialer-signed.apk | grep -q "CN=Gr4nt"
+      - name: AAB signature verifies
+        run: jarsigner -verify -strict ios-dialer-signed.aab | tee -a "$GITHUB_STEP_SUMMARY"
