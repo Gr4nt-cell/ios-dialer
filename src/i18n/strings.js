@@ -180,6 +180,8 @@ export const STRINGS = {
   'Plain': { es: 'Liso', zh: '纯色', th: 'พื้นเรียบ', pl: 'Jednolite', ja: '単色', it: 'Tinta unita' },
   'Add to Existing Contact': { es: 'Añadir a un contacto', zh: '添加到现有联系人', th: 'เพิ่มในรายชื่อที่มีอยู่', pl: 'Dodaj do istniejącego kontaktu', ja: '既存の連絡先に追加', it: 'Aggiungi a un contatto' },
   'Add to Contact': { es: 'Añadir al contacto', zh: '添加到联系人', th: 'เพิ่มในรายชื่อ', pl: 'Dodaj do kontaktu', ja: '連絡先に追加', it: 'Aggiungi al contatto' },
+  'Caller Announcement': { es: 'Anuncio de llamada', zh: '来电播报', th: 'ประกาศผู้โทร', pl: 'Zapowiedź dzwoniącego', ja: '着信アナウンス', it: 'Annuncio chiamante' },
+  'Preview': { es: 'Vista previa', zh: '预览', th: 'ตัวอย่าง', pl: 'Podgląd', ja: 'プレビュー', it: 'Anteprima' },
   'Edit Contact': { es: 'Editar contacto', zh: '编辑联系人', th: 'แก้ไขรายชื่อ', pl: 'Edytuj kontakt', ja: '連絡先を編集', it: 'Modifica contatto' },
   'Couldn’t Save Changes': { es: 'No se pudieron guardar los cambios', zh: '无法保存更改', th: 'บันทึกการเปลี่ยนแปลงไม่สำเร็จ', pl: 'Nie udało się zapisać zmian', ja: '変更を保存できませんでした', it: 'Impossibile salvare le modifiche' },
   'Depth Adjustment': { es: 'Ajuste de profundidad', zh: '景深调整', th: 'ปรับความลึก', pl: 'Regulacja głębi', ja: '深度の調整', it: 'Regolazione profondità' },

@@ -148,6 +148,16 @@ export default function SettingsScreen() {
       // ignore
     }
   };
+  // caller announcement lives in the native prefs, beside the island settings
+  const [announce, setAnnounceState] = useState(() =>
+    Dialer && Dialer.getAnnouncePrefs ? Dialer.getAnnouncePrefs() : { on: false, repeat: 2, unknown: false }
+  );
+  const setAnnounce = (patch) => {
+    const next = { ...announce, ...patch };
+    setAnnounceState(next);
+    if (Dialer && Dialer.setAnnouncePrefs) Dialer.setAnnouncePrefs(!!next.on, Number(next.repeat) || 2, !!next.unknown);
+  };
+
   const setOverlayPref = (patch) => {
     const next = { ...overlay, ...patch };
     setOverlay(next);
@@ -539,6 +549,57 @@ export default function SettingsScreen() {
           <Cell value="Keypad Haptics" right={toggle('haptics')} />
         </Group>
         <Footer>{tr('Plays a tone and a light tap for each key you press.')}</Footer>
+
+        <SectionTitle>{tr('Caller Announcement')}</SectionTitle>
+        <Group>
+          <Cell
+            value="Say Who's Calling"
+            right={
+              <Switch
+                value={!!announce.on}
+                onValueChange={(v) => setAnnounce({ on: v })}
+                trackColor={{ true: t.green }}
+                thumbColor="#fff"
+              />
+            }
+          />
+          {announce.on ? (
+            <>
+              <Cell
+                value="Announce Unknown Numbers"
+                right={
+                  <Switch
+                    value={!!announce.unknown}
+                    onValueChange={(v) => setAnnounce({ unknown: v })}
+                    trackColor={{ true: t.green }}
+                    thumbColor="#fff"
+                  />
+                }
+              />
+              <Cell
+                value="Times"
+                right={
+                  <Stepper
+                    value={Number(announce.repeat) || 2}
+                    min={1}
+                    max={5}
+                    onChange={(v) => setAnnounce({ repeat: v })}
+                    format={(v) => `${v}\u00d7`}
+                  />
+                }
+              />
+              <Cell
+                value={tr('Preview')}
+                color={t.blue}
+                onPress={() => Dialer && Dialer.previewAnnounce && Dialer.previewAnnounce('Call from Ella')}
+              />
+            </>
+          ) : null}
+        </Group>
+        <Footer>
+          Speaks the caller's name over the ringtone, using your phone's own voice — nothing is sent anywhere. It
+          follows the ring volume and stays quiet on silent or vibrate.
+        </Footer>
 
         <SectionTitle>{tr('Voicemail')}</SectionTitle>
         <Group>

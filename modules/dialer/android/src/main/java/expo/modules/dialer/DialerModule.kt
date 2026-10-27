@@ -416,6 +416,21 @@ class DialerModule : Module() {
       if (id == null) false else ContactTools.addNumber(ctx, id, label, number)
     }
 
+    // ---------- caller announcement ----------
+    Function("getAnnouncePrefs") { ->
+      mapOf(
+        "on" to Announcer.enabled(ctx),
+        "repeat" to Announcer.repeats(ctx),
+        "unknown" to Announcer.announcesUnknown(ctx),
+      )
+    }
+
+    Function("setAnnouncePrefs") { on: Boolean, repeat: Int, unknown: Boolean ->
+      Announcer.setPrefs(ctx, on, repeat, unknown)
+    }
+
+    Function("previewAnnounce") { line: String -> Announcer.preview(ctx, line) }
+
     Function("hasWhatsApp") { -> ContactTools.whatsAppPackage(ctx) != null }
 
     Function("openWhatsApp") { contactId: String?, number: String, kind: String ->
