@@ -15,7 +15,6 @@ import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
 import { BlurTargetView, FlatBackdropContext, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
-import { primeCache } from './src/lookup';
 import FavoritesScreen from './src/screens/FavoritesScreen';
 import RecentsScreen from './src/screens/RecentsScreen';
 import ContactsScreen from './src/screens/ContactsScreen';

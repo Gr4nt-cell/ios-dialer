@@ -16,6 +16,11 @@
   <uses-permission android:name="android.permission.VIBRATE" />
 
   <queries>
+    <!-- Android 11+ hides other packages: without this the speech recogniser
+         reports itself unavailable even when one is installed. -->
+    <intent>
+      <action android:name="android.speech.RecognitionService" />
+    </intent>
     <package android:name="com.whatsapp" />
     <package android:name="com.whatsapp.w4b" />
   </queries>

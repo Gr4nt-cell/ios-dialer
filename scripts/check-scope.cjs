@@ -65,18 +65,25 @@ function declared(src) {
   }
   for (const m of src.matchAll(/function\s*[A-Za-z0-9_$]*\s*\(([^)]*)\)/g)) {
     for (const part of m[1].split(',')) {
-      const token = part.trim().split(/[:=]/)[0].replace(/[{}[\].]/g, ' ').trim();
+      const token = part.trim().split(/[:=]/)[0].replace(/[{}[\]().]/g, ' ').trim();
       token.split(/\s+/).forEach((t) => t && names.add(t));
     }
   }
   for (const m of src.matchAll(/\(([^)]*)\)\s*=>/g)) {
     for (const part of m[1].split(',')) {
-      const token = part.trim().split(/[:=]/)[0].replace(/[{}[\].]/g, ' ').trim();
+      const token = part.trim().split(/[:=]/)[0].replace(/[{}[\]().]/g, ' ').trim();
       token.split(/\s+/).forEach((t) => t && names.add(t));
     }
   }
   for (const m of src.matchAll(/([A-Za-z0-9_$]+)\s*=>/g)) names.add(m[1]);
   for (const m of src.matchAll(/catch\s*\(\s*([A-Za-z0-9_$]+)/g)) names.add(m[1]);
+  // any destructured or named binding anywhere, including inside callbacks
+  for (const m of src.matchAll(/\{\s*([A-Za-z0-9_$,\s:]+?)\s*\}\s*(?:=|=>|\))/g)) {
+    for (const part of m[1].split(',')) {
+      const token = part.trim().split(':').pop().trim();
+      if (token) names.add(token);
+    }
+  }
   return names;
 }
 
@@ -108,6 +115,7 @@ for (const f of files) {
   const src = fs.readFileSync(f, 'utf8');
   const have = declared(src);
   const used = new Set();
+  const localUses = new Set();
 
   // JSX components and bare identifier reads that look like module-level names
   for (const m of src.matchAll(/<([A-Z][A-Za-z0-9_$]*)/g)) used.add(m[1]);
@@ -115,12 +123,24 @@ for (const f of files) {
   for (const name of exportedSomewhere.keys()) {
     if (new RegExp(`(^|[^.\\w'"\`])${name}\\s*\\(`).test(src)) used.add(name);
   }
+  // locals too: anything called as `thing.method(` must come from somewhere in
+  // this file. A hook result used in a screen that never calls the hook is the
+  // shape of bug this catches.
+  for (const m of src.matchAll(/(^|[^.\w'"`$])([a-z][A-Za-z0-9_$]{2,})\.[a-zA-Z_$][A-Za-z0-9_$]*\s*\(/g)) {
+    if (m[2] !== 'this') localUses.add(m[2]);
+  }
 
   for (const name of used) {
     if (have.has(name) || GLOBALS.has(name)) continue;
     if (!exportedSomewhere.has(name)) continue; // not ours: a local or a global we don't track
     problems++;
     console.log(`${f}: uses "${name}" but never imports it (exported by ${exportedSomewhere.get(name)})`);
+  }
+
+  for (const name of localUses) {
+    if (have.has(name) || GLOBALS.has(name) || used.has(name)) continue;
+    problems++;
+    console.log(`${f}: uses "${name}.…()" but "${name}" is never declared or imported here`);
   }
 }
 
