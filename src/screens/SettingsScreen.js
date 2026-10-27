@@ -12,6 +12,7 @@ import { useNav } from '../nav';
 import { cleanNumber, contactName, contactPhoto, formatNumber } from '../phone';
 import { Cell, Group, IconButton, Segmented, SheetHeader, TextButton } from '../components/ui';
 import { LANGS, deviceLanguage, useT } from '../i18n';
+import { PROVIDERS, clearCache, lookupReady } from '../lookup';
 import LanguageWheel from '../components/LanguageWheel';
 import DepthPreview from '../components/DepthPreview';
 import { DEPTH_DEFAULTS, depthAvailable } from '../depth';
