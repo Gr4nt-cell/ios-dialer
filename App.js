@@ -38,6 +38,7 @@ const ROUTES = {
   newContact: NewContactScreen,
   settings: SettingsScreen,
   pickFavorite: PickFavoriteScreen,
+  pickContact: PickFavoriteScreen, // the same picker, choosing where a number goes
   recordings: RecordingsScreen,
   privacyPolicy: PrivacyPolicyScreen,
   statistics: StatisticsScreen,

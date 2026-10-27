@@ -175,7 +175,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                       </View>
                     ) : null}
                   </View>
-                  <Text style={[styles.label, { color }]} numberOfLines={1}>
+                  <Text style={[styles.label, { color }]} numberOfLines={1} allowFontScaling={false}>
                     {tr(tab.label)}
                   </Text>
                 </View>

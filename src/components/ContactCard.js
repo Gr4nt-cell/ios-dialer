@@ -55,13 +55,13 @@ export default function ContactCard({ width, height, name, label, image, colorKe
               <>
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.65)']} style={styles.shade} pointerEvents="none" />
                 <View style={styles.overlayText}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }} numberOfLines={1}>
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }} numberOfLines={1} allowFontScaling={false}>
                     {name.split(' ')[0]}
                   </Text>
                   {label ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
                       <Ionicons name="call" size={10} color="rgba(255,255,255,0.8)" style={{ marginRight: 3 }} />
-                      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }} numberOfLines={1}>
+                      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }} numberOfLines={1} allowFontScaling={false}>
                         {label}
                       </Text>
                     </View>

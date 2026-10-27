@@ -10,7 +10,11 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds.Email
+import android.provider.ContactsContract.CommonDataKinds.Organization
+import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.CommonDataKinds.Photo
+import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.Data
 import android.provider.ContactsContract.RawContacts
 import android.telephony.PhoneNumberUtils
@@ -287,4 +291,196 @@ object ContactTools {
   fun writeJpeg(bmp: Bitmap, file: File) {
     FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) }
   }
+
+  // ---------- writing contacts ----------
+  //
+  // expo-contacts raises on both adding and updating here (its Android update path
+  // is unreliable and its insert refuses some accounts), which is what surfaced as
+  // "Couldn't Save". These go through the content provider directly, the same way
+  // the photo write above already does.
+
+  private fun phoneType(label: String?): Int = when (label?.lowercase(Locale.US)) {
+    "mobile", "cell" -> Phone.TYPE_MOBILE
+    "home" -> Phone.TYPE_HOME
+    "work", "office" -> Phone.TYPE_WORK
+    "main" -> Phone.TYPE_MAIN
+    "fax" -> Phone.TYPE_FAX_WORK
+    else -> Phone.TYPE_OTHER
+  }
+
+  private fun emailType(label: String?): Int = when (label?.lowercase(Locale.US)) {
+    "home" -> Email.TYPE_HOME
+    "work", "office" -> Email.TYPE_WORK
+    else -> Email.TYPE_OTHER
+  }
+
+  /** The raw contact we may write to: ours or the device account, never a messenger's. */
+  private fun writableRaw(ctx: Context, contactId: Long): Long? =
+    rawContacts(ctx, contactId).filter { it.accountType !in MESSENGER_ACCOUNTS }.sortedBy { rank(it) }.firstOrNull()?.id
+
+  /**
+   * Creates a contact, or replaces the name, numbers and emails of an existing one.
+   * Returns the contact id, or -1 if the write failed.
+   */
+  fun saveContact(
+    ctx: Context,
+    contactId: Long?,
+    firstName: String?,
+    lastName: String?,
+    company: String?,
+    phones: List<Map<String, Any?>>,
+    emails: List<Map<String, Any?>>,
+  ): Long {
+    val cr = ctx.contentResolver
+    val first = firstName?.trim().orEmpty()
+    val last = lastName?.trim().orEmpty()
+    val org = company?.trim().orEmpty()
+    val display = listOf(first, last).filter { it.isNotEmpty() }.joinToString(" ").ifEmpty { org }
+
+    val numbers = phones.mapNotNull { p ->
+      val n = (p["number"] as? String)?.trim().orEmpty()
+      if (n.isEmpty()) null else (p["label"] as? String) to n
+    }
+    val mails = emails.mapNotNull { e ->
+      val a = (e["email"] as? String)?.trim().orEmpty()
+      if (a.isEmpty()) null else (e["label"] as? String) to a
+    }
+
+    val ops = ArrayList<ContentProviderOperation>()
+
+    if (contactId == null) {
+      // a new contact goes in the local account, so no sync adapter can refuse it
+      ops.add(
+        ContentProviderOperation.newInsert(RawContacts.CONTENT_URI)
+          .withValue(RawContacts.ACCOUNT_TYPE, null)
+          .withValue(RawContacts.ACCOUNT_NAME, null)
+          .build(),
+      )
+      if (display.isNotEmpty() || first.isNotEmpty() || last.isNotEmpty()) {
+        ops.add(
+          ContentProviderOperation.newInsert(Data.CONTENT_URI)
+            .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+            .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
+            .withValue(StructuredName.DISPLAY_NAME, display)
+            .withValue(StructuredName.GIVEN_NAME, first.ifEmpty { null })
+            .withValue(StructuredName.FAMILY_NAME, last.ifEmpty { null })
+            .build(),
+        )
+      }
+      if (org.isNotEmpty()) {
+        ops.add(
+          ContentProviderOperation.newInsert(Data.CONTENT_URI)
+            .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+            .withValue(Data.MIMETYPE, Organization.CONTENT_ITEM_TYPE)
+            .withValue(Organization.COMPANY, org)
+            .withValue(Organization.TYPE, Organization.TYPE_WORK)
+            .build(),
+        )
+      }
+      numbers.forEach { (label, number) ->
+        ops.add(
+          ContentProviderOperation.newInsert(Data.CONTENT_URI)
+            .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+            .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+            .withValue(Phone.NUMBER, number)
+            .withValue(Phone.TYPE, phoneType(label))
+            .withValue(Phone.LABEL, label)
+            .build(),
+        )
+      }
+      mails.forEach { (label, address) ->
+        ops.add(
+          ContentProviderOperation.newInsert(Data.CONTENT_URI)
+            .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+            .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
+            .withValue(Email.ADDRESS, address)
+            .withValue(Email.TYPE, emailType(label))
+            .withValue(Email.LABEL, label)
+            .build(),
+        )
+      }
+      return try {
+        val res = cr.applyBatch(ContactsContract.AUTHORITY, ops)
+        val rawId = ContentUris.parseId(res[0].uri ?: return -1L)
+        contactIdForRaw(ctx, rawId) ?: -1L
+      } catch (_: Exception) { -1L }
+    }
+
+    val rawId = writableRaw(ctx, contactId) ?: return -1L
+    val raw = rawId.toString()
+
+    // Replace rather than merge: the form shows the whole set, so what it sends
+    // is the whole set — otherwise a number deleted in the form survives here.
+    listOf(StructuredName.CONTENT_ITEM_TYPE, Organization.CONTENT_ITEM_TYPE, Phone.CONTENT_ITEM_TYPE, Email.CONTENT_ITEM_TYPE)
+      .forEach { mime ->
+        ops.add(
+          ContentProviderOperation.newDelete(Data.CONTENT_URI)
+            .withSelection("${Data.RAW_CONTACT_ID}=? AND ${Data.MIMETYPE}=?", arrayOf(raw, mime))
+            .build(),
+        )
+      }
+    if (display.isNotEmpty() || first.isNotEmpty() || last.isNotEmpty()) {
+      ops.add(
+        ContentProviderOperation.newInsert(Data.CONTENT_URI)
+          .withValue(Data.RAW_CONTACT_ID, rawId)
+          .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
+          .withValue(StructuredName.DISPLAY_NAME, display)
+          .withValue(StructuredName.GIVEN_NAME, first.ifEmpty { null })
+          .withValue(StructuredName.FAMILY_NAME, last.ifEmpty { null })
+          .build(),
+      )
+    }
+    if (org.isNotEmpty()) {
+      ops.add(
+        ContentProviderOperation.newInsert(Data.CONTENT_URI)
+          .withValue(Data.RAW_CONTACT_ID, rawId)
+          .withValue(Data.MIMETYPE, Organization.CONTENT_ITEM_TYPE)
+          .withValue(Organization.COMPANY, org)
+          .withValue(Organization.TYPE, Organization.TYPE_WORK)
+          .build(),
+      )
+    }
+    numbers.forEach { (label, number) ->
+      ops.add(
+        ContentProviderOperation.newInsert(Data.CONTENT_URI)
+          .withValue(Data.RAW_CONTACT_ID, rawId)
+          .withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+          .withValue(Phone.NUMBER, number)
+          .withValue(Phone.TYPE, phoneType(label))
+          .withValue(Phone.LABEL, label)
+          .build(),
+      )
+    }
+    mails.forEach { (label, address) ->
+      ops.add(
+        ContentProviderOperation.newInsert(Data.CONTENT_URI)
+          .withValue(Data.RAW_CONTACT_ID, rawId)
+          .withValue(Data.MIMETYPE, Email.CONTENT_ITEM_TYPE)
+          .withValue(Email.ADDRESS, address)
+          .withValue(Email.TYPE, emailType(label))
+          .withValue(Email.LABEL, label)
+          .build(),
+        )
+    }
+    return try {
+      cr.applyBatch(ContactsContract.AUTHORITY, ops)
+      contactId
+    } catch (_: Exception) { -1L }
+  }
+
+  /** Appends one number to a contact that already exists. */
+  fun addNumber(ctx: Context, contactId: Long, label: String?, number: String): Boolean {
+    val n = number.trim()
+    if (n.isEmpty()) return false
+    val rawId = writableRaw(ctx, contactId) ?: return false
+    val values = android.content.ContentValues().apply {
+      put(Data.RAW_CONTACT_ID, rawId)
+      put(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE)
+      put(Phone.NUMBER, n)
+      put(Phone.TYPE, phoneType(label))
+      put(Phone.LABEL, label)
+    }
+    return try { ctx.contentResolver.insert(Data.CONTENT_URI, values) != null } catch (_: Exception) { false }
+  }
+
 }

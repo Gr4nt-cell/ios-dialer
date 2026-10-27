@@ -37,7 +37,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
           </View>
           <View style={[styles.rowBody, { borderBottomColor: t.separator }]}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: missed ? t.red : t.text, fontSize: 17, fontWeight: '600' }} numberOfLines={1}>
+              <Text style={{ color: missed ? t.red : t.text, fontSize: 17, fontWeight: '600' }} numberOfLines={1} allowFontScaling={false}>
                 {title}
                 {count > 1 ? ` (${count})` : ''}
               </Text>
@@ -47,7 +47,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
                 ) : missed ? (
                   <Ionicons name="arrow-down-outline" size={13} color={t.red} style={{ transform: [{ rotate: '45deg' }], marginRight: 3 }} />
                 ) : null}
-                <Text style={{ color: t.secondary, fontSize: 15, flexShrink: 1 }} numberOfLines={1}>
+                <Text style={{ color: t.secondary, fontSize: 15, flexShrink: 1 }} numberOfLines={1} allowFontScaling={false}>
                   {group.type === 'voicemail' ? 'voicemail' : group.type === 'blocked' ? 'blocked' : subtitle}
                 </Text>
               </View>

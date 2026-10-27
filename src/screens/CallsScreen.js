@@ -189,7 +189,7 @@ export default function CallsScreen() {
               <View style={[styles.statsIcon, { backgroundColor: t.chartOther }]}>
                 <Ionicons name="stats-chart" size={14} color="#fff" />
               </View>
-              <Text style={{ color: t.text, fontSize: 15, fontWeight: '600', marginLeft: 8 }} numberOfLines={1}>
+              <Text style={{ color: t.text, fontSize: 15, fontWeight: '600', marginLeft: 8 }} numberOfLines={1} allowFontScaling={false}>
                 {tr('Statistics')}
               </Text>
             </Glass>

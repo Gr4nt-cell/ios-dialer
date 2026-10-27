@@ -392,6 +392,30 @@ class DialerModule : Module() {
       if (contactId == null) false else ContactTools.setContactPhoto(ctx, contactId, uri)
     }
 
+    // Saving goes through the content provider rather than expo-contacts, whose
+    // Android write path fails on both insert and update for some accounts.
+    AsyncFunction("saveContact") { contact: Map<String, Any?> ->
+      val id = (contact["id"] as? String)?.toLongOrNull()
+      @Suppress("UNCHECKED_CAST")
+      val phones = (contact["phoneNumbers"] as? List<Map<String, Any?>>) ?: emptyList()
+      @Suppress("UNCHECKED_CAST")
+      val emails = (contact["emails"] as? List<Map<String, Any?>>) ?: emptyList()
+      ContactTools.saveContact(
+        ctx,
+        id,
+        contact["firstName"] as? String,
+        contact["lastName"] as? String,
+        contact["company"] as? String,
+        phones,
+        emails,
+      ).toString()
+    }
+
+    AsyncFunction("addNumberToContact") { contactId: String, label: String?, number: String ->
+      val id = contactId.toLongOrNull()
+      if (id == null) false else ContactTools.addNumber(ctx, id, label, number)
+    }
+
     Function("hasWhatsApp") { -> ContactTools.whatsAppPackage(ctx) != null }
 
     Function("openWhatsApp") { contactId: String?, number: String, kind: String ->

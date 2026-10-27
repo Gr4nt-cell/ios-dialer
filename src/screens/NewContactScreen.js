@@ -150,16 +150,21 @@ export default function NewContactScreen({ route }) {
       if (mails.length) data.emails = mails;
 
       let id = route.contactId;
-      if (editing) {
-        // the native side replaces the fields it is given, so an emptied list
-        // has to be sent as an empty array rather than left out
-        await Contacts.updateContactAsync({
-          ...data,
-          id,
+      if (Dialer && Dialer.saveContact) {
+        // The content provider writes both the new contact and the edit; the
+        // whole set is sent each time, so a row deleted in the form goes.
+        const saved = await Dialer.saveContact({
+          id: id ? String(id) : null,
+          firstName: first,
+          lastName: last,
+          company: company.trim(),
           phoneNumbers: numbers,
           emails: mails,
-          company: company.trim(),
         });
+        if (!saved || saved === '-1') throw new Error('Your phone turned down the change. A contact synced from an account that blocks edits has to be changed in that account’s app.');
+        id = saved;
+      } else if (editing) {
+        await Contacts.updateContactAsync({ ...data, id, phoneNumbers: numbers, emails: mails, company: company.trim() });
       } else {
         id = await Contacts.addContactAsync(data);
       }
@@ -197,6 +202,16 @@ export default function NewContactScreen({ route }) {
               <Text style={{ color: t.blue, fontSize: 15 }}>{photo ? 'Edit Photo' : 'Add Photo'}</Text>
             </Pressable>
           </View>
+          {route.number && !editing ? (
+            <Pressable onPress={() => nav.push({ name: 'pickContact', mode: 'addNumber', number: route.number })}>
+              {({ pressed }) => (
+                <View style={[styles.group, styles.multiRow, { backgroundColor: t.card, borderBottomWidth: 0, opacity: pressed ? 0.5 : 1 }]}>
+                  <Ionicons name="person-add" size={22} color={t.blue} />
+                  <Text style={{ color: t.blue, fontSize: 17, marginLeft: 10 }}>{tr('Add to Existing Contact')}</Text>
+                </View>
+              )}
+            </Pressable>
+          ) : null}
           <View style={[styles.group, { backgroundColor: t.card }]}>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
               <Field value={firstName} onChangeText={setFirst} placeholder={tr('First name')} autoFocus={!route.number && !editing} />

@@ -24,7 +24,9 @@ function Action({ icon, label, onPress, disabled, color }) {
       {({ pressed }) => (
         <Glass radius={18} pressed={pressed} style={[styles.action, { opacity: disabled ? 0.4 : 1 }]}>
           <Ionicons name={icon} size={22} color={color || t.text} />
-          <Text style={{ color: t.text, fontSize: 12, marginTop: 4 }}>{label}</Text>
+          <Text style={{ color: t.text, fontSize: 12, marginTop: 4 }} numberOfLines={1} allowFontScaling={false}>
+            {label}
+          </Text>
         </Glass>
       )}
     </Pressable>

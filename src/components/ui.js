@@ -41,7 +41,13 @@ export function TextButton({ title, onPress, color, bold, disabled, style, glass
             tintOpacity={0.92}
             style={{ height: 36, paddingHorizontal: 15, justifyContent: 'center', opacity: disabled ? 0.45 : 1 }}
           >
-            <Text style={{ color: prominent ? '#fff' : color || t.text, fontSize: 16, fontWeight: bold || prominent ? '600' : '500' }}>{title}</Text>
+            <Text
+              numberOfLines={1}
+              allowFontScaling={false}
+              style={{ color: prominent ? '#fff' : color || t.text, fontSize: 16, fontWeight: bold || prominent ? '600' : '500' }}
+            >
+              {title}
+            </Text>
           </Glass>
         )}
       </Pressable>
