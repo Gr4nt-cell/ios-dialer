@@ -442,6 +442,10 @@ class DialerModule : Module() {
 
     Function("previewAnnounce") { line: String -> Announcer.preview(ctx, line) }
 
+    Function("getAnnounceVoices") { -> Announcer.voices(ctx) }
+    Function("getAnnounceVoice") { -> Announcer.chosenVoice(ctx) }
+    Function("setAnnounceVoice") { name: String? -> Announcer.setVoice(ctx, name) }
+
     Function("hasWhatsApp") { -> ContactTools.whatsAppPackage(ctx) != null }
 
     Function("openWhatsApp") { contactId: String?, number: String, kind: String ->

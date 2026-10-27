@@ -152,6 +152,30 @@ export default function SettingsScreen() {
   const [announce, setAnnounceState] = useState(() =>
     Dialer && Dialer.getAnnouncePrefs ? Dialer.getAnnouncePrefs() : { on: false, repeat: 2, unknown: false }
   );
+  const [voiceId, setVoiceId] = useState(() => (Dialer && Dialer.getAnnounceVoice ? Dialer.getAnnounceVoice() : null));
+  const voices = useMemo(() => (Dialer && Dialer.getAnnounceVoices ? Dialer.getAnnounceVoices() : []), [announce.on]);
+  const voiceLabel = (voices.find((v) => v.id === voiceId) || {}).label || tr('Best available');
+
+  // The engine's own list: which voices a phone has depends on what is
+  // installed, so there is nothing to hard-code here.
+  const chooseVoice = () => {
+    if (!voices.length) {
+      Alert.alert(tr('No Voices Found'), tr('Install a speech engine, such as Google Speech Services, to choose a voice.'));
+      return;
+    }
+    sheet.show({
+      title: tr('Voice'),
+      options: voices.map((v) => ({
+        text: `${v.label}${v.id === voiceId ? '  ✓' : ''}`,
+        onPress: () => {
+          setVoiceId(v.id);
+          if (Dialer && Dialer.setAnnounceVoice) Dialer.setAnnounceVoice(v.id);
+          if (Dialer && Dialer.previewAnnounce) setTimeout(() => Dialer.previewAnnounce('Call from Ella'), 250);
+        },
+      })),
+    });
+  };
+
   const setAnnounce = (patch) => {
     const next = { ...announce, ...patch };
     setAnnounceState(next);
@@ -586,6 +610,15 @@ export default function SettingsScreen() {
                     onChange={(v) => setAnnounce({ repeat: v })}
                     format={(v) => `${v}\u00d7`}
                   />
+                }
+              />
+              <Cell
+                value={tr('Voice')}
+                onPress={chooseVoice}
+                right={
+                  <Text style={{ color: t.secondary, fontSize: 15, maxWidth: 190 }} numberOfLines={1}>
+                    {voiceLabel}
+                  </Text>
                 }
               />
               <Cell
