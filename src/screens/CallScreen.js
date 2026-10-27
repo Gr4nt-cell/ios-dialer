@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Dialer, { ROUTE, isRinging } from '../dialer';
 import { depthTransform, useDepth } from '../depth';
+import { cachedLookup, lookupNumber } from '../lookup';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
 import { useTheme } from '../theme';
@@ -69,10 +70,17 @@ function useIdentity() {
         key: match.contact.id,
       };
     }
+    // nothing in contacts: show whatever the lookup service returned, if any
+    const found = c.number ? cachedLookup(c.number) : null;
+    const detail = found ? [found.carrier, found.region].filter(Boolean).join(' · ') : '';
     return {
-      name: c.name || (c.number ? formatNumber(c.number) : 'Unknown'),
-      label: c.number && c.name ? formatNumber(c.number) : c.number ? 'unknown number' : 'No Caller ID',
+      name: (found && found.name) || c.name || (c.number ? formatNumber(c.number) : 'Unknown'),
+      label:
+        found && found.name
+          ? formatNumber(c.number)
+          : detail || (c.number && c.name ? formatNumber(c.number) : c.number ? 'unknown number' : 'No Caller ID'),
       image: null,
+      spam: !!(found && found.spam),
       key: c.number || '?',
     };
   };
@@ -326,9 +334,29 @@ export default function CallScreen() {
   const depth = useDepth(usePhoto ? who.image : null, settings.callDepth !== false);
   const photo = usePhoto ? (depth ? depth.base : who.image) : null;
   const zoomStyle = useZoom();
+  const [, setLookupTick] = useState(0);
   const nameStyle = usePhoto ? styles.posterName : styles.name;
   // depth layer goes right after the name so the person overlaps it
   const front = usePhoto && depth && !keypad ? <DepthLayer uri={depth.foreground} zoomStyle={zoomStyle} adjust={settings} /> : null;
+
+  // An unknown caller is looked up once per call; the answer lands in the cache
+  // and the next render shows it. A number the service reports as spam is
+  // rejected, but only while that setting is on.
+  const unknownNumber = focus && !focus.isConference && focus.number && !resolve(focus.number) ? focus.number : null;
+  useEffect(() => {
+    if (!unknownNumber) return;
+    let alive = true;
+    lookupNumber(unknownNumber, settings)
+      .then((r) => {
+        if (!alive || !r) return;
+        setLookupTick((n) => n + 1);
+        if (r.spam && settings.blockSpam && focus && focus.state === 'ringing') Dialer.reject(focus.id, null);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [unknownNumber, settings, focus]);
 
   useTicker(live.some((c) => c.state === 'active'));
 

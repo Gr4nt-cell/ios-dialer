@@ -550,6 +550,68 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{tr('Plays a tone and a light tap for each key you press.')}</Footer>
 
+        <SectionTitle>{tr('Caller Lookup')}</SectionTitle>
+        <Group>
+          <Cell
+            value="Look Up Unknown Callers"
+            right={
+              <Switch
+                value={settings.lookupOn === true}
+                onValueChange={(v) => updateSettings({ lookupOn: v })}
+                trackColor={{ true: t.green }}
+                thumbColor="#fff"
+              />
+            }
+          />
+          {settings.lookupOn ? (
+            <>
+              <Cell
+                value="Service"
+                right={
+                  <Segmented
+                    options={PROVIDERS.map((p) => ({ label: p.name.split(' ')[0], value: p.id }))}
+                    value={settings.lookupProvider || 'numverify'}
+                    onChange={(v) => updateSettings({ lookupProvider: v })}
+                  />
+                }
+              />
+              {(PROVIDERS.find((p) => p.id === (settings.lookupProvider || 'numverify')) || PROVIDERS[0]).fields.map((f) => (
+                <View key={f.key} style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ color: t.text, fontSize: 17, width: 120 }} numberOfLines={1}>
+                    {f.label}
+                  </Text>
+                  <TextInput
+                    value={(settings.lookupCreds && settings.lookupCreds[f.key]) || ''}
+                    onChangeText={(v) => updateSettings({ lookupCreds: { ...(settings.lookupCreds || {}), [f.key]: v } })}
+                    placeholder={f.key === 'url' ? 'https://…/{number}' : 'paste here'}
+                    placeholderTextColor={t.secondary}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={{ color: t.text, fontSize: 17, flex: 1, paddingVertical: 12 }}
+                  />
+                </View>
+              ))}
+              <Cell
+                value="Block Numbers Reported as Spam"
+                right={
+                  <Switch
+                    value={settings.blockSpam === true}
+                    onValueChange={(v) => updateSettings({ blockSpam: v })}
+                    trackColor={{ true: t.green }}
+                    thumbColor="#fff"
+                  />
+                }
+              />
+              <Cell value={tr('Clear Saved Lookups')} color={t.blue} onPress={() => clearCache()} />
+            </>
+          ) : null}
+        </Group>
+        <Footer>
+          {settings.lookupOn && !lookupReady(settings)
+            ? 'Enter a key above to switch this on. Until then no number is sent anywhere.'
+            : 'Unknown numbers are sent to the service you choose, so only turn this on if you are comfortable with that. Carrier and region work almost everywhere; a caller’s name only exists where the network publishes one, which in practice means the US and Canada. Answers are cached for a month.'}
+        </Footer>
+
         <SectionTitle>{tr('Caller Announcement')}</SectionTitle>
         <Group>
           <Cell

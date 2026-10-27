@@ -1,0 +1,131 @@
+# Codemagic builds for the dialer.
+#
+# Setup, once:
+#   1. codemagic.io → Add application → this GitHub repo → "I have a codemagic.yaml".
+#   2. To get a signed bundle, add a keystore under Teams → Code signing identities →
+#      Android keystores, reference name `upload`, and upload the .jks with its
+#      password and the alias `upload`. Without it the build still runs and
+#      produces a debug-signed artifact, which Play will not accept.
+#   3. Press Start on `android-apk` or `android-aab`.
+#
+# Artifacts are downloadable from the build page and emailed if you fill in
+# `publishing.email` below.
+
+definitions:
+  base: &base
+    instance_type: linux_x2
+    max_build_duration: 90
+    environment:
+      java: 17
+      node: 22
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - $CM_BUILD_DIR/node_modules
+    scripts:
+      - name: Install dependencies
+        script: npm install --no-audit --no-fund
+      - name: Build number from the commit count
+        script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
+      - name: Generate the native Android project
+        script: CI=1 npx expo prebuild --platform android --no-install
+      - name: Point release builds at the upload key
+        script: |
+          # CM_KEYSTORE_PATH is set when an Android keystore is attached to the workflow
+          if [ -n "$CM_KEYSTORE_PATH" ]; then
+            export ANDROID_KEYSTORE_PATH="$CM_KEYSTORE_PATH"
+            export ANDROID_KEYSTORE_PASSWORD="$CM_KEYSTORE_PASSWORD"
+            export ANDROID_KEY_ALIAS="$CM_KEY_ALIAS"
+            export ANDROID_KEY_PASSWORD="$CM_KEY_PASSWORD"
+            node scripts/use-upload-key.js
+          else
+            echo "No keystore attached — this build will be debug-signed and Play will reject it."
+          fi
+      - name: More memory for R8
+        script: |
+          cd android
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+          grep -q jvmargs gradle.properties || echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
+
+workflows:
+  android-apk:
+    <<: *base
+    name: Android APK
+    environment:
+      groups:
+        - signing # optional: holds the keystore if you attached one
+      android_signing:
+        - upload
+      java: 17
+      node: 22
+    scripts:
+      - name: Install dependencies
+        script: npm install --no-audit --no-fund
+      - name: Build number from the commit count
+        script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
+      - name: Generate the native Android project
+        script: CI=1 npx expo prebuild --platform android --no-install
+      - name: Point release builds at the upload key
+        script: |
+          if [ -n "$CM_KEYSTORE_PATH" ]; then
+            export ANDROID_KEYSTORE_PATH="$CM_KEYSTORE_PATH"
+            export ANDROID_KEYSTORE_PASSWORD="$CM_KEYSTORE_PASSWORD"
+            export ANDROID_KEY_ALIAS="$CM_KEY_ALIAS"
+            export ANDROID_KEY_PASSWORD="$CM_KEY_PASSWORD"
+            node scripts/use-upload-key.js
+          else
+            echo "No keystore attached — this build will be debug-signed."
+          fi
+      # arm64 only: every phone from the last several years, half the build time
+      - name: Build the APK
+        script: cd android && ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
+      - name: Google Play readiness check
+        script: node scripts/play-check.js android || true
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - play-check.txt
+
+  android-aab:
+    <<: *base
+    name: Android App Bundle
+    environment:
+      android_signing:
+        - upload
+      java: 17
+      node: 22
+    scripts:
+      - name: Install dependencies
+        script: npm install --no-audit --no-fund
+      - name: Build number from the commit count
+        script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
+      - name: Generate the native Android project
+        script: CI=1 npx expo prebuild --platform android --no-install
+      - name: Point release builds at the upload key
+        script: |
+          if [ -n "$CM_KEYSTORE_PATH" ]; then
+            export ANDROID_KEYSTORE_PATH="$CM_KEYSTORE_PATH"
+            export ANDROID_KEYSTORE_PASSWORD="$CM_KEYSTORE_PASSWORD"
+            export ANDROID_KEY_ALIAS="$CM_KEY_ALIAS"
+            export ANDROID_KEY_PASSWORD="$CM_KEY_PASSWORD"
+            node scripts/use-upload-key.js
+          else
+            echo "No keystore attached — this bundle will be debug-signed and Play will reject it."
+          fi
+      - name: More memory for R8
+        script: |
+          cd android
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+          grep -q jvmargs gradle.properties || echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
+      # every architecture: Play splits the bundle per device
+      - name: Build the bundle
+        script: cd android && ./gradlew bundleRelease --no-daemon
+      - name: Google Play readiness check
+        script: node scripts/play-check.js android || true
+      - name: Who signed it
+        script: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify -certs "$AAB" | grep -E "X.509|jar verified" || true
+          jarsigner -verify -certs "$AAB" | grep -q "Android Debug" && echo "WARNING: debug-signed, Play will reject this" || true
+    artifacts:
+      - android/app/build/outputs/bundle/**/*.aab
+      - play-check.txt
