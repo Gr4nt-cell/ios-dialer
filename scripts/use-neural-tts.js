@@ -10,6 +10,11 @@
  * otherwise.
  *
  * Run after `expo prebuild` and after fetch-voices.sh.
+ *
+ * With --abi=<list> it also limits the native libraries to those
+ * architectures. The runtime carries four, which is right for a bundle (Play
+ * hands each phone only its own) but wasteful in a single APK, where all four
+ * ride along and most of the download is libraries the phone can't run.
  */
 const fs = require('fs');
 
@@ -50,6 +55,25 @@ if (drm) {
 
 // prove the artifact is actually there, so a build fails here with a clear
 // message rather than deep inside dependency resolution
+// --abi: keep only these architectures in an APK build
+const abiArg = process.argv.find((a) => a.startsWith('--abi='));
+if (abiArg) {
+  const abis = abiArg.slice('--abi='.length).split(',').map((a) => a.trim()).filter(Boolean);
+  const APP = 'android/app/build.gradle';
+  if (!fs.existsSync(APP)) die(`${APP} not found`);
+  let app = fs.readFileSync(APP, 'utf8');
+  if (app.includes('abiFilters')) {
+    console.log('use-neural-tts: abiFilters already set');
+  } else {
+    const anchor = app.match(/defaultConfig\s*\{/);
+    if (!anchor) die('no defaultConfig block in app/build.gradle');
+    const block = `\n        ndk {\n            abiFilters ${abis.map((a) => `'${a}'`).join(', ')}\n        }`;
+    app = app.slice(0, anchor.index + anchor[0].length) + block + app.slice(anchor.index + anchor[0].length);
+    fs.writeFileSync(APP, app);
+    console.log(`use-neural-tts: native libraries limited to ${abis.join(', ')}`);
+  }
+}
+
 const aar = 'android/local-maven/com/k2fsa/sherpa-onnx/1.13.7/sherpa-onnx-1.13.7.aar';
 if (!fs.existsSync(aar)) die(`${aar} is missing — did scripts/fetch-voices.sh run?`);
 console.log(`use-neural-tts: runtime present (${Math.round(fs.statSync(aar).size / 1048576)}MB)`);

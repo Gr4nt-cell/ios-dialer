@@ -67,7 +67,8 @@ jobs:
         run: ./scripts/fetch-voices.sh
 
       - name: Wire the speech runtime into Gradle
-        run: node scripts/use-neural-tts.js
+        # one architecture in a sideloaded APK; the bundle keeps all four
+        run: node scripts/use-neural-tts.js --abi=arm64-v8a
 
       - name: Show release shrinking settings
         run: grep -nE "minifyEnabled|shrinkResources|enableProguard|enableShrink" android/app/build.gradle android/gradle.properties || true
