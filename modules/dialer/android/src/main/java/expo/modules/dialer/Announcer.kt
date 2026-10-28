@@ -24,7 +24,6 @@ object Announcer {
   private const val KEY_REPEAT = "announceRepeat"
   private const val KEY_UNKNOWN = "announceUnknown"
   private const val KEY_VOICE = "announceVoice"
-  private const val KEY_BUNDLED = "announceBundled" // "male", "female", or "" for the phone's own
 
   private var tts: TextToSpeech? = null
   private var ready = false
@@ -38,22 +37,7 @@ object Announcer {
   fun announcesUnknown(ctx: Context) = ctx.getSharedPreferences(PREFS, 0).getBoolean(KEY_UNKNOWN, false)
   fun chosenVoice(ctx: Context): String? = ctx.getSharedPreferences(PREFS, 0).getString(KEY_VOICE, null)
 
-  /** "male" and "female" are the bundled voices; "" hands back to the phone's engine. */
-  fun bundledVoice(ctx: Context): String =
-    ctx.getSharedPreferences(PREFS, 0).getString(KEY_BUNDLED, null)
-      ?: if (NeuralVoice.available(ctx)) "female" else ""
 
-  fun setBundledVoice(ctx: Context, which: String) {
-    ctx.getSharedPreferences(PREFS, 0).edit().putString(KEY_BUNDLED, which).apply()
-  }
-
-  fun bundledAvailable(ctx: Context) = NeuralVoice.available(ctx)
-
-  private fun bundledChoice(ctx: Context): NeuralVoice.Which? = when (bundledVoice(ctx)) {
-    "male" -> NeuralVoice.Which.MALE
-    "female" -> NeuralVoice.Which.FEMALE
-    else -> null
-  }
 
   fun setVoice(ctx: Context, name: String?) {
     ctx.getSharedPreferences(PREFS, 0).edit().putString(KEY_VOICE, name).apply()
@@ -158,11 +142,6 @@ object Announcer {
     spoken = 0
     pending = "Call from $who"
 
-    val bundled = bundledChoice(ctx)
-    if (bundled != null) {
-      speakBundled(ctx, bundled)
-      return
-    }
     val engine = tts
     if (engine != null && ready) speakNow() else start(ctx)
   }
@@ -197,24 +176,12 @@ object Announcer {
     if (spoken < target) main.postDelayed({ speakNow() }, 4000)
   }
 
-  /** Repeats through the app's own voice, falling back if it can't start. */
-  private fun speakBundled(ctx: Context, which: NeuralVoice.Which) {
-    val line = pending ?: return
-    if (spoken >= target) return
-    spoken++
-    NeuralVoice.speak(ctx, line, which, speed = 0.95f) {
-      // the bundled voice failed: use the phone's engine for this call
-      main.post { if (tts != null && ready) speakNow() else start(ctx) }
-    }
-    if (spoken < target) main.postDelayed({ speakBundled(ctx, which) }, 4000)
-  }
 
   /** Stops talking: the call was answered, rejected, or silenced. */
   fun stop() {
     pending = null
     spoken = 0
     main.removeCallbacksAndMessages(null)
-    NeuralVoice.stop()
     try { tts?.stop() } catch (_: Exception) {}
   }
 
@@ -223,20 +190,7 @@ object Announcer {
     target = 1
     spoken = 0
     pending = line
-    val bundled = bundledChoice(ctx)
-    if (bundled != null) {
-      speakBundled(ctx, bundled)
-      return
-    }
     if (tts != null && ready) speakNow() else start(ctx)
   }
 
-  /** Preview one bundled voice without making it the choice. */
-  fun previewBundled(ctx: Context, which: String, line: String) {
-    val pick = if (which == "male") NeuralVoice.Which.MALE else NeuralVoice.Which.FEMALE
-    target = 1
-    spoken = 0
-    pending = line
-    speakBundled(ctx, pick)
-  }
 }

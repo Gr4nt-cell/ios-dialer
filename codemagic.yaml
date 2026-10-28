@@ -29,10 +29,6 @@ definitions:
         script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
       - name: Generate the native Android project
         script: CI=1 npx expo prebuild --platform android --no-install
-      - name: Fetch the bundled voices
-        script: ./scripts/fetch-voices.sh
-      - name: Wire the speech runtime into Gradle
-        script: node scripts/use-neural-tts.js
       - name: Point release builds at the upload key
         script: |
           # CM_KEYSTORE_PATH is set when an Android keystore is attached to the workflow
@@ -69,10 +65,6 @@ workflows:
         script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
       - name: Generate the native Android project
         script: CI=1 npx expo prebuild --platform android --no-install
-      - name: Fetch the bundled voices
-        script: ./scripts/fetch-voices.sh
-      - name: Wire the speech runtime into Gradle
-        script: node scripts/use-neural-tts.js
       - name: Point release builds at the upload key
         script: |
           if [ -n "$CM_KEYSTORE_PATH" ]; then
@@ -108,10 +100,6 @@ workflows:
         script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
       - name: Generate the native Android project
         script: CI=1 npx expo prebuild --platform android --no-install
-      - name: Fetch the bundled voices
-        script: ./scripts/fetch-voices.sh
-      - name: Wire the speech runtime into Gradle
-        script: node scripts/use-neural-tts.js
       - name: Point release builds at the upload key
         script: |
           if [ -n "$CM_KEYSTORE_PATH" ]; then

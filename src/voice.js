@@ -1,14 +1,10 @@
 import { contactName, numberKey } from './phone';
-import Dialer from './dialer';
 
 /**
  * Turns a spoken phrase into an action.
  *
- * This is the grammar FunctionGemma would replace: the same job (words in,
- * structured call out), done with rules instead of a model. It runs instantly,
- * adds nothing to the app's size, and never invents a call — which matters
- * when the action is dialling someone. See understand() at the bottom for
- * where the model slots in.
+ * Rules rather than a model: instant, nothing added to the app's size, and it
+ * never invents a call — which matters when the action is dialling someone.
  *
  * Every action is returned, never performed, so the caller decides what is
  * safe to do without asking.
@@ -161,59 +157,8 @@ export function describe(cmd) {
   }
 }
 
-/**
- * The seam for an on-device model.
- *
- * FunctionGemma does exactly this shape of work — a phrase in, a structured
- * call out — so when the weights are on the device, understand() asks it and
- * falls back to the grammar when it declines or the model isn't there. The
- * rules stay as the floor rather than being replaced, because a wrong call
- * placed confidently is worse than one not understood.
- */
 export async function understand(text, contacts) {
-  const floor = parseCommand(text, contacts);
-  if (!Dialer || !Dialer.understand || !Dialer.brainStatus) return floor;
-  try {
-    if (!Dialer.brainStatus().installed) return floor;
-    const names = (contacts || []).map(contactName).filter(Boolean);
-    const json = await Dialer.understand(text, names);
-    const guess = json ? JSON.parse(json) : null;
-    const better = fromModel(guess, contacts);
-    // the rules win whenever the model is vague: on a dialler, a confident
-    // wrong answer rings the wrong person
-    return better || floor;
-  } catch {
-    return floor;
-  }
-}
-
-/** Turns the model's JSON into the same shape parseCommand returns, or null. */
-function fromModel(guess, contacts) {
-  if (!guess || typeof guess !== 'object') return null;
-  switch (guess.action) {
-    case 'call': {
-      if (!guess.name) return null;
-      const found = matchContact(String(guess.name), contacts);
-      if (!found || found === 'ambiguous') return null;
-      const phones = found.phoneNumbers || [];
-      if (!phones.length) return null;
-      const want = guess.label ? String(guess.label).toLowerCase() : null;
-      const phone = (want && phones.find((p) => (p.label || '').toLowerCase().includes(want))) || phones[0];
-      return { action: 'call', number: phone.number, label: phone.label || null, contact: found, name: contactName(found) };
-    }
-    case 'dial': {
-      const digits = String(guess.number || '').replace(/[^\d+]/g, '');
-      return digits.length >= 3 ? { action: 'dial', number: digits } : null;
-    }
-    case 'redial':
-      return { action: 'redial' };
-    case 'tab':
-      return ['calls', 'contacts', 'keypad', 'search'].includes(guess.tab) ? { action: 'tab', tab: guess.tab } : null;
-    case 'search':
-      return guess.query ? { action: 'search', query: String(guess.query) } : null;
-    default:
-      return null;
-  }
+  return parseCommand(text, contacts);
 }
 
 export const commandExamples = [

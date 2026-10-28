@@ -12,21 +12,9 @@ android {
     versionCode 1
     versionName "1.0.0"
   }
-
-  // the voice models are read straight out of the package, so they must not be
-  // compressed on the way in
-  androidResources {
-    noCompress 'onnx', 'task'
-  }
 }
 
 dependencies {
-  // the runtime is fetched into android/local-maven at build time and the
-  // repository is declared by scripts/use-neural-tts.js, because React
-  // Native's settings.gradle forbids per-module repositories
-  implementation "com.k2fsa:sherpa-onnx:1.13.7"
-  // FunctionGemma runs through MediaPipe's on-device LLM runtime
-  implementation "com.google.mediapipe:tasks-genai:0.10.35"
   implementation "androidx.core:core-ktx:1.13.1"
   implementation "androidx.exifinterface:exifinterface:1.3.7"
   implementation "com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1"
