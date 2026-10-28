@@ -55,22 +55,41 @@ if (drm) {
 
 // prove the artifact is actually there, so a build fails here with a clear
 // message rather than deep inside dependency resolution
-// --abi: keep only these architectures in an APK build
+// --abi: keep only these architectures in an APK build.
+//
+// Not defaultConfig.ndk.abiFilters: React Native's own build.gradle already
+// writes an abiFilters line, so anything keying off "is abiFilters present"
+// silently does nothing — which is exactly what happened the first time. A
+// packaging exclude is unambiguous and drops the libraries at packaging time,
+// whatever else set them.
 const abiArg = process.argv.find((a) => a.startsWith('--abi='));
 if (abiArg) {
-  const abis = abiArg.slice('--abi='.length).split(',').map((a) => a.trim()).filter(Boolean);
+  const keep = abiArg.slice('--abi='.length).split(',').map((a) => a.trim()).filter(Boolean);
+  const ALL = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'];
+  const drop = ALL.filter((a) => !keep.includes(a));
   const APP = 'android/app/build.gradle';
   if (!fs.existsSync(APP)) die(`${APP} not found`);
   let app = fs.readFileSync(APP, 'utf8');
-  if (app.includes('abiFilters')) {
-    console.log('use-neural-tts: abiFilters already set');
+  if (app.includes('// bundled-voice abi trim')) {
+    console.log('use-neural-tts: abi trim already applied');
+  } else if (!drop.length) {
+    console.log('use-neural-tts: nothing to trim');
   } else {
-    const anchor = app.match(/defaultConfig\s*\{/);
-    if (!anchor) die('no defaultConfig block in app/build.gradle');
-    const block = `\n        ndk {\n            abiFilters ${abis.map((a) => `'${a}'`).join(', ')}\n        }`;
+    const anchor = app.match(/android\s*\{/);
+    if (!anchor) die('no android block in app/build.gradle');
+    const excludes = drop.map((a) => `            excludes += "lib/${a}/*"`).join('\n');
+    const block = [
+      '',
+      '    // bundled-voice abi trim',
+      '    packaging {',
+      '        jniLibs {',
+      excludes,
+      '        }',
+      '    }',
+    ].join('\n');
     app = app.slice(0, anchor.index + anchor[0].length) + block + app.slice(anchor.index + anchor[0].length);
     fs.writeFileSync(APP, app);
-    console.log(`use-neural-tts: native libraries limited to ${abis.join(', ')}`);
+    console.log(`use-neural-tts: packaging drops ${drop.join(', ')}; keeping ${keep.join(', ')}`);
   }
 }
 
