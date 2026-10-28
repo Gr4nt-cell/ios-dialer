@@ -547,15 +547,21 @@ class DialerModule : Module() {
       val tries = LinkedHashMap<String, TelephonyManager>()
       val handle = accountKey?.let { CallManager.accountHandle(it) }
       if (handle != null) {
-        if (Build.VERSION.SDK_INT >= 30) {
-          try {
-            val subId = SubscriptionManager.getSubscriptionId(handle)
-            if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-              tries["sub"] = base.createForSubscriptionId(subId)
-            }
-          } catch (_: Throwable) {}
+        // getSubscriptionId(PhoneAccountHandle) is API 30 and was called
+        // getSubIdForPhoneAccountHandle before it was made public, so ask for
+        // either by name rather than failing to build against one of them.
+        val subId = sequenceOf("getSubscriptionId", "getSubIdForPhoneAccountHandle")
+          .mapNotNull { name ->
+            try {
+              val m = TelephonyManager::class.java.getMethod(name, android.telecom.PhoneAccountHandle::class.java)
+              (m.invoke(base, handle) as? Int)?.takeIf { it != SubscriptionManager.INVALID_SUBSCRIPTION_ID }
+            } catch (_: Throwable) { null }
+          }
+          .firstOrNull()
+        if (subId != null) {
+          try { tries["sub"] = base.createForSubscriptionId(subId) } catch (_: Throwable) {}
         }
-        try { tries["account"] = base.createForPhoneAccountHandle(handle) } catch (_: Throwable) {}
+        try { base.createForPhoneAccountHandle(handle)?.let { tries["account"] = it } } catch (_: Throwable) {}
       }
       tries["default"] = base
 
