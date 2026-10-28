@@ -152,7 +152,50 @@ export default function SettingsScreen() {
   const [announce, setAnnounceState] = useState(() =>
     Dialer && Dialer.getAnnouncePrefs ? Dialer.getAnnouncePrefs() : { on: false, repeat: 2, unknown: false }
   );
-  const hasBundled = !!(Dialer && Dialer.hasBundledVoices && Dialer.hasBundledVoices());
+  // which voices are on the phone, and how a download is going
+  const [voiceState, setVoiceState] = useState(() => (Dialer && Dialer.voiceStatus ? Dialer.voiceStatus() : { male: false, female: false, state: 'idle', progress: 0 }));
+  useEffect(() => {
+    if (!Dialer || !Dialer.voiceStatus) return undefined;
+    const id = setInterval(() => setVoiceState(Dialer.voiceStatus()), 700);
+    return () => clearInterval(id);
+  }, []);
+  const hasBundled = !!(voiceState.male || voiceState.female);
+  const downloading = voiceState.state === 'running';
+
+  const voiceRow = (slot, label) => {
+    const have = !!voiceState[slot];
+    const busy = downloading && voiceState.slot === slot;
+    return (
+      <Cell
+        key={slot}
+        value={label}
+        color={have ? undefined : t.blue}
+        onPress={
+          busy
+            ? undefined
+            : have
+            ? () => {
+                sheet.show({
+                  title: label,
+                  options: [
+                    { text: tr('Preview'), onPress: () => Dialer.previewBundledVoice && Dialer.previewBundledVoice(slot, 'Call from Ella') },
+                    { text: tr('Delete'), destructive: true, onPress: () => { Dialer.removeVoice && Dialer.removeVoice(slot); setVoiceState(Dialer.voiceStatus()); } },
+                  ],
+                });
+              }
+            : () => {
+                Dialer.downloadVoice && Dialer.downloadVoice(slot);
+                setVoiceState(Dialer.voiceStatus());
+              }
+        }
+        right={
+          <Text style={{ color: t.secondary, fontSize: 15 }} numberOfLines={1}>
+            {busy ? `${voiceState.progress || 0}%` : have ? tr('Installed') : '18 MB'}
+          </Text>
+        }
+      />
+    );
+  };
   const [bundled, setBundled] = useState(() => (Dialer && Dialer.getBundledVoice ? Dialer.getBundledVoice() : ''));
   const [voiceId, setVoiceId] = useState(() => (Dialer && Dialer.getAnnounceVoice ? Dialer.getAnnounceVoice() : null));
   const voices = useMemo(() => (Dialer && Dialer.getAnnounceVoices ? Dialer.getAnnounceVoices() : []), [announce.on]);
@@ -576,6 +619,26 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{tr('Plays a tone and a light tap for each key you press.')}</Footer>
 
+        <SectionTitle>{tr('Voice Control')}</SectionTitle>
+        <Group>
+          <Cell
+            value="Mic Button on the Keypad"
+            right={
+              <Switch
+                value={settings.voiceButton === true}
+                onValueChange={(v) => updateSettings({ voiceButton: v })}
+                trackColor={{ true: t.green }}
+                thumbColor="#fff"
+              />
+            }
+          />
+        </Group>
+        <Footer>
+          Puts a mic beside Settings on the keypad. Say "call Ella", "call Ella on mobile", "dial zero two four…",
+          "redial", "open contacts" or "search for Mercy". Placing a call always asks first, and a name that matches
+          more than one contact is reported rather than guessed.
+        </Footer>
+
         <SectionTitle>{tr('Caller Announcement')}</SectionTitle>
         <Group>
           <Cell
@@ -614,6 +677,11 @@ export default function SettingsScreen() {
                   />
                 }
               />
+              {voiceRow('female', tr('Female Voice'))}
+              {voiceRow('male', tr('Male Voice'))}
+              {voiceState.state === 'failed' ? (
+                <Footer>{voiceState.error || tr('The download failed.')}</Footer>
+              ) : null}
               {hasBundled ? (
                 <Cell
                   value={tr('Voice')}

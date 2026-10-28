@@ -235,7 +235,7 @@ export default function KeypadScreen({ prefill }) {
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
       <View style={styles.topBar}>
         <View style={{ flex: 1 }} />
-        {canListen ? (
+        {canListen && settings.voiceButton === true ? (
           <IconButton
             glass
             name={listening ? 'ellipsis-horizontal' : 'mic-outline'}

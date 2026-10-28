@@ -66,40 +66,7 @@ cat > "$MAVEN/sherpa-onnx-$SHERPA_VERSION.pom" <<POM
 </project>
 POM
 
-# ---------- the voices ----------
-fetch_voice() {
-  local name="$1" slot="$2"
-  if [ -s "$ASSETS/$slot/model.onnx" ]; then
-    echo "$slot voice already present"
-    return
-  fi
-  echo "Fetching $name…"
-  curl -fsSL "$RELEASES/tts-models/$name.tar.bz2" -o "$WORK/$slot.tar.bz2"
-  mkdir -p "$WORK/$slot"
-  tar -xjf "$WORK/$slot.tar.bz2" -C "$WORK/$slot"
-  local src="$WORK/$slot/$name"
-  mkdir -p "$ASSETS/$slot"
-  cp "$src"/*.onnx "$ASSETS/$slot/model.onnx"
-  cp "$src/tokens.txt" "$ASSETS/$slot/tokens.txt"
-
-  # espeak-ng-data is 19MB of dictionaries for every language it knows; the
-  # English files are 1.5MB of that, and both voices share them.
-  if [ ! -d "$ASSETS/espeak-ng-data" ]; then
-    mkdir -p "$ASSETS/espeak-ng-data"
-    cp -r "$src/espeak-ng-data/lang" "$ASSETS/espeak-ng-data/" 2>/dev/null || true
-    for f in en_dict phontab phonindex phondata intonations; do
-      cp "$src/espeak-ng-data/$f" "$ASSETS/espeak-ng-data/$f" 2>/dev/null || true
-    done
-  fi
-}
-
-fetch_voice "$MALE_VOICE" male
-fetch_voice "$FEMALE_VOICE" female
-
-echo "--- bundled speech ---"
-du -sh "$ASSETS"/* 2>/dev/null || true
-du -sh "$MAVEN" 2>/dev/null || true
-test -s "$ASSETS/male/model.onnx"
-test -s "$ASSETS/female/model.onnx"
-test -s "$ASSETS/espeak-ng-data/en_dict"
-echo "ok"
+# The voices themselves are no longer packaged: they are published to the
+# release by pack-voices.sh and the app downloads the one it wants. See
+# VoiceDownload.kt. This script now only places the runtime.
+echo "fetch-voices: runtime ready (voices are downloaded on demand)"

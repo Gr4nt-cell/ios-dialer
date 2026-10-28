@@ -96,6 +96,11 @@ jobs:
       - name: Fetch the bundled voices
         run: ./scripts/fetch-voices.sh
 
+      - name: Publish the downloadable voices
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/pack-voices.sh
+
       - name: Wire the speech runtime into Gradle
         run: node scripts/use-neural-tts.js
 

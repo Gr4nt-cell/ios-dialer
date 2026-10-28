@@ -447,6 +447,11 @@ class DialerModule : Module() {
     Function("setAnnounceVoice") { name: String? -> Announcer.setVoice(ctx, name) }
 
     // the two voices packaged with the app
+    // ---------- downloadable voices ----------
+    Function("voiceStatus") { -> VoiceDownload.status(ctx) }
+    Function("downloadVoice") { which: String -> VoiceDownload.start(ctx, which) }
+    Function("removeVoice") { which: String -> VoiceDownload.remove(ctx, which) }
+
     Function("hasBundledVoices") { -> Announcer.bundledAvailable(ctx) }
     Function("getBundledVoice") { -> Announcer.bundledVoice(ctx) }
     Function("setBundledVoice") { which: String -> Announcer.setBundledVoice(ctx, which) }

@@ -10,7 +10,6 @@ import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
-import java.io.File
 import java.util.concurrent.Executors
 
 /**
@@ -26,7 +25,6 @@ import java.util.concurrent.Executors
  */
 object NeuralVoice {
   private const val TAG = "NeuralVoice"
-  private const val ASSET_ROOT = "tts"
 
   /** Which bundled voice to use. */
   enum class Which(val slot: String) { MALE("male"), FEMALE("female") }
@@ -36,64 +34,40 @@ object NeuralVoice {
   private var track: AudioTrack? = null
   @Volatile private var cancelled = false
 
-  /** True when the voices were packaged into this build. */
-  fun available(ctx: Context): Boolean = try {
-    val list = ctx.assets.list("$ASSET_ROOT/male") ?: emptyArray()
-    list.contains("model.onnx")
-  } catch (_: Exception) { false }
+  /** True when at least one voice has been downloaded. */
+  fun available(ctx: Context): Boolean =
+    VoiceDownload.installed(ctx, "male") || VoiceDownload.installed(ctx, "female")
 
-  /**
-   * espeak-ng turns the words into phonemes and insists on a real directory,
-   * so its data is unpacked out of the assets once and kept.
-   */
-  private fun phonemeData(ctx: Context): String? {
-    val dir = File(ctx.filesDir, "espeak-ng-data")
-    val marker = File(dir, ".copied")
-    if (marker.exists()) return dir.absolutePath
-    return try {
-      copyAsset(ctx, "$ASSET_ROOT/espeak-ng-data", dir)
-      marker.createNewFile()
-      dir.absolutePath
-    } catch (e: Exception) {
-      Log.w(TAG, "could not unpack espeak-ng-data: ${e.message}")
-      null
-    }
-  }
+  fun available(ctx: Context, which: Which): Boolean = VoiceDownload.installed(ctx, which.slot)
 
-  private fun copyAsset(ctx: Context, path: String, dest: File) {
-    val children = ctx.assets.list(path) ?: emptyArray()
-    if (children.isEmpty()) {
-      dest.parentFile?.mkdirs()
-      ctx.assets.open(path).use { input -> dest.outputStream().use { input.copyTo(it) } }
-      return
-    }
-    dest.mkdirs()
-    for (child in children) copyAsset(ctx, "$path/$child", File(dest, child))
+  /** Drops a loaded engine, so a deleted voice stops being held open. */
+  fun release(slot: String) {
+    engines.remove(slot)?.let { try { it.release() } catch (_: Throwable) {} }
   }
 
   private fun engine(ctx: Context, which: Which): OfflineTts? {
     engines[which.slot]?.let { return it }
-    if (!available(ctx)) return null
-    val data = phonemeData(ctx) ?: return null
+    if (!VoiceDownload.installed(ctx, which.slot)) return null
     return try {
       val config = OfflineTtsConfig(
         model = OfflineTtsModelConfig(
           vits = OfflineTtsVitsModelConfig(
-            model = "$ASSET_ROOT/${which.slot}/model.onnx",
-            tokens = "$ASSET_ROOT/${which.slot}/tokens.txt",
-            dataDir = data,
+            model = VoiceDownload.modelFile(ctx, which.slot).absolutePath,
+            tokens = VoiceDownload.tokensFile(ctx, which.slot).absolutePath,
+            dataDir = VoiceDownload.phonemeDir(ctx).absolutePath,
           ),
           numThreads = 2,
           debug = false,
         ),
       )
-      val tts = OfflineTts(assetManager = ctx.assets, config = config)
+      // no assetManager: these are real files in the app's own storage
+      val tts = OfflineTts(config = config)
       engines[which.slot] = tts
       tts
     } catch (e: Throwable) {
-      // a missing model or an ABI without the native library: fall back to the
-      // system voice rather than taking the ring down with us
-      Log.w(TAG, "could not start the bundled voice: ${e.message}")
+      // a half-written model, or an architecture without the native library:
+      // fall back to the system voice rather than taking the ring down with us
+      Log.w(TAG, "could not start the downloaded voice: ${e.message}")
       null
     }
   }
