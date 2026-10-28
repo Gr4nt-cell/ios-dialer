@@ -416,17 +416,6 @@ class DialerModule : Module() {
       if (id == null) false else ContactTools.addNumber(ctx, id, label, number)
     }
 
-    // ---------- voice control ----------
-    Function("canListen") { -> Listener.available(ctx) }
-
-    AsyncFunction("listen") { promise: Promise ->
-      Listener.listen(ctx) { text, error ->
-        if (text != null) promise.resolve(text) else promise.reject("voice", error ?: "Speech recognition failed", null)
-      }
-    }
-
-    Function("stopListening") { -> Listener.stop() }
-
     // ---------- caller announcement ----------
     Function("getAnnouncePrefs") { ->
       mapOf(

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, PermissionsAndroid, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -11,8 +11,6 @@ import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
 import { playTone, preloadTones } from '../sounds';
 import { IconButton } from '../components/ui';
-import { describe, understand } from '../voice';
-import { useActionSheet } from '../components/ActionSheet';
 import { Glass } from '../components/Glass';
 import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
 import { useCalls } from '../CallContext';
@@ -170,80 +168,10 @@ export default function KeypadScreen({ prefill }) {
   const top = suggestions[0];
   const display = formatNumber(num);
 
-  // ---------- voice control ----------
-  const sheet = useActionSheet();
-  const canListen = !!(Dialer && Dialer.canListen && Dialer.canListen());
-  const [listening, setListening] = useState(false);
-
-  const run = (cmd) => {
-    switch (cmd.action) {
-      case 'call':
-        // dialling is the one action worth a confirmation: a misheard name
-        // would otherwise ring a stranger
-        sheet.show({
-          title: describe(cmd),
-          options: [{ text: tr('Call'), onPress: () => call(cmd.number) }],
-        });
-        return;
-      case 'dial':
-        update(cmd.number);
-        return;
-      case 'redial': {
-        const last = recents && recents[0];
-        if (last && last.number) sheet.show({ title: `${tr('Call')} ${formatNumber(last.number)}`, options: [{ text: tr('Call'), onPress: () => call(last.number) }] });
-        else Alert.alert(tr('Nothing to Redial'));
-        return;
-      }
-      case 'tab':
-        nav.setTab(cmd.tab);
-        return;
-      case 'search':
-        nav.setTab('search');
-        return;
-      case 'ambiguous':
-        Alert.alert(tr('Which One?'), describe(cmd));
-        return;
-      default:
-        Alert.alert(tr('Sorry'), describe(cmd));
-    }
-  };
-
-  const speak = async () => {
-    if (listening) {
-      Dialer.stopListening && Dialer.stopListening();
-      setListening(false);
-      return;
-    }
-    try {
-      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
-    } catch {
-      return;
-    }
-    setListening(true);
-    try {
-      const heard = await Dialer.listen();
-      run(await understand(heard, contacts));
-    } catch (e) {
-      Alert.alert(tr('Sorry'), (e && e.message) || 'Speech recognition failed');
-    } finally {
-      setListening(false);
-    }
-  };
-
   return (
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
       <View style={styles.topBar}>
         <View style={{ flex: 1 }} />
-        {canListen && settings.voiceButton === true ? (
-          <IconButton
-            glass
-            name={listening ? 'ellipsis-horizontal' : 'mic-outline'}
-            color={listening ? t.blue : undefined}
-            onPress={speak}
-            style={{ marginRight: 8 }}
-          />
-        ) : null}
         <IconButton glass name="settings-outline" onPress={() => nav.push({ name: 'settings' })} />
       </View>
 

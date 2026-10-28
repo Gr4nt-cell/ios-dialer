@@ -574,26 +574,6 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{tr('Plays a tone and a light tap for each key you press.')}</Footer>
 
-        <SectionTitle>{tr('Voice Control')}</SectionTitle>
-        <Group>
-          <Cell
-            value="Mic Button on the Keypad"
-            right={
-              <Switch
-                value={settings.voiceButton === true}
-                onValueChange={(v) => updateSettings({ voiceButton: v })}
-                trackColor={{ true: t.green }}
-                thumbColor="#fff"
-              />
-            }
-          />
-        </Group>
-        <Footer>
-          Puts a mic beside Settings on the keypad. Say "call Ella", "call Ella on mobile", "dial zero two four…",
-          "redial", "open contacts" or "search for Mercy". Placing a call always asks first, and a name that matches
-          more than one contact is reported rather than guessed.
-        </Footer>
-
         <SectionTitle>{tr('Caller Announcement')}</SectionTitle>
         <Group>
           <Cell
