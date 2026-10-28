@@ -13,6 +13,7 @@ import android.os.Looper
 import android.provider.BlockedNumberContract
 import android.provider.Settings
 import android.telecom.TelecomManager
+import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
@@ -533,33 +534,72 @@ class DialerModule : Module() {
         promise.resolve(mapOf("ok" to false, "code" to -100))
         return@AsyncFunction
       }
-      var tm = ctx.getSystemService(TelephonyManager::class.java)
-      if (tm == null) {
+      val base = ctx.getSystemService(TelephonyManager::class.java)
+      if (base == null) {
         promise.resolve(mapOf("ok" to false, "code" to -101))
         return@AsyncFunction
       }
-      accountKey?.let { CallManager.accountHandle(it) }?.let { handle ->
-        tm?.createForPhoneAccountHandle(handle)?.let { tm = it }
-      }
-      var done = false
-      try {
-        tm!!.sendUssdRequest(code, object : TelephonyManager.UssdResponseCallback() {
-          override fun onReceiveUssdResponse(telephonyManager: TelephonyManager, request: String, response: CharSequence) {
-            if (done) return
-            done = true
-            promise.resolve(mapOf("ok" to true, "message" to response.toString()))
-          }
 
-          override fun onReceiveUssdResponseFailed(telephonyManager: TelephonyManager, request: String, failureCode: Int) {
-            if (done) return
-            done = true
-            promise.resolve(mapOf("ok" to false, "code" to failureCode))
-          }
-        }, Handler(Looper.getMainLooper()))
-      } catch (e: SecurityException) {
-        done = true
-        promise.reject(CodedException("Phone permission is needed to run USSD codes", e))
+      // Which TelephonyManager to ask matters, and OEMs disagree about it: one
+      // built from a subscription id works where one built from the phone
+      // account handle returns a plain failure, and on some phones only the
+      // bare manager works at all. So try them in turn rather than deciding.
+      val tries = LinkedHashMap<String, TelephonyManager>()
+      val handle = accountKey?.let { CallManager.accountHandle(it) }
+      if (handle != null) {
+        if (Build.VERSION.SDK_INT >= 30) {
+          try {
+            val subId = SubscriptionManager.getSubscriptionId(handle)
+            if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+              tries["sub"] = base.createForSubscriptionId(subId)
+            }
+          } catch (_: Throwable) {}
+        }
+        try { tries["account"] = base.createForPhoneAccountHandle(handle) } catch (_: Throwable) {}
       }
+      tries["default"] = base
+
+      val handler = Handler(Looper.getMainLooper())
+      var settled = false
+      fun settle(value: Any?) {
+        if (settled) return
+        settled = true
+        promise.resolve(value)
+      }
+
+      val order = tries.entries.toList()
+      fun attempt(i: Int, lastCode: Int) {
+        if (i >= order.size) {
+          settle(mapOf("ok" to false, "code" to lastCode, "tried" to order.joinToString(",") { it.key }))
+          return
+        }
+        val (name, tm) = order[i]
+        var answered = false
+        try {
+          tm.sendUssdRequest(code, object : TelephonyManager.UssdResponseCallback() {
+            override fun onReceiveUssdResponse(telephonyManager: TelephonyManager, request: String, response: CharSequence) {
+              if (answered) return
+              answered = true
+              settle(mapOf("ok" to true, "message" to response.toString(), "via" to name))
+            }
+
+            override fun onReceiveUssdResponseFailed(telephonyManager: TelephonyManager, request: String, failureCode: Int) {
+              if (answered) return
+              answered = true
+              attempt(i + 1, failureCode)
+            }
+          }, handler)
+        } catch (e: SecurityException) {
+          if (i == order.size - 1) {
+            settle(mapOf("ok" to false, "code" to -102))
+          } else {
+            attempt(i + 1, -102)
+          }
+        } catch (_: Throwable) {
+          attempt(i + 1, -103)
+        }
+      }
+      attempt(0, -1)
     }
 
     // *#*#code#*#* "secret" codes — only the default phone app may send these.

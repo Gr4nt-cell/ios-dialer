@@ -34,20 +34,22 @@ export async function runUssd(code, accountKey = null) {
     // that never answers would leave the button stuck on "Running…".
     r = await Promise.race([
       Dialer.sendUssd(code, accountKey || null),
-      new Promise((resolve) => setTimeout(() => resolve({ ok: false, code: -1 }), 30000)),
+      new Promise((resolve) => setTimeout(() => resolve({ ok: false, code: -200 }), 30000)),
     ]);
   } catch {
     return { ok: false, reason: 'permission' };
   }
   if (r && r.ok) return { ok: true, message: r.message || '' };
-  // -100/-101 are ours (too old an Android, no telephony); -1 and -2 are
-  // TelephonyManager's RETURN_FAILURE and SERVICE_UNAVAIL.
+  // -100/-101/-102/-103 are ours (too old an Android, no telephony, refused,
+  // threw); -1 and -2 are TelephonyManager's RETURN_FAILURE and SERVICE_UNAVAIL.
+  const code = r && typeof r.code === 'number' ? r.code : -1;
   const reason =
-    r && r.code === -100 ? 'unsupported'
-    : r && r.code === -101 ? 'unsupported'
-    : r && r.code === -2 ? 'unavailable'
+    code === -100 || code === -101 ? 'unsupported'
+    : code === -102 ? 'permission'
+    : code === -2 ? 'unavailable'
+    : code === -200 ? 'timeout'
     : 'failed';
-  return { ok: false, reason };
+  return { ok: false, reason, code, tried: (r && r.tried) || null };
 }
 
 export function parseCallState(json) {

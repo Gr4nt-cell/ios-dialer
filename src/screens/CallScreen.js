@@ -6,7 +6,8 @@ import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Dialer, { ROUTE, isRinging, isUssdCode, runUssd } from '../dialer';
+import Dialer, { ROUTE, isRinging, isUssdCode } from '../dialer';
+import { runUssdDuringCall } from '../ussd';
 import { depthTransform, useDepth } from '../depth';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
@@ -512,20 +513,9 @@ export default function CallScreen() {
   const sendUssd = async () => {
     const code = dtmf;
     setUssdBusy(true);
-    const r = await runUssd(code, primary && primary.accountKey);
+    await runUssdDuringCall(code, primary, tr);
     setUssdBusy(false);
     setDtmf('');
-    if (r.ok) {
-      Alert.alert(code, r.message || tr('No reply from the network.'));
-      return;
-    }
-    Alert.alert(
-      tr('Couldn’t Run the Code'),
-      r.reason === 'unavailable' ? tr('The network didn’t accept the code while a call is in progress. Try again after the call.')
-      : r.reason === 'permission' ? tr('Phone permission is needed to run USSD codes.')
-      : r.reason === 'unsupported' ? tr('This phone can’t run USSD codes during a call.')
-      : tr('The code didn’t go through. Try again after the call.')
-    );
   };
 
   return wrap(

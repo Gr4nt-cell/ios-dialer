@@ -12,7 +12,8 @@ import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
 import { playTone, preloadTones } from '../sounds';
 import { IconButton } from '../components/ui';
 import { Glass } from '../components/Glass';
-import Dialer, { isImeiCode, isSecretCode, isUssdCode, runUssd } from '../dialer';
+import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
+import { runUssdDuringCall } from '../ussd';
 import { useCalls } from '../CallContext';
 import { load, save } from '../storage';
 import { useT } from '../i18n';
@@ -124,21 +125,6 @@ export default function KeypadScreen({ prefill }) {
     update((n) => n.slice(0, -1));
   };
 
-  const sendUssdMidCall = async (code, accountKey) => {
-    const r = await runUssd(code, accountKey);
-    if (r.ok) {
-      Alert.alert(code, r.message || tr('No reply from the network.'));
-      return;
-    }
-    Alert.alert(
-      tr('Couldn’t Run the Code'),
-      r.reason === 'unavailable' ? tr('The network didn’t accept the code while a call is in progress. Try again after the call.')
-      : r.reason === 'permission' ? tr('Phone permission is needed to run USSD codes.')
-      : r.reason === 'unsupported' ? tr('This phone can’t run USSD codes during a call.')
-      : tr('The code didn’t go through. Try again after the call.')
-    );
-  };
-
   const onCall = () => {
     if (!num) {
       const lastOut = recents.find((g) => g.type === 'outgoing');
@@ -162,7 +148,7 @@ export default function KeypadScreen({ prefill }) {
       if (onCallNow) {
         // Telecom refuses a second call while one is up, so the code would
         // simply vanish. Ask the radio directly instead and show the reply.
-        sendUssdMidCall(num, onCallNow.accountKey);
+        runUssdDuringCall(num, onCallNow, tr);
         update('');
         return;
       }
