@@ -3,7 +3,8 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
+import { useBottomSpace } from '../device';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName } from '../phone';
@@ -14,6 +15,7 @@ export default function FavoritesScreen() {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const nav = useNav();
   const { favorites, findContact, call, removeFavorite, moveFavorite } = useData();
   const [editing, setEditing] = useState(false);
@@ -82,7 +84,7 @@ export default function FavoritesScreen() {
             action={<TextButton title={tr('Add Favorite')} bold onPress={() => nav.push({ name: 'pickFavorite' })} />}
           />
         }
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
       />
     </View>
   );

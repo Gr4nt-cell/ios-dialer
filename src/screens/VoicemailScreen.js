@@ -3,7 +3,8 @@ import { Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
+import { useBottomSpace } from '../device';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { formatNumber } from '../phone';
@@ -14,12 +15,13 @@ export default function VoicemailScreen() {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const nav = useNav();
   const { callVoicemail, settings, recents } = useData();
   const voicemailCalls = recents.filter((g) => g.type === 'voicemail').slice(0, 20);
 
   return (
-    <View style={{ flex: 1, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
+    <View style={{ flex: 1, paddingBottom: tabBarSpace + insets.bottom }}>
       <LargeHeader title={tr('Voicemail')} right={<IconButton glass name="settings-outline" onPress={() => nav.push({ name: 'settings' })} />} />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36 }}>
         <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center' }}>

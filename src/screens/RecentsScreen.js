@@ -3,7 +3,8 @@ import { Alert, FlatList, Linking, RefreshControl, StyleSheet, Text, View } from
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
+import { useBottomSpace } from '../device';
 import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, timeLabel } from '../phone';
@@ -70,6 +71,7 @@ export default function RecentsScreen() {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const { recents, markRecentsSeen, deleteCalls, callLogPerm, refreshCallLog } = useData();
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState(false);
@@ -149,7 +151,7 @@ export default function RecentsScreen() {
           />
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} progressViewOffset={insets.top + 40} />}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
       />
     </View>
   );

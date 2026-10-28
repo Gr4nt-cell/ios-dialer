@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Dialer, { ROUTE, isRinging, isUssdCode } from '../dialer';
 import { runUssdThroughOperator } from '../ussd';
 import { depthTransform, useDepth } from '../depth';
+import { useIsTablet } from '../device';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
 import { useTheme } from '../theme';
@@ -304,6 +305,7 @@ export default function CallScreen() {
   const t = useTheme();
   const identify = useIdentity();
   const [keypad, setKeypad] = useState(false);
+  const isTablet = useIsTablet();
   const [dtmf, setDtmf] = useState('');
   const [ussdBusy, setUssdBusy] = useState(false);
   const askedPostDial = useRef({});
@@ -330,7 +332,10 @@ export default function CallScreen() {
   const zoomStyle = useZoom();
   const nameStyle = usePhoto ? styles.posterName : styles.name;
   // depth layer goes right after the name so the person overlaps it
-  const front = usePhoto && depth && !keypad ? <DepthLayer uri={depth.foreground} zoomStyle={zoomStyle} adjust={settings} /> : null;
+  // on a tablet the dial pad lives in its own column, so the left side never
+  // swaps itself out for it
+  const padOpen = keypad && !isTablet;
+  const front = usePhoto && depth && !padOpen ? <DepthLayer uri={depth.foreground} zoomStyle={zoomStyle} adjust={settings} /> : null;
 
 
   useTicker(live.some((c) => c.state === 'active'));
@@ -517,7 +522,7 @@ export default function CallScreen() {
     setDtmf('');
   };
 
-  return wrap(
+  const body = (
     <>
       {/* top bar */}
       <View style={styles.topRow}>
@@ -552,7 +557,7 @@ export default function CallScreen() {
       })}
 
       {/* caller */}
-      {keypad ? (
+      {padOpen ? (
         <View style={{ alignItems: 'center', marginTop: 34, paddingHorizontal: 24 }}>
           <Text style={styles.statusTop}>{who.name}</Text>
           <Text style={[styles.name, { fontWeight: '300', letterSpacing: 1.5 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
@@ -663,7 +668,7 @@ export default function CallScreen() {
             ))}
           </View>
         </View>
-      ) : keypad ? (
+      ) : padOpen ? (
         <View style={{ alignItems: 'center', marginBottom: 6 }}>
           {[0, 1, 2, 3].map((row) => (
             <View key={row} style={{ flexDirection: 'row', marginBottom: 12 }}>
@@ -721,7 +726,7 @@ export default function CallScreen() {
       {/* bottom row: Add Call · End · Keypad (End always in the middle) */}
       {primary.state === 'select_account' ? null : (
       <View style={styles.gridRow}>
-        {keypad || primary.state === 'select_account' ? (
+        {padOpen || primary.state === 'select_account' ? (
           <View style={{ width: COL }} />
         ) : (
           <CallButton size={KEY} icon={canMerge ? 'git-merge' : 'add'} label={canMerge ? 'Merge' : 'Add Call'} onPress={addOrMerge} />
@@ -736,13 +741,13 @@ export default function CallScreen() {
             }}
           />
         )}
-        {keypad ? (
+        {padOpen ? (
           <Pressable onPress={() => setKeypad(false)} hitSlop={12} style={{ width: COL, alignItems: 'center', paddingTop: 18 }}>
             <Glass dark radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center' }}>
               <Text style={{ color: WHITE, fontSize: 15, fontWeight: '600' }}>{tr('Hide')}</Text>
             </Glass>
           </Pressable>
-        ) : primary.state === 'select_account' ? (
+        ) : primary.state === 'select_account' || isTablet ? (
           <View style={{ width: COL }} />
         ) : (
           <CallButton size={KEY} icon="keypad" label={tr('Keypad')} onPress={() => setKeypad(true)} disabled={!connected} />
@@ -751,6 +756,68 @@ export default function CallScreen() {
       )}
     </>
   );
+
+  // ---------- tablet: call on the left, dial pad always out on the right ----------
+  if (isTablet) {
+    return wrap(
+      <View style={{ flex: 1, flexDirection: 'row' }}>
+        <View style={{ flex: 1, minWidth: 0 }}>{body}</View>
+        <View style={styles.padColumn}>
+          <Glass dark vivid outline radius={32} style={styles.padPanel}>
+            <Text style={styles.statusTop} numberOfLines={1}>
+              {who.name}
+            </Text>
+            <Text
+              style={[styles.name, { fontWeight: '300', letterSpacing: 1.5, fontSize: 30, marginTop: 2 }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+            >
+              {dtmf || ' '}
+            </Text>
+
+            {isUssdCode(dtmf) ? (
+              <Pressable onPress={sendUssd} disabled={ussdBusy} hitSlop={10} style={{ marginTop: 8 }}>
+                {({ pressed }) => (
+                  <Glass dark vivid outline radius={18} pressed={pressed} style={styles.runCode}>
+                    <Ionicons name="arrow-forward-circle-outline" size={17} color={WHITE} />
+                    <Text allowFontScaling={false} style={{ color: WHITE, fontSize: 15, fontWeight: '600', marginLeft: 7 }}>
+                      {ussdBusy ? tr('Running…') : tr('Run Code')}
+                    </Text>
+                  </Glass>
+                )}
+              </Pressable>
+            ) : null}
+
+            <View style={{ marginTop: 18 }}>
+              {[0, 1, 2, 3].map((row) => (
+                <View key={row} style={{ flexDirection: 'row', marginBottom: 12 }}>
+                  {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
+                    <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 10 }}>
+                      {({ pressed }) => (
+                        <Glass dark radius={36} pressed={pressed} tint="rgba(255,255,255,0.16)" tintOpacity={1} style={styles.dtmfKey}>
+                          <Text style={{ color: WHITE, fontSize: 32, lineHeight: 38 }}>{d}</Text>
+                          {l ? <Text style={{ color: WHITE, fontSize: 9, fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
+                        </Glass>
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              ))}
+            </View>
+
+            {dtmf ? (
+              <Pressable onPress={() => setDtmf('')} hitSlop={10} style={{ marginTop: 6 }}>
+                <Text style={{ color: DIM, fontSize: 15, fontWeight: '600' }}>{tr('Clear')}</Text>
+              </Pressable>
+            ) : null}
+          </Glass>
+        </View>
+      </View>
+    );
+  }
+
+  return wrap(body);
 }
 
 const styles = StyleSheet.create({
@@ -780,6 +847,9 @@ const styles = StyleSheet.create({
   answerRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 36 },
   pillRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 44, marginBottom: 34 },
   dtmfKey: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
+  padColumn: { width: 360, paddingRight: 24, paddingLeft: 8, justifyContent: 'center' },
+  padPanel: { alignItems: 'center', paddingVertical: 26, paddingHorizontal: 18 },
+  runCode: { height: 36, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' },
   simTile: { width: 102, paddingVertical: 9, paddingHorizontal: 7, alignItems: 'center' },
   simBadge: { width: 18, height: 18, borderRadius: 5.5, alignItems: 'center', justifyContent: 'center' },
   simRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },

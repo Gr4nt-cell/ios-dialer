@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, AppState } from 'react-native';
-import { Linking, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { usePaneSize } from '../device';
+import { Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
@@ -187,7 +188,7 @@ export default function SettingsScreen() {
     setOverlay(next);
     if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(next.island !== false, !!next.rear);
   };
-  const { width } = useWindowDimensions();
+  const { width } = usePaneSize();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
   const bg = settings.callBackground || 'auto';
   const previewColors = bg === 'auto' ? gradientFor('Jane Appleseed') : gradientFor('', bg);

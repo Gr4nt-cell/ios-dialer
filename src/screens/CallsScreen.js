@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Animated, FlatList, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Animated, FlatList, StyleSheet, Text, View } from 'react-native';
+import { usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
 import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, sameDay } from '../phone';
@@ -45,7 +46,7 @@ function FavoritesRow() {
   const t = useTheme();
   const nav = useNav();
   const tr = useT();
-  const { width } = useWindowDimensions();
+  const { width } = usePaneSize();
   const { favorites, findContact, call } = useData();
 
   const VIEWPORT = width - SIDE * 2;  // exactly the date strip's width
@@ -133,6 +134,7 @@ export default function CallsScreen() {
   const t = useTheme();
   const nav = useNav();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const sheet = useActionSheet();
   const { recents, resolve, markRecentsSeen, deleteCalls, callVoicemail } = useData();
   const [filter, setFilter] = useState('all');
@@ -251,7 +253,7 @@ export default function CallsScreen() {
             <EmptyState icon={current.icon} title={`${tr('No')} ${tr(current.label)}`} message={tr('Nothing like that on this day.')} />
           )
         }
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
       />
     </View>
   );

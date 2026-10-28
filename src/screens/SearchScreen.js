@@ -3,7 +3,8 @@ import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
+import { useBottomSpace } from '../device';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, prettyLabel, timeLabel } from '../phone';
@@ -14,6 +15,7 @@ export default function SearchScreen() {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const nav = useNav();
   const { contacts, recents, resolve, call } = useData();
   const [q, setQ] = useState('');
@@ -105,7 +107,7 @@ export default function SearchScreen() {
           section.title ? <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.bg }}>{section.title}</Text> : null
         }
         ListEmptyComponent={q ? <EmptyState icon="search" title={tr('No Results')} message={`Nothing matches “${q}”.`} /> : <EmptyState icon="search" title={tr('Search')} message={tr('Find people, recent calls, or type a number to call it.')} />}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
       />
     </View>
   );

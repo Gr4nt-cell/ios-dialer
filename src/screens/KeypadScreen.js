@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
@@ -66,7 +67,8 @@ export default function KeypadScreen({ prefill }) {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const tabBarSpace = useBottomSpace();
+  const { width, height } = usePaneSize();
   const nav = useNav();
   const { call, callVoicemail, settings, recents, contacts, resolve } = useData();
   const { available, isDefault, requestDefault, live } = useCalls();
@@ -92,7 +94,7 @@ export default function KeypadScreen({ prefill }) {
   }, [prefill]);
 
   // 10% smaller keys than before, packed closer together like the iPhone keypad
-  const base = Math.max(64, Math.min(82, Math.floor((width - 110) / 3), Math.floor((height - insets.top - TAB_BAR_SPACE - 300) / 4.6)));
+  const base = Math.max(64, Math.min(82, Math.floor((width - 110) / 3), Math.floor((height - insets.top - tabBarSpace - 300) / 4.6)));
   const size = Math.round(base * 0.9);
   const gapX = Math.round(size * 0.17);
   const gapY = Math.max(10, Math.round(size * 0.2));
@@ -172,7 +174,7 @@ export default function KeypadScreen({ prefill }) {
   const display = formatNumber(num);
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: TAB_BAR_SPACE + insets.bottom }}>
+    <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: tabBarSpace + insets.bottom }}>
       <View style={styles.topBar}>
         <View style={{ flex: 1 }} />
         <IconButton glass name="settings-outline" onPress={() => nav.push({ name: 'settings' })} />

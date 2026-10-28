@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Linking, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, Linking, StyleSheet, Text, View } from 'react-native';
+import { usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { scrollTick } from '../haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_SPACE, useTheme } from '../theme';
+import { useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, prettyLabel } from '../phone';
@@ -92,8 +93,9 @@ export default function ContactsScreen() {
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const nav = useNav();
-  const { width } = useWindowDimensions();
+  const { width } = usePaneSize();
   const { contacts, contactsPerm, contactsError, refreshContacts, call } = useData();
   const [query, setQuery] = useState('');
   const [letter, setLetter] = useState('all');
@@ -252,7 +254,7 @@ export default function ContactsScreen() {
             }
           />
         }
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
       />
     </View>
   );

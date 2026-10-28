@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Linking, Modal, Text, View } from 'react-native';
+import { BackHandler, Linking, Modal, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -31,6 +31,8 @@ import CallsScreen from './src/screens/CallsScreen';
 import StatisticsScreen from './src/screens/StatisticsScreen';
 import { I18nProvider } from './src/i18n';
 import SearchScreen from './src/screens/SearchScreen';
+import TabletShell from './src/TabletShell';
+import { useIsTablet } from './src/device';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 
 const ROUTES = {
@@ -43,6 +45,10 @@ const ROUTES = {
   privacyPolicy: PrivacyPolicyScreen,
   statistics: StatisticsScreen,
 };
+
+// On a tablet these fill the pane beside the list instead of covering the
+// screen; the rest (the forms and pickers) stay modal, where they belong.
+const PANE_ROUTES = new Set(['contact', 'settings', 'recordings', 'privacyPolicy', 'statistics']);
 
 function islandOn() {
   try {
@@ -98,6 +104,8 @@ function Main() {
   const { missedCount, settings } = useData();
   const blurTarget = useRef(null);
   const tabs = UNIFIED_TABS;
+  const isTablet = useIsTablet();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { showScreen, live, setMinimized } = useCalls();
   const [tab, setTabState] = useState('keypad');
   const [stack, setStack] = useState([]);
@@ -121,6 +129,9 @@ function Main() {
   const setTab = useCallback((next) => {
     setTabState(next);
     save('lastTab', next);
+    // on a tablet the open detail belongs to the section it was opened from,
+    // so it goes when the section does
+    setStack((cur) => (cur.length ? [] : cur));
   }, []);
 
   const push = useCallback((route) => {
@@ -196,6 +207,51 @@ function Main() {
       screen = <KeypadScreen prefill={prefill} />;
   }
 
+  // ---------- tablet: rail, list, detail ----------
+
+  // The keypad keeps the detail pane to itself: recents sit in the list column
+  // so a number is one tap away, and anything opened from there stays modal
+  // rather than pushing the dial pad out of sight.
+  const paneTop = isTablet ? [...stack].reverse().find((r) => PANE_ROUTES.has(r.name)) : null;
+  const keypadSection = shownTab === 'keypad';
+  const paneRoute = keypadSection ? null : paneTop;
+  const modalStack = isTablet ? stack.filter((r) => r !== paneRoute) : stack;
+
+  let tabletList = screen;
+  let tabletDetail = null;
+  if (isTablet) {
+    if (keypadSection) {
+      tabletList = <RecentsScreen />;
+      tabletDetail = <KeypadScreen prefill={prefill} />;
+    } else if (paneRoute) {
+      const PaneScreen = ROUTES[paneRoute.name];
+      tabletDetail = PaneScreen ? <PaneScreen route={paneRoute} inPane /> : null;
+    }
+  }
+
+  const shell = isTablet ? (
+    <TabletShell
+      tabs={tabs}
+      activeTab={shownTab}
+      onChangeTab={setTab}
+      onSettings={() => push({ name: 'settings' })}
+      badges={{ recents: missedCount, calls: missedCount }}
+      list={tabletList}
+      detail={tabletDetail}
+      listKey={shownTab}
+      detailKey={paneRoute ? paneRoute.key : shownTab}
+      windowWidth={windowWidth}
+      windowHeight={windowHeight}
+    />
+  ) : (
+    <>
+      <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
+        <Boundary resetKey={shownTab}>{screen}</Boundary>
+      </BlurTargetView>
+      <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
+    </>
+  );
+
   return (
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
@@ -205,13 +261,10 @@ function Main() {
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
-        <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
-          <Boundary resetKey={shownTab}>{screen}</Boundary>
-        </BlurTargetView>
-        <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
+        {shell}
         <ReturnToCall />
       </View>
-      {stack.map((route) => {
+      {modalStack.map((route) => {
         const Screen = ROUTES[route.name];
         if (!Screen) return null;
         return (
