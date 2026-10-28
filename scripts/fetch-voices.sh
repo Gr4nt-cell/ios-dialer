@@ -17,8 +17,12 @@
 set -euo pipefail
 
 SHERPA_VERSION="1.13.7"
-MALE_VOICE="vits-piper-en_GB-alan-medium"
-FEMALE_VOICE="vits-piper-en_GB-alba-medium"
+# int8 builds of the same two voices: 17.8MB each against 63MB, which is the
+# difference between a 75MB app and a 170MB one. Same recordings, same model,
+# weights stored at lower precision — sherpa publishes them as first-class
+# downloads and loads them exactly the same way.
+MALE_VOICE="vits-piper-en_GB-alan-medium-int8"
+FEMALE_VOICE="vits-piper-en_GB-alba-medium-int8"
 RELEASES="https://github.com/k2-fsa/sherpa-onnx/releases/download"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
