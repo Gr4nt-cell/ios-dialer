@@ -34,6 +34,23 @@ if [ ! -s "$MAVEN/sherpa-onnx-$SHERPA_VERSION.aar" ]; then
   curl -fsSL "$RELEASES/v$SHERPA_VERSION/sherpa-onnx-$SHERPA_VERSION.aar" \
     -o "$MAVEN/sherpa-onnx-$SHERPA_VERSION.aar"
 fi
+# KEEP_ABIS trims the runtime's native libraries before Gradle ever sees it.
+# Patching Gradle to do this proved unreliable — React Native writes its own
+# abiFilters line, and a packaging exclude did nothing either — so the archive
+# is edited directly, where the result can be printed and checked.
+if [ -n "${KEEP_ABIS:-}" ]; then
+  AAR="$MAVEN/sherpa-onnx-$SHERPA_VERSION.aar"
+  for abi in armeabi-v7a arm64-v8a x86 x86_64; do
+    case " $KEEP_ABIS " in
+      *" $abi "*) ;;
+      *) zip -q -d "$AAR" "jni/$abi/*" >/dev/null 2>&1 || true ;;
+    esac
+  done
+  echo "Runtime architectures kept:"
+  unzip -l "$AAR" | awk -F/ '/jni\//{print "  " $2}' | sort -u
+  echo "Runtime size: $(du -h "$AAR" | cut -f1)"
+fi
+
 cat > "$MAVEN/sherpa-onnx-$SHERPA_VERSION.pom" <<POM
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
