@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Dialer, { ROUTE, isRinging } from '../dialer';
+import Dialer, { ROUTE, isRinging, isUssdCode, runUssd } from '../dialer';
 import { depthTransform, useDepth } from '../depth';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
@@ -304,6 +304,7 @@ export default function CallScreen() {
   const identify = useIdentity();
   const [keypad, setKeypad] = useState(false);
   const [dtmf, setDtmf] = useState('');
+  const [ussdBusy, setUssdBusy] = useState(false);
   const askedPostDial = useRef({});
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -504,6 +505,29 @@ export default function CallScreen() {
     Dialer.dtmf(primary.id, d);
   };
 
+  // A USSD code typed on the in-call keypad only ever went out as tones, which
+  // the network ignores. Sent through the radio it works, on the SIM this call
+  // is on; the reply comes back here, since the system's own USSD dialog
+  // doesn't appear while a call is up.
+  const sendUssd = async () => {
+    const code = dtmf;
+    setUssdBusy(true);
+    const r = await runUssd(code, primary && primary.accountKey);
+    setUssdBusy(false);
+    setDtmf('');
+    if (r.ok) {
+      Alert.alert(code, r.message || tr('No reply from the network.'));
+      return;
+    }
+    Alert.alert(
+      tr('Couldn’t Run the Code'),
+      r.reason === 'unavailable' ? tr('The network didn’t accept the code while a call is in progress. Try again after the call.')
+      : r.reason === 'permission' ? tr('Phone permission is needed to run USSD codes.')
+      : r.reason === 'unsupported' ? tr('This phone can’t run USSD codes during a call.')
+      : tr('The code didn’t go through. Try again after the call.')
+    );
+  };
+
   return wrap(
     <>
       {/* top bar */}
@@ -545,6 +569,18 @@ export default function CallScreen() {
           <Text style={[styles.name, { fontWeight: '300', letterSpacing: 1.5 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
             {dtmf || ' '}
           </Text>
+          {isUssdCode(dtmf) ? (
+            <Pressable onPress={sendUssd} disabled={ussdBusy} hitSlop={10} style={{ marginTop: 10 }}>
+              {({ pressed }) => (
+                <Glass dark vivid outline radius={18} pressed={pressed} style={{ height: 36, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="arrow-forward-circle-outline" size={17} color={WHITE} />
+                  <Text allowFontScaling={false} style={{ color: WHITE, fontSize: 15, fontWeight: '600', marginLeft: 7 }}>
+                    {ussdBusy ? tr('Running…') : tr('Run Code')}
+                  </Text>
+                </Glass>
+              )}
+            </Pressable>
+          ) : null}
         </View>
       ) : (
         <View style={{ alignItems: 'center', marginTop: twoCalls ? 18 : usePhoto ? 22 : 40 }}>

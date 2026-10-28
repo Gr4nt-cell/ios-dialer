@@ -11,6 +11,45 @@ export const isImeiCode = (s) => s === '*#06#';
 // *124#, *170*1#, #100# … (but not the codes above)
 export const isUssdCode = (s) => /^[*#][0-9*#]*#$/.test(s || '') && !isSecretCode(s) && !isImeiCode(s);
 
+/**
+ * Runs a USSD code through the radio rather than by placing a call.
+ *
+ * Placing a call is the better route normally, because the network's own
+ * dialog then handles the reply and any menu that follows. But Telecom won't
+ * place a second call while one is up, which is why a code typed during a
+ * call did nothing at all — so mid-call this asks the radio directly and
+ * hands back the reply for the app to show.
+ *
+ * One honest limit: Android has no API to answer a USSD menu this way, so a
+ * code that replies with "1. Balance 2. Data" can be read but not replied to
+ * until the call ends.
+ *
+ * Resolves { ok: true, message } or { ok: false, reason }.
+ */
+export async function runUssd(code, accountKey = null) {
+  if (!Dialer || !Dialer.sendUssd) return { ok: false, reason: 'unsupported' };
+  let r;
+  try {
+    // The native side settles only when the network answers, and a network
+    // that never answers would leave the button stuck on "Running…".
+    r = await Promise.race([
+      Dialer.sendUssd(code, accountKey || null),
+      new Promise((resolve) => setTimeout(() => resolve({ ok: false, code: -1 }), 30000)),
+    ]);
+  } catch {
+    return { ok: false, reason: 'permission' };
+  }
+  if (r && r.ok) return { ok: true, message: r.message || '' };
+  // -100/-101 are ours (too old an Android, no telephony); -1 and -2 are
+  // TelephonyManager's RETURN_FAILURE and SERVICE_UNAVAIL.
+  const reason =
+    r && r.code === -100 ? 'unsupported'
+    : r && r.code === -101 ? 'unsupported'
+    : r && r.code === -2 ? 'unavailable'
+    : 'failed';
+  return { ok: false, reason };
+}
+
 export function parseCallState(json) {
   try {
     const s = JSON.parse(json);

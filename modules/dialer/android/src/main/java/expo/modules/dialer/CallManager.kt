@@ -182,6 +182,8 @@ object CallManager {
       o.put("parentId", call.parent?.let { ids[it] } ?: JSONObject.NULL)
       o.put("postDialWait", postDial[id] ?: JSONObject.NULL)
       o.put("disconnectLabel", d.disconnectCause?.label?.toString() ?: JSONObject.NULL)
+      // the SIM this call is on, so a USSD code run mid-call goes out on the same one
+      o.put("accountKey", d.accountHandle?.let { accountKey(it) } ?: JSONObject.NULL)
       if (state == Call.STATE_SELECT_PHONE_ACCOUNT) o.put("accounts", selectableAccounts(call))
       arr.put(o)
     }
