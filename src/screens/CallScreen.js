@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Dialer, { ROUTE, isRinging, isUssdCode } from '../dialer';
-import { runUssdDuringCall } from '../ussd';
+import { runUssdThroughOperator } from '../ussd';
 import { depthTransform, useDepth } from '../depth';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
@@ -506,14 +506,13 @@ export default function CallScreen() {
     Dialer.dtmf(primary.id, d);
   };
 
-  // A USSD code typed on the in-call keypad only ever went out as tones, which
-  // the network ignores. Sent through the radio it works, on the SIM this call
-  // is on; the reply comes back here, since the system's own USSD dialog
-  // doesn't appear while a call is up.
+  // A USSD code typed here only ever went out as DTMF tones, which the network
+  // ignores. Sending it properly hands it to the operator, whose own dialog
+  // takes over — so a menu code can be answered rather than just read.
   const sendUssd = async () => {
     const code = dtmf;
     setUssdBusy(true);
-    await runUssdDuringCall(code, primary, tr);
+    await runUssdThroughOperator(code, primary, tr);
     setUssdBusy(false);
     setDtmf('');
   };

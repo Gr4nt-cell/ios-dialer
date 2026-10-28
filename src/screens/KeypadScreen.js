@@ -13,7 +13,7 @@ import { playTone, preloadTones } from '../sounds';
 import { IconButton } from '../components/ui';
 import { Glass } from '../components/Glass';
 import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
-import { runUssdDuringCall } from '../ussd';
+import { runUssdThroughOperator } from '../ussd';
 import { useCalls } from '../CallContext';
 import { load, save } from '../storage';
 import { useT } from '../i18n';
@@ -144,17 +144,11 @@ export default function KeypadScreen({ prefill }) {
       return;
     }
     if (isUssdCode(num)) {
+      // always the operator's own dialog, in a call or not — it is what keeps
+      // the session open so a menu can be answered. On a call it goes out on
+      // that call's SIM.
       const onCallNow = live && live.length ? live.find((c) => c.state === 'active') || live[0] : null;
-      if (onCallNow) {
-        // Telecom refuses a second call while one is up, so the code would
-        // simply vanish. Ask the radio directly instead and show the reply.
-        runUssdDuringCall(num, onCallNow, tr);
-        update('');
-        return;
-      }
-      // placed like any other call, so the network's own dialog handles it on
-      // the default SIM — that dialog copes with long menus and replies
-      call(num);
+      runUssdThroughOperator(num, onCallNow, tr);
       update('');
       return;
     }
