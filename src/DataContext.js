@@ -62,7 +62,25 @@ export function DataProvider({ children }) {
       setContactsPerm(perm.status);
       if (perm.status !== 'granted') return;
       const { data } = await Contacts.getContactsAsync({ fields: CONTACT_FIELDS, sort: Contacts.SortTypes.FirstName });
-      setContacts(data.filter((c) => c.name || c.firstName || c.lastName || c.company || (c.phoneNumbers && c.phoneNumbers.length)));
+
+      // The photo a contact is actually stored with, which is often larger
+      // than the one expo-contacts hands back — one query for all of them.
+      let large = null;
+      try {
+        large = Dialer && Dialer.getDisplayPhotos ? Dialer.getDisplayPhotos() : null;
+      } catch {
+        large = null;
+      }
+
+      const kept = data.filter((c) => c.name || c.firstName || c.lastName || c.company || (c.phoneNumbers && c.phoneNumbers.length));
+      setContacts(
+        large
+          ? kept.map((c) => {
+              const uri = c.id && large[String(c.id)];
+              return uri ? { ...c, largeImage: { uri } } : c;
+            })
+          : kept
+      );
       setContactsError(null);
     } catch (e) {
       setContactsError(e && e.message ? e.message : String(e));

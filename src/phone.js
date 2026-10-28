@@ -187,9 +187,15 @@ export function parseTelUrl(url) {
 }
 
 // Full-size contact photo when available (Android's "image" can be a small thumbnail).
+//
+// `largeImage` is the one the contacts provider stores at full size, read
+// natively in DataContext; it is the sharpest of the three and the one the
+// call screen wants. The small variant deliberately prefers the thumbnail,
+// since a 40px avatar in a list has no use for a 700px photo.
 export function contactPhoto(c, large = false) {
   if (!c) return null;
+  const big = c.largeImage && c.largeImage.uri;
   const raw = c.rawImage && c.rawImage.uri;
   const img = c.image && c.image.uri;
-  return large ? raw || img || null : img || raw || null;
+  return large ? big || raw || img || null : img || raw || big || null;
 }

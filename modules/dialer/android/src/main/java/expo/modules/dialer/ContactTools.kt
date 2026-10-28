@@ -122,6 +122,62 @@ object ContactTools {
   }
 
   /**
+   * The best photo the provider holds for each contact that has one, as
+   * contact id → uri.
+   *
+   * PHOTO_URI can be the 96px thumbnail, which is what made a photo look soft
+   * filling the call screen. When a contact has a full-size display photo the
+   * provider records a PHOTO_FILE_ID for it, and that photo is served from the
+   * contact's own display_photo path — usually several hundred pixels square,
+   * and the largest the system has.
+   */
+  fun displayPhotos(ctx: Context): Map<String, String> {
+    val out = HashMap<String, String>()
+    try {
+      ctx.contentResolver.query(
+        ContactsContract.Contacts.CONTENT_URI,
+        arrayOf(
+          ContactsContract.Contacts._ID,
+          ContactsContract.Contacts.PHOTO_FILE_ID,
+          ContactsContract.Contacts.PHOTO_URI,
+        ),
+        "${ContactsContract.Contacts.PHOTO_URI} IS NOT NULL",
+        null,
+        null,
+      )?.use { c ->
+        while (c.moveToNext()) {
+          val id = c.getLong(0)
+          val best = if (!c.isNull(1)) {
+            Uri.withAppendedPath(
+              ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id),
+              ContactsContract.Contacts.Photo.DISPLAY_PHOTO,
+            ).toString()
+          } else {
+            c.getString(2)
+          }
+          if (best != null) out[id.toString()] = best
+        }
+      }
+    } catch (_: Exception) {}
+    return out
+  }
+
+  /**
+   * The largest photo the provider will keep, so a photo set in the app isn't
+   * downscaled further than it has to be. Contacts caps display photos at its
+   * own maximum dimension (commonly 720), and asking is cheap.
+   */
+  fun displayPhotoMaxDim(ctx: Context): Int = try {
+    ctx.contentResolver.query(
+      ContactsContract.DisplayPhoto.CONTENT_MAX_DIMENSIONS_URI,
+      arrayOf(ContactsContract.DisplayPhoto.DISPLAY_MAX_DIM),
+      null,
+      null,
+      null,
+    )?.use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }?.takeIf { it > 0 } ?: 1080
+  } catch (_: Exception) { 1080 }
+
+  /**
    * Sets (or with a null [uri], removes) the photo of a contact.
    * Writes a full-size display photo; the provider makes the thumbnail.
    */
@@ -143,7 +199,7 @@ object ContactTools {
     if (uri == null) return true
 
     val bytes = readBytes(ctx, uri) ?: return false
-    val bmp = decode(bytes, 1080) ?: return false
+    val bmp = decode(bytes, displayPhotoMaxDim(ctx)) ?: return false
     val full = jpeg(bmp, 90)
     val target = raws.first()
 

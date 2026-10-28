@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Dimensions, PixelRatio } from 'react-native';
 import Dialer from './dialer';
 
 // Cut-out of the person in a contact photo, cached per photo
@@ -6,29 +7,42 @@ import Dialer from './dialer';
 // depth-effect preview in Settings so both show exactly the same cut-out.
 const depthCache = new Map();
 
-export function useDepth(image, enabled = true) {
-  const [depth, setDepth] = useState(() => (image && depthCache.get(image)) || null);
+/**
+ * Pixels the photo needs on the call screen: the screen's longest side in real
+ * device pixels, times the slow push-in, so the zoom is never magnifying a
+ * picture that was already smaller than the screen. A phone at 1080x2400 asks
+ * for about 2568, which the native side clamps to 2560.
+ */
+export function screenPhotoSide() {
+  const { width, height } = Dimensions.get('window');
+  const longest = Math.max(width, height) * PixelRatio.get();
+  return Math.round(longest * 1.07);
+}
+
+export function useDepth(image, enabled = true, maxSide = screenPhotoSide()) {
+  const cacheKey = `${image}@${maxSide}`;
+  const [depth, setDepth] = useState(() => (image && depthCache.get(cacheKey)) || null);
   useEffect(() => {
     let alive = true;
     if (!image || !enabled || !Dialer || !Dialer.prepareDepth) {
       setDepth(null);
       return undefined;
     }
-    if (depthCache.has(image)) {
-      setDepth(depthCache.get(image));
+    if (depthCache.has(cacheKey)) {
+      setDepth(depthCache.get(cacheKey));
       return undefined;
     }
     setDepth(null);
-    Dialer.prepareDepth(image)
+    Dialer.prepareDepth(image, maxSide)
       .then((r) => {
-        if (r && r.base && r.foreground) depthCache.set(image, r);
+        if (r && r.base && r.foreground) depthCache.set(cacheKey, r);
         if (alive) setDepth(r && r.base && r.foreground ? r : null);
       })
       .catch(() => {});
     return () => {
       alive = false;
     };
-  }, [image, enabled]);
+  }, [image, enabled, maxSide, cacheKey]);
   return depth;
 }
 

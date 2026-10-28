@@ -444,9 +444,12 @@ class DialerModule : Module() {
 
     Function("toE164") { number: String -> ContactTools.toE164Digits(ctx, number) }
 
+    // The best photo per contact, for screens that show one large.
+    Function("getDisplayPhotos") { -> ContactTools.displayPhotos(ctx) }
+
     // ---------- call screen depth: cut the person out of their photo ----------
 
-    AsyncFunction("prepareDepth") { uri: String, promise: Promise ->
+    AsyncFunction("prepareDepth") { uri: String, maxSide: Int?, promise: Promise ->
       val context = ctx
       Thread {
         var settled = false
@@ -461,7 +464,10 @@ class DialerModule : Module() {
             done(null)
             return@Thread
           }
-          val key = ContactTools.md5(bytes)
+          // The cut-out is cached per photo AND per size: a cache written for a
+          // smaller screen would otherwise keep being served at that size.
+          val side = (maxSide ?: 1280).coerceIn(640, 2560)
+          val key = "${ContactTools.md5(bytes)}-$side"
           val base = ContactTools.cacheFile(context, "$key-base.jpg")
           val fg = ContactTools.cacheFile(context, "$key-fg.png")
           val none = ContactTools.cacheFile(context, "$key-none")
@@ -474,7 +480,7 @@ class DialerModule : Module() {
             done(null)
             return@Thread
           }
-          val bmp = ContactTools.decode(bytes, 1280)
+          val bmp = ContactTools.decode(bytes, side)
           if (bmp == null) {
             done(null)
             return@Thread
