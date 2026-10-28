@@ -42,14 +42,14 @@ export async function runUssd(code, accountKey = null) {
   if (r && r.ok) return { ok: true, message: r.message || '' };
   // -100/-101/-102/-103 are ours (too old an Android, no telephony, refused,
   // threw); -1 and -2 are TelephonyManager's RETURN_FAILURE and SERVICE_UNAVAIL.
-  const code = r && typeof r.code === 'number' ? r.code : -1;
+  const failure = r && typeof r.code === 'number' ? r.code : -1;
   const reason =
-    code === -100 || code === -101 ? 'unsupported'
-    : code === -102 ? 'permission'
-    : code === -2 ? 'unavailable'
-    : code === -200 ? 'timeout'
+    failure === -100 || failure === -101 ? 'unsupported'
+    : failure === -102 ? 'permission'
+    : failure === -2 ? 'unavailable'
+    : failure === -200 ? 'timeout'
     : 'failed';
-  return { ok: false, reason, code, tried: (r && r.tried) || null };
+  return { ok: false, reason, failure, tried: (r && r.tried) || null };
 }
 
 export function parseCallState(json) {

@@ -25,6 +25,8 @@ definitions:
     scripts:
       - name: Install dependencies
         script: npm install --no-audit --no-fund
+      - name: Check that every source file parses
+        script: node scripts/check-syntax.cjs
       - name: Build number from the commit count
         script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
       - name: Generate the native Android project
@@ -61,6 +63,8 @@ workflows:
     scripts:
       - name: Install dependencies
         script: npm install --no-audit --no-fund
+      - name: Check that every source file parses
+        script: node scripts/check-syntax.cjs
       - name: Build number from the commit count
         script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
       - name: Generate the native Android project
@@ -96,6 +100,8 @@ workflows:
     scripts:
       - name: Install dependencies
         script: npm install --no-audit --no-fund
+      - name: Check that every source file parses
+        script: node scripts/check-syntax.cjs
       - name: Build number from the commit count
         script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
       - name: Generate the native Android project
