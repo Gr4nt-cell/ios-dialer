@@ -96,6 +96,9 @@ jobs:
       - name: Fetch the bundled voices
         run: ./scripts/fetch-voices.sh
 
+      - name: Wire the speech runtime into Gradle
+        run: node scripts/use-neural-tts.js
+
       - name: Show release shrinking settings
         run: grep -nE "minifyEnabled|shrinkResources|enableProguard|enableShrink" android/app/build.gradle android/gradle.properties || true
 
