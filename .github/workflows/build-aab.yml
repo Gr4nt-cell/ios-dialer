@@ -93,8 +93,11 @@ jobs:
         env:
           CI: 1
 
+      # x86 and x86_64 are emulators, not phones, and the speech runtime costs
+      # about 30MB per architecture — carrying both would add 60MB to every
+      # device's download for hardware nobody calls from.
       - name: Fetch the bundled voices
-        run: ./scripts/fetch-voices.sh
+        run: KEEP_ABIS="arm64-v8a armeabi-v7a" ./scripts/fetch-voices.sh
 
       - name: Publish the downloadable voices
         env:
