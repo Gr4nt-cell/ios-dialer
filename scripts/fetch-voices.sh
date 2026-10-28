@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Fetches the neural speech runtime and the two bundled voices.
+#
+# Run after `expo prebuild`, before Gradle. Nothing here is committed: the
+# models are 61MB each and would bloat the repository for ever, so CI pulls
+# them on each build and Gradle packages them into the app.
+#
+#   ./scripts/fetch-voices.sh
+#
+# What it places:
+#   android/local-maven/...             the sherpa-onnx runtime, as a Maven
+#                                       module — AGP refuses a bare .aar file
+#                                       dependency inside a library module
+#   modules/dialer/android/src/main/assets/tts/
+#     male/ female/                     each with its .onnx and tokens.txt
+#     espeak-ng-data/                   phonemiser data, English only
+set -euo pipefail
+
+SHERPA_VERSION="1.13.7"
+MALE_VOICE="vits-piper-en_GB-alan-medium"
+FEMALE_VOICE="vits-piper-en_GB-alba-medium"
+RELEASES="https://github.com/k2-fsa/sherpa-onnx/releases/download"
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ASSETS="$ROOT/modules/dialer/android/src/main/assets/tts"
+MAVEN="$ROOT/android/local-maven/com/k2fsa/sherpa-onnx/$SHERPA_VERSION"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+# ---------- the runtime ----------
+mkdir -p "$MAVEN"
+if [ ! -s "$MAVEN/sherpa-onnx-$SHERPA_VERSION.aar" ]; then
+  echo "Fetching sherpa-onnx $SHERPA_VERSION…"
+  curl -fsSL "$RELEASES/v$SHERPA_VERSION/sherpa-onnx-$SHERPA_VERSION.aar" \
+    -o "$MAVEN/sherpa-onnx-$SHERPA_VERSION.aar"
+fi
+cat > "$MAVEN/sherpa-onnx-$SHERPA_VERSION.pom" <<POM
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.k2fsa</groupId>
+  <artifactId>sherpa-onnx</artifactId>
+  <version>$SHERPA_VERSION</version>
+  <packaging>aar</packaging>
+</project>
+POM
+
+# ---------- the voices ----------
+fetch_voice() {
+  local name="$1" slot="$2"
+  if [ -s "$ASSETS/$slot/model.onnx" ]; then
+    echo "$slot voice already present"
+    return
+  fi
+  echo "Fetching $name…"
+  curl -fsSL "$RELEASES/tts-models/$name.tar.bz2" -o "$WORK/$slot.tar.bz2"
+  mkdir -p "$WORK/$slot"
+  tar -xjf "$WORK/$slot.tar.bz2" -C "$WORK/$slot"
+  local src="$WORK/$slot/$name"
+  mkdir -p "$ASSETS/$slot"
+  cp "$src"/*.onnx "$ASSETS/$slot/model.onnx"
+  cp "$src/tokens.txt" "$ASSETS/$slot/tokens.txt"
+
+  # espeak-ng-data is 19MB of dictionaries for every language it knows; the
+  # English files are 1.5MB of that, and both voices share them.
+  if [ ! -d "$ASSETS/espeak-ng-data" ]; then
+    mkdir -p "$ASSETS/espeak-ng-data"
+    cp -r "$src/espeak-ng-data/lang" "$ASSETS/espeak-ng-data/" 2>/dev/null || true
+    for f in en_dict phontab phonindex phondata intonations; do
+      cp "$src/espeak-ng-data/$f" "$ASSETS/espeak-ng-data/$f" 2>/dev/null || true
+    done
+  fi
+}
+
+fetch_voice "$MALE_VOICE" male
+fetch_voice "$FEMALE_VOICE" female
+
+echo "--- bundled speech ---"
+du -sh "$ASSETS"/* 2>/dev/null || true
+du -sh "$MAVEN" 2>/dev/null || true
+test -s "$ASSETS/male/model.onnx"
+test -s "$ASSETS/female/model.onnx"
+test -s "$ASSETS/espeak-ng-data/en_dict"
+echo "ok"

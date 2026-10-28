@@ -3,3 +3,5 @@ node_modules/
 /ios
 .expo/
 dist/
+modules/dialer/android/src/main/assets/tts/
+android/local-maven/

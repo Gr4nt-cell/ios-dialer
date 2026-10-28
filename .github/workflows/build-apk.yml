@@ -63,6 +63,9 @@ jobs:
         env:
           CI: 1
 
+      - name: Fetch the bundled voices
+        run: ./scripts/fetch-voices.sh
+
       - name: Show release shrinking settings
         run: grep -nE "minifyEnabled|shrinkResources|enableProguard|enableShrink" android/app/build.gradle android/gradle.properties || true
 

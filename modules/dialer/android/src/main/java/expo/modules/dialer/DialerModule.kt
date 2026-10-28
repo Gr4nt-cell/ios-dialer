@@ -446,6 +446,12 @@ class DialerModule : Module() {
     Function("getAnnounceVoice") { -> Announcer.chosenVoice(ctx) }
     Function("setAnnounceVoice") { name: String? -> Announcer.setVoice(ctx, name) }
 
+    // the two voices packaged with the app
+    Function("hasBundledVoices") { -> Announcer.bundledAvailable(ctx) }
+    Function("getBundledVoice") { -> Announcer.bundledVoice(ctx) }
+    Function("setBundledVoice") { which: String -> Announcer.setBundledVoice(ctx, which) }
+    Function("previewBundledVoice") { which: String, line: String -> Announcer.previewBundled(ctx, which, line) }
+
     Function("hasWhatsApp") { -> ContactTools.whatsAppPackage(ctx) != null }
 
     Function("openWhatsApp") { contactId: String?, number: String, kind: String ->

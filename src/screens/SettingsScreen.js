@@ -152,6 +152,8 @@ export default function SettingsScreen() {
   const [announce, setAnnounceState] = useState(() =>
     Dialer && Dialer.getAnnouncePrefs ? Dialer.getAnnouncePrefs() : { on: false, repeat: 2, unknown: false }
   );
+  const hasBundled = !!(Dialer && Dialer.hasBundledVoices && Dialer.hasBundledVoices());
+  const [bundled, setBundled] = useState(() => (Dialer && Dialer.getBundledVoice ? Dialer.getBundledVoice() : ''));
   const [voiceId, setVoiceId] = useState(() => (Dialer && Dialer.getAnnounceVoice ? Dialer.getAnnounceVoice() : null));
   const voices = useMemo(() => (Dialer && Dialer.getAnnounceVoices ? Dialer.getAnnounceVoices() : []), [announce.on]);
   const voiceLabel = (voices.find((v) => v.id === voiceId) || {}).label || tr('Best available');
@@ -612,15 +614,37 @@ export default function SettingsScreen() {
                   />
                 }
               />
-              <Cell
-                value={tr('Voice')}
-                onPress={chooseVoice}
-                right={
-                  <Text style={{ color: t.secondary, fontSize: 15, maxWidth: 190 }} numberOfLines={1}>
-                    {voiceLabel}
-                  </Text>
-                }
-              />
+              {hasBundled ? (
+                <Cell
+                  value={tr('Voice')}
+                  right={
+                    <Segmented
+                      options={[
+                        { label: tr('Female'), value: 'female' },
+                        { label: tr('Male'), value: 'male' },
+                        { label: tr('Phone'), value: '' },
+                      ]}
+                      value={bundled}
+                      onChange={(v) => {
+                        setBundled(v);
+                        if (Dialer && Dialer.setBundledVoice) Dialer.setBundledVoice(v);
+                        if (v && Dialer && Dialer.previewBundledVoice) Dialer.previewBundledVoice(v, 'Call from Ella');
+                      }}
+                    />
+                  }
+                />
+              ) : null}
+              {!hasBundled || bundled === '' ? (
+                <Cell
+                  value={hasBundled ? tr('Phone Voice') : tr('Voice')}
+                  onPress={chooseVoice}
+                  right={
+                    <Text style={{ color: t.secondary, fontSize: 15, maxWidth: 170 }} numberOfLines={1}>
+                      {voiceLabel}
+                    </Text>
+                  }
+                />
+              ) : null}
               <Cell
                 value={tr('Preview')}
                 color={t.blue}
