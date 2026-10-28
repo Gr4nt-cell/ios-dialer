@@ -447,6 +447,19 @@ class DialerModule : Module() {
     Function("setAnnounceVoice") { name: String? -> Announcer.setVoice(ctx, name) }
 
     // the two voices packaged with the app
+    // ---------- on-device understanding ----------
+    Function("brainStatus") { -> GemmaBrain.status(ctx) }
+    Function("downloadBrain") { url: String -> BrainDownload.start(ctx, url) }
+    Function("brainDownloadStatus") { -> BrainDownload.status(ctx) }
+    Function("removeBrain") { ->
+      GemmaBrain.release()
+      GemmaBrain.modelFile(ctx).delete()
+    }
+
+    AsyncFunction("understand") { phrase: String, names: List<String>, promise: Promise ->
+      GemmaBrain.understand(ctx, phrase, names) { json -> promise.resolve(json) }
+    }
+
     // ---------- downloadable voices ----------
     Function("voiceStatus") { -> VoiceDownload.status(ctx) }
     Function("downloadVoice") { which: String -> VoiceDownload.start(ctx, which) }

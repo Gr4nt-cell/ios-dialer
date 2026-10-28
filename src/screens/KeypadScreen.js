@@ -11,7 +11,7 @@ import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
 import { playTone, preloadTones } from '../sounds';
 import { IconButton } from '../components/ui';
-import { describe, parseCommand } from '../voice';
+import { describe, understand } from '../voice';
 import { useActionSheet } from '../components/ActionSheet';
 import { Glass } from '../components/Glass';
 import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
@@ -223,7 +223,7 @@ export default function KeypadScreen({ prefill }) {
     setListening(true);
     try {
       const heard = await Dialer.listen();
-      run(parseCommand(heard, contacts));
+      run(await understand(heard, contacts));
     } catch (e) {
       Alert.alert(tr('Sorry'), (e && e.message) || 'Speech recognition failed');
     } finally {

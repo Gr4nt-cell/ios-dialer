@@ -26,12 +26,11 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MICROPHONE"
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
       ],
       "allowBackup": false,
-      "blockedPermissions": [
-        "android.permission.INTERNET"
-      ],
       "versionCode": 4,
       "edgeToEdgeEnabled": true
     },

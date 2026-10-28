@@ -1,4 +1,5 @@
 import { contactName, numberKey } from './phone';
+import Dialer from './dialer';
 
 /**
  * Turns a spoken phrase into an action.
@@ -169,16 +170,50 @@ export function describe(cmd) {
  * rules stay as the floor rather than being replaced, because a wrong call
  * placed confidently is worse than one not understood.
  */
-export async function understand(text, contacts, model) {
-  if (model && model.ready) {
-    try {
-      const guess = await model.call(text);
-      if (guess && guess.action) return guess;
-    } catch {
-      // fall through to the rules
-    }
+export async function understand(text, contacts) {
+  const floor = parseCommand(text, contacts);
+  if (!Dialer || !Dialer.understand || !Dialer.brainStatus) return floor;
+  try {
+    if (!Dialer.brainStatus().installed) return floor;
+    const names = (contacts || []).map(contactName).filter(Boolean);
+    const json = await Dialer.understand(text, names);
+    const guess = json ? JSON.parse(json) : null;
+    const better = fromModel(guess, contacts);
+    // the rules win whenever the model is vague: on a dialler, a confident
+    // wrong answer rings the wrong person
+    return better || floor;
+  } catch {
+    return floor;
   }
-  return parseCommand(text, contacts);
+}
+
+/** Turns the model's JSON into the same shape parseCommand returns, or null. */
+function fromModel(guess, contacts) {
+  if (!guess || typeof guess !== 'object') return null;
+  switch (guess.action) {
+    case 'call': {
+      if (!guess.name) return null;
+      const found = matchContact(String(guess.name), contacts);
+      if (!found || found === 'ambiguous') return null;
+      const phones = found.phoneNumbers || [];
+      if (!phones.length) return null;
+      const want = guess.label ? String(guess.label).toLowerCase() : null;
+      const phone = (want && phones.find((p) => (p.label || '').toLowerCase().includes(want))) || phones[0];
+      return { action: 'call', number: phone.number, label: phone.label || null, contact: found, name: contactName(found) };
+    }
+    case 'dial': {
+      const digits = String(guess.number || '').replace(/[^\d+]/g, '');
+      return digits.length >= 3 ? { action: 'dial', number: digits } : null;
+    }
+    case 'redial':
+      return { action: 'redial' };
+    case 'tab':
+      return ['calls', 'contacts', 'keypad', 'search'].includes(guess.tab) ? { action: 'tab', tab: guess.tab } : null;
+    case 'search':
+      return guess.query ? { action: 'search', query: String(guess.query) } : null;
+    default:
+      return null;
+  }
 }
 
 export const commandExamples = [
