@@ -4,9 +4,10 @@ import { Pressable } from './Touch';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import Dialer from '../dialer';
 import { Glass } from './Glass';
+import { ChromeText } from './ui';
 import { useT } from '../i18n';
 
 export const SIDEBAR_WIDTH = 92;
@@ -88,13 +89,9 @@ export default function Sidebar({ tabs, active, onChange, onSettings, badges = {
                     </View>
                   ) : null}
                 </View>
-                <Text
-                  allowFontScaling={false}
-                  numberOfLines={1}
-                  style={{ color: on ? t.blue : t.secondary, fontSize: 11, fontWeight: on ? '700' : '500', marginTop: 4 }}
-                >
+                <ChromeText style={{ color: on ? t.blue : t.secondary, fontSize: fs(11), fontWeight: on ? '700' : '500', marginTop: 4 }}>
                   {tr(tab.label)}
-                </Text>
+                </ChromeText>
               </Pressable>
             );
           })}
@@ -128,5 +125,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  badgeText: { color: '#fff', fontSize: fs(11), fontWeight: '700' },
 });

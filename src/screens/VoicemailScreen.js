@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useBottomSpace } from '../device';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
@@ -27,13 +27,13 @@ export default function VoicemailScreen() {
         <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="recording-outline" size={44} color={t.secondary} />
         </View>
-        <Text style={{ color: t.text, fontSize: 22, fontWeight: '700', marginTop: 18 }}>{tr('Voicemail')}</Text>
-        <Text style={{ color: t.secondary, fontSize: 15, textAlign: 'center', marginTop: 6, lineHeight: 21 }}>
+        <Text style={{ color: t.text, fontSize: fs(22), fontWeight: '700', marginTop: 18 }}>{tr('Voicemail')}</Text>
+        <Text style={{ color: t.secondary, fontSize: fs(15), textAlign: 'center', marginTop: 6, lineHeight: fs(21) }}>
           Listen to your messages by calling your carrier’s voicemail
           {settings.voicemailNumber ? ` at ${formatNumber(settings.voicemailNumber)}` : ''}.
         </Text>
         {voicemailCalls.length ? (
-          <Text style={{ color: t.secondary, fontSize: 13, marginTop: 10 }}>
+          <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 10 }}>
             {voicemailCalls.length} recent voicemail {voicemailCalls.length === 1 ? 'call' : 'calls'} in Recents
           </Text>
         ) : null}
@@ -41,11 +41,11 @@ export default function VoicemailScreen() {
           {({ pressed }) => (
             <View style={{ backgroundColor: t.blue, borderRadius: 14, paddingVertical: 15, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', opacity: pressed ? 0.75 : 1 }}>
               <Ionicons name="call" size={18} color="#fff" />
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '600', marginLeft: 8 }}>{tr('Call Voicemail')}</Text>
+              <Text style={{ color: '#fff', fontSize: fs(17), fontWeight: '600', marginLeft: 8 }}>{tr('Call Voicemail')}</Text>
             </View>
           )}
         </Pressable>
-        <Text style={{ color: t.secondary, fontSize: 13, textAlign: 'center', marginTop: 14 }}>{tr('Tip: press and hold 1 on the keypad to call voicemail.')}</Text>
+        <Text style={{ color: t.secondary, fontSize: fs(13), textAlign: 'center', marginTop: 14 }}>{tr('Tip: press and hold 1 on the keypad to call voicemail.')}</Text>
       </View>
     </View>
   );

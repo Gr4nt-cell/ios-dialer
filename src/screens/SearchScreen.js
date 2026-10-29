@@ -3,7 +3,7 @@ import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useBottomSpace } from '../device';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
@@ -55,7 +55,7 @@ export default function SearchScreen() {
           <View style={[styles.iconCircle, { backgroundColor: t.green }]}>
             <Ionicons name="call" size={18} color="#fff" />
           </View>
-          <Text style={{ color: t.text, fontSize: 17, marginLeft: 12 }}>Call {formatNumber(item.number)}</Text>
+          <Text style={{ color: t.text, fontSize: fs(17), marginLeft: 12 }}>Call {formatNumber(item.number)}</Text>
         </Pressable>
       );
     }
@@ -66,8 +66,8 @@ export default function SearchScreen() {
         <Pressable onPress={() => nav.push({ name: 'contact', contactId: c.id })} style={styles.row}>
           <Avatar name={contactName(c)} image={c.image && c.image.uri} size={40} />
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={{ color: t.text, fontSize: 17 }} numberOfLines={1}>{contactName(c)}</Text>
-            {phone ? <Text style={{ color: t.secondary, fontSize: 14 }}>{prettyLabel(phone.label)} · {formatNumber(phone.number)}</Text> : null}
+            <Text style={{ color: t.text, fontSize: fs(17) }} numberOfLines={1}>{contactName(c)}</Text>
+            {phone ? <Text style={{ color: t.secondary, fontSize: fs(14) }}>{prettyLabel(phone.label)} · {formatNumber(phone.number)}</Text> : null}
           </View>
           {phone ? (
             <Pressable onPress={() => call(phone.number)} hitSlop={10}>
@@ -85,8 +85,8 @@ export default function SearchScreen() {
           <Ionicons name="time-outline" size={18} color={t.secondary} />
         </View>
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={{ color: t.text, fontSize: 17 }} numberOfLines={1}>{m ? contactName(m.contact) : g.name || formatNumber(g.number)}</Text>
-          <Text style={{ color: t.secondary, fontSize: 14 }}>{timeLabel(g.date)}</Text>
+          <Text style={{ color: t.text, fontSize: fs(17) }} numberOfLines={1}>{m ? contactName(m.contact) : g.name || formatNumber(g.number)}</Text>
+          <Text style={{ color: t.secondary, fontSize: fs(14) }}>{timeLabel(g.date)}</Text>
         </View>
       </Pressable>
     );
@@ -104,7 +104,7 @@ export default function SearchScreen() {
         keyboardDismissMode="on-drag"
         renderItem={renderItem}
         renderSectionHeader={({ section }) =>
-          section.title ? <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.bg }}>{section.title}</Text> : null
+          section.title ? <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.bg }}>{section.title}</Text> : null
         }
         ListEmptyComponent={q ? <EmptyState icon="search" title={tr('No Results')} message={`Nothing matches “${q}”.`} /> : <EmptyState icon="search" title={tr('Search')} message={tr('Find people, recent calls, or type a number to call it.')} />}
         contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}

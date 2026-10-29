@@ -5,7 +5,7 @@ import { Pressable } from '../components/Touch';
 import { scrollTick } from '../haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, prettyLabel } from '../phone';
@@ -42,7 +42,7 @@ function LetterKey({ letter, selected, available, onPress, size }) {
             backgroundColor: selected ? t.blue : pressed ? (t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)') : 'transparent',
           }}
         >
-          <Text style={{ color: selected ? '#fff' : available ? t.text : t.tertiary, fontSize: 14, fontWeight: selected ? '700' : '600' }}>{letter}</Text>
+          <Text style={{ color: selected ? '#fff' : available ? t.text : t.tertiary, fontSize: fs(14), fontWeight: selected ? '700' : '600' }}>{letter}</Text>
         </View>
       )}
     </Pressable>
@@ -62,7 +62,7 @@ function ContactRow({ item, onOpen, onCall }) {
             <Avatar name={name} image={contactPhoto(item, false)} size={40} />
           </View>
           <View style={[styles.rowBody, { borderBottomColor: t.separator }]}>
-            <Text style={{ color: t.text, fontSize: 17, fontWeight: '600', flex: 1 }} numberOfLines={1}>
+            <Text style={{ color: t.text, fontSize: fs(17), fontWeight: '600', flex: 1 }} numberOfLines={1}>
               {name}
             </Text>
           </View>
@@ -157,7 +157,7 @@ export default function ContactsScreen() {
                   { backgroundColor: letter === 'all' ? t.blue : pressed ? (t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)') : 'transparent' },
                 ]}
               >
-                <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: 13, fontWeight: '600' }}>
+                <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: fs(13), fontWeight: '600' }}>
                   {tr('All')} <Text style={{ fontWeight: '400', color: letter === 'all' ? 'rgba(255,255,255,0.85)' : t.secondary }}>({contacts.length})</Text>
                 </Text>
               </View>
@@ -175,7 +175,7 @@ export default function ContactsScreen() {
         </Glass>
       ) : null}
       {!query && letter !== 'all' && list.length ? (
-        <Text style={{ color: t.secondary, fontSize: 13, paddingHorizontal: SIDE + 4, marginTop: 10 }}>
+        <Text style={{ color: t.secondary, fontSize: fs(13), paddingHorizontal: SIDE + 4, marginTop: 10 }}>
           {list.length} {list.length === 1 ? 'contact' : 'contacts'} starting with “{letter}”
         </Text>
       ) : null}

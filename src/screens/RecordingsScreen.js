@@ -4,7 +4,7 @@ import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, numberKey } from '../phone';
@@ -123,10 +123,10 @@ export default function RecordingsScreen({ route }) {
                   </View>
                 </Pressable>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={{ color: t.text, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>
+                  <Text style={{ color: t.text, fontSize: fs(16), fontWeight: '600' }} numberOfLines={1}>
                     {title}
                   </Text>
-                  <Text style={{ color: t.secondary, fontSize: 13, marginTop: 1 }}>
+                  <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 1 }}>
                     {dateLabel(item.date)} · {mmss(item.duration)}
                   </Text>
                 </View>
@@ -140,8 +140,8 @@ export default function RecordingsScreen({ route }) {
                     <View style={[styles.fill, { backgroundColor: t.blue, width: `${total ? Math.min(100, (pos / total) * 100) : 0}%` }]} />
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                    <Text style={{ color: t.secondary, fontSize: 11 }}>{mmss(pos)}</Text>
-                    <Text style={{ color: t.secondary, fontSize: 11 }}>-{mmss(total - pos)}</Text>
+                    <Text style={{ color: t.secondary, fontSize: fs(11) }}>{mmss(pos)}</Text>
+                    <Text style={{ color: t.secondary, fontSize: fs(11) }}>-{mmss(total - pos)}</Text>
                   </View>
                 </View>
               ) : null}

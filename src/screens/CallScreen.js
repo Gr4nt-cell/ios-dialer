@@ -12,19 +12,26 @@ import { depthTransform, useDepth } from '../depth';
 import { useIsTablet } from '../device';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
 import { Glass } from '../components/Glass';
 import { gradientFor } from '../gradients';
 import { useActionSheet } from '../components/ActionSheet';
 import { useT } from '../i18n';
+import { ChromeText } from '../components/ui';
 
 // ---------------------------------------------------------------------------
 // Look & feel
 // ---------------------------------------------------------------------------
 
 const WHITE = '#FFFFFF';
+
+// The control glass: a pale frosted disc with a bright rim and a glossy top,
+// the way a media player's transport buttons sit over video. Brighter than the
+// old 16% wash, which read as a flat grey circle rather than something with a
+// surface to it.
+const CONTROL_TINT = 'rgba(255,255,255,0.26)';
 const DIM = 'rgba(255,255,255,0.72)';
 const RED = '#FF3B30';
 const GREEN = '#30D158';
@@ -247,9 +254,11 @@ function CallButton({ icon, label, onPress, on, disabled, color, size = 76, icon
       {({ pressed }) => (
         <Glass
           dark
+          vivid
+          outline
           radius={size / 2}
           pressed={pressed}
-          tint={color || (on ? '#FFFFFF' : 'rgba(255,255,255,0.16)')}
+          tint={color || (on ? '#FFFFFF' : CONTROL_TINT)}
           tintOpacity={color ? 0.95 : 1}
           style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
         >
@@ -283,7 +292,7 @@ function SmallPill({ icon, label, onPress }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={label} style={{ alignItems: 'center', width: 110 }}>
       {({ pressed }) => (
-        <Glass dark radius={26} pressed={pressed} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
+        <Glass dark vivid outline radius={26} pressed={pressed} tint={CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={21} color={WHITE} />
         </Glass>
       )}
@@ -535,7 +544,7 @@ export default function CallScreen() {
         </Pressable>
         {primary.isConference ? (
           <Glass dark radius={16} style={{ paddingHorizontal: 12, height: 32, justifyContent: 'center' }}>
-            <Text style={{ color: WHITE, fontSize: 13, fontWeight: '600' }}>{tr('Conference')}</Text>
+            <Text style={{ color: WHITE, fontSize: fs(13), fontWeight: '600' }}>{tr('Conference')}</Text>
           </Glass>
         ) : null}
       </View>
@@ -547,10 +556,10 @@ export default function CallScreen() {
           <Pressable key={h.id} onPress={() => Dialer.swap()} style={{ marginHorizontal: 20, marginTop: 10 }}>
             <Glass dark radius={20} style={styles.heldStrip}>
               <Ionicons name="pause-circle" size={20} color={DIM} />
-              <Text style={{ color: WHITE, fontSize: 15, fontWeight: '600', flex: 1, marginLeft: 8 }} numberOfLines={1}>
+              <Text style={{ color: WHITE, fontSize: fs(15), fontWeight: '600', flex: 1, marginLeft: 8 }} numberOfLines={1}>
                 {hw.name}
               </Text>
-              <Text style={{ color: DIM, fontSize: 13 }}>On hold · tap to swap</Text>
+              <Text style={{ color: DIM, fontSize: fs(13) }}>On hold · tap to swap</Text>
             </Glass>
           </Pressable>
         );
@@ -568,7 +577,7 @@ export default function CallScreen() {
               {({ pressed }) => (
                 <Glass dark vivid outline radius={18} pressed={pressed} style={{ height: 36, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons name="arrow-forward-circle-outline" size={17} color={WHITE} />
-                  <Text allowFontScaling={false} style={{ color: WHITE, fontSize: 15, fontWeight: '600', marginLeft: 7 }}>
+                  <Text allowFontScaling={false} style={{ color: WHITE, fontSize: fs(15), fontWeight: '600', marginLeft: 7 }}>
                     {ussdBusy ? tr('Running…') : tr('Run Code')}
                   </Text>
                 </Glass>
@@ -597,8 +606,8 @@ export default function CallScreen() {
         <View style={{ marginHorizontal: 14, marginTop: 20 }}>
           <Glass dark radius={40} style={styles.waitingPill}>
             <View style={{ flex: 1, paddingLeft: 8, paddingRight: 6 }}>
-              <Text style={{ color: DIM, fontSize: 12 }}>{tr('Incoming call')}</Text>
-              <Text style={{ color: WHITE, fontSize: 18, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
+              <Text style={{ color: DIM, fontSize: fs(12) }}>{tr('Incoming call')}</Text>
+              <Text style={{ color: WHITE, fontSize: fs(18), fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
                 {identify(ringing).name}
               </Text>
             </View>
@@ -637,7 +646,7 @@ export default function CallScreen() {
               )}
             </Pressable>
           </Glass>
-          <Text style={{ color: DIM, fontSize: 12, textAlign: 'center', marginTop: 8 }}>
+          <Text style={{ color: DIM, fontSize: fs(12), textAlign: 'center', marginTop: 8 }}>
             {primary.canHold
               ? tr('Answer puts your current call on hold · hold Answer to end it instead')
               : tr('Answering ends your current call')}
@@ -657,11 +666,11 @@ export default function CallScreen() {
                 {({ pressed }) => (
                   <Glass radius={14} pressed={pressed} style={styles.simTile}>
                     <View style={[styles.simBadge, { backgroundColor: t.blue }]}>
-                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{i + 1}</Text>
+                      <Text style={{ color: '#fff', fontSize: fs(10), fontWeight: '800' }}>{i + 1}</Text>
                     </View>
-                    <Text style={{ color: t.text, fontSize: 12, fontWeight: '600', marginTop: 5 }} numberOfLines={1}>
+                    <ChromeText style={{ color: t.text, fontSize: fs(12), fontWeight: '600', marginTop: 5 }}>
                       {a.label || `SIM ${i + 1}`}
-                    </Text>
+                    </ChromeText>
                   </Glass>
                 )}
               </Pressable>
@@ -675,9 +684,9 @@ export default function CallScreen() {
               {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
                 <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 12 }}>
                   {({ pressed }) => (
-                    <Glass dark radius={36} pressed={pressed} tint="rgba(255,255,255,0.16)" tintOpacity={1} style={styles.dtmfKey}>
-                      <Text style={{ color: WHITE, fontSize: 32, lineHeight: 38 }}>{d}</Text>
-                      {l ? <Text style={{ color: WHITE, fontSize: 9, fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
+                    <Glass dark vivid outline radius={36} pressed={pressed} tint={CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
+                      <Text style={{ color: WHITE, fontSize: fs(32), lineHeight: fs(38) }}>{d}</Text>
+                      {l ? <Text style={{ color: WHITE, fontSize: fs(9), fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
                     </Glass>
                   )}
                 </Pressable>
@@ -744,7 +753,7 @@ export default function CallScreen() {
         {padOpen ? (
           <Pressable onPress={() => setKeypad(false)} hitSlop={12} style={{ width: COL, alignItems: 'center', paddingTop: 18 }}>
             <Glass dark radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center' }}>
-              <Text style={{ color: WHITE, fontSize: 15, fontWeight: '600' }}>{tr('Hide')}</Text>
+              <Text style={{ color: WHITE, fontSize: fs(15), fontWeight: '600' }}>{tr('Hide')}</Text>
             </Glass>
           </Pressable>
         ) : primary.state === 'select_account' || isTablet ? (
@@ -768,7 +777,7 @@ export default function CallScreen() {
               {who.name}
             </Text>
             <Text
-              style={[styles.name, { fontWeight: '300', letterSpacing: 1.5, fontSize: 30, marginTop: 2 }]}
+              style={[styles.name, { fontWeight: '300', letterSpacing: 1.5, fontSize: fs(30), marginTop: 2 }]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.5}
@@ -781,7 +790,7 @@ export default function CallScreen() {
                 {({ pressed }) => (
                   <Glass dark vivid outline radius={18} pressed={pressed} style={styles.runCode}>
                     <Ionicons name="arrow-forward-circle-outline" size={17} color={WHITE} />
-                    <Text allowFontScaling={false} style={{ color: WHITE, fontSize: 15, fontWeight: '600', marginLeft: 7 }}>
+                    <Text allowFontScaling={false} style={{ color: WHITE, fontSize: fs(15), fontWeight: '600', marginLeft: 7 }}>
                       {ussdBusy ? tr('Running…') : tr('Run Code')}
                     </Text>
                   </Glass>
@@ -795,9 +804,9 @@ export default function CallScreen() {
                   {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
                     <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 10 }}>
                       {({ pressed }) => (
-                        <Glass dark radius={36} pressed={pressed} tint="rgba(255,255,255,0.16)" tintOpacity={1} style={styles.dtmfKey}>
-                          <Text style={{ color: WHITE, fontSize: 32, lineHeight: 38 }}>{d}</Text>
-                          {l ? <Text style={{ color: WHITE, fontSize: 9, fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
+                        <Glass dark vivid outline radius={36} pressed={pressed} tint={CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
+                          <Text style={{ color: WHITE, fontSize: fs(32), lineHeight: fs(38) }}>{d}</Text>
+                          {l ? <Text style={{ color: WHITE, fontSize: fs(9), fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
                         </Glass>
                       )}
                     </Pressable>
@@ -808,7 +817,7 @@ export default function CallScreen() {
 
             {dtmf ? (
               <Pressable onPress={() => setDtmf('')} hitSlop={10} style={{ marginTop: 6 }}>
-                <Text style={{ color: DIM, fontSize: 15, fontWeight: '600' }}>{tr('Clear')}</Text>
+                <Text style={{ color: DIM, fontSize: fs(15), fontWeight: '600' }}>{tr('Clear')}</Text>
               </Pressable>
             ) : null}
           </Glass>
@@ -824,13 +833,13 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0B0C10' },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
   topBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  statusTop: { color: DIM, fontSize: 17, fontWeight: '500', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
-  status: { color: DIM, fontSize: 17, marginTop: 6, textAlign: 'center' },
-  name: { color: WHITE, fontSize: 38, fontWeight: '600', marginTop: 4, textAlign: 'center', paddingHorizontal: 24, letterSpacing: 0.2 },
+  statusTop: { color: DIM, fontSize: fs(17), fontWeight: '500', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
+  status: { color: DIM, fontSize: fs(17), marginTop: 6, textAlign: 'center' },
+  name: { color: WHITE, fontSize: fs(38), fontWeight: '600', marginTop: 4, textAlign: 'center', paddingHorizontal: 24, letterSpacing: 0.2 },
   posterName: {
     color: WHITE,
-    fontSize: 52,
-    lineHeight: 58,
+    fontSize: fs(52),
+    lineHeight: fs(58),
     fontWeight: '700',
     marginTop: 2,
     textAlign: 'center',

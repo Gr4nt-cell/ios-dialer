@@ -4,11 +4,11 @@ import { usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, sameDay } from '../phone';
-import { EmptyState, IconButton, LargeHeader, TextButton } from '../components/ui';
+import { ChromeText, EmptyState, IconButton, LargeHeader, TextButton } from '../components/ui';
 import { EXTENDED_BLUR, Glass } from '../components/Glass';
 import { useActionSheet } from '../components/ActionSheet';
 import { RecentRow } from './RecentsScreen';
@@ -86,7 +86,7 @@ function FavoritesRow() {
           {({ pressed }) => (
             <Glass radius={22} pressed={pressed} style={{ width: CARD_W, height: CARD_H, alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name="add" size={28} color={t.blue} />
-              <Text style={{ color: t.secondary, fontSize: 12, marginTop: 4 }}>{tr('Favorites')}</Text>
+              <Text style={{ color: t.secondary, fontSize: fs(12), marginTop: 4 }}>{tr('Favorites')}</Text>
             </Glass>
           )}
         </Pressable>
@@ -124,7 +124,7 @@ function DayMessage({ icon, text }) {
       <Glass radius={30} style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name={icon} size={26} color={t.blue} />
       </Glass>
-      <Text style={{ color: t.secondary, fontSize: 17, fontWeight: '500', marginTop: 16, textAlign: 'center', lineHeight: 24 }}>{text}</Text>
+      <Text style={{ color: t.secondary, fontSize: fs(17), fontWeight: '500', marginTop: 16, textAlign: 'center', lineHeight: fs(24) }}>{text}</Text>
     </View>
   );
 }
@@ -191,9 +191,9 @@ export default function CallsScreen() {
               <View style={[styles.statsIcon, { backgroundColor: t.chartOther }]}>
                 <Ionicons name="stats-chart" size={14} color="#fff" />
               </View>
-              <Text style={{ color: t.text, fontSize: 15, fontWeight: '600', marginLeft: 8 }} numberOfLines={1} allowFontScaling={false}>
+              <ChromeText style={{ color: t.text, fontSize: fs(15), fontWeight: '600', marginLeft: 8, flexShrink: 1 }}>
                 {tr('Statistics')}
-              </Text>
+              </ChromeText>
             </Glass>
           )}
         </Pressable>
@@ -220,7 +220,7 @@ export default function CallsScreen() {
           {({ pressed }) => (
             <Glass radius={22} pressed={pressed} style={{ flexDirection: 'row', alignItems: 'center', padding: 14 }}>
               <Ionicons name="recording" size={22} color={t.blue} />
-              <Text style={{ color: t.text, fontSize: 17, marginLeft: 10, flex: 1 }}>{tr('Call Voicemail')}</Text>
+              <Text style={{ color: t.text, fontSize: fs(17), marginLeft: 10, flex: 1 }}>{tr('Call Voicemail')}</Text>
               <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
             </Glass>
           )}
@@ -260,7 +260,7 @@ export default function CallsScreen() {
 }
 
 const styles = StyleSheet.create({
-  section: { fontSize: 20, fontWeight: '700', paddingHorizontal: 16, marginBottom: 8, marginTop: 4 },
+  section: { fontSize: fs(20), fontWeight: '700', paddingHorizontal: 16, marginBottom: 8, marginTop: 4 },
   // fills the header row between the filter button and Edit
   statsPill: { width: '100%', height: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
   statsIcon: { width: 26, height: 26, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },

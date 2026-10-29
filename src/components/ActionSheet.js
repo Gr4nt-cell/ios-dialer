@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { Animated, Modal, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from './Touch';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { Glass } from './Glass';
 
 // iOS-style action sheet (Android's Alert only fits three buttons).
@@ -52,7 +52,7 @@ function Sheet({ sheet, onClose }) {
           <Pressable key={i} onPress={() => pick(opt)} style={styles.row}>
             {({ pressed }) => (
               <Glass radius={22} outline pressed={pressed} style={styles.option}>
-                <Text style={{ color: opt.destructive ? t.red : t.text, fontSize: 18, fontWeight: '600' }} numberOfLines={1}>
+                <Text style={{ color: opt.destructive ? t.red : t.text, fontSize: fs(18), fontWeight: '600', textAlign: 'center' }} numberOfLines={2}>
                   {opt.text}
                 </Text>
               </Glass>
@@ -63,7 +63,7 @@ function Sheet({ sheet, onClose }) {
         <Pressable onPress={onClose} style={[styles.row, { marginTop: 6 }]}>
           {({ pressed }) => (
             <Glass radius={22} outline pressed={pressed} style={styles.option}>
-              <Text style={{ color: t.secondary, fontSize: 18, fontWeight: '600' }}>Cancel</Text>
+              <Text style={{ color: t.secondary, fontSize: fs(18), fontWeight: '600' }}>Cancel</Text>
             </Glass>
           )}
         </Pressable>
@@ -87,8 +87,8 @@ export function ActionSheetProvider({ children }) {
 const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingHorizontal: 24 },
-  caption: { fontSize: 13, fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.6, textAlign: 'center' },
-  message: { fontSize: 13, marginTop: -6, marginBottom: 12, textAlign: 'center' },
+  caption: { fontSize: fs(13), fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.6, textAlign: 'center' },
+  message: { fontSize: fs(13), marginTop: -6, marginBottom: 12, textAlign: 'center' },
   row: { alignSelf: 'stretch', marginBottom: 10 },
   option: { minHeight: 52, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 12 },
 });

@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, numberKey } from '../phone';
@@ -95,8 +95,8 @@ export default function StatisticsScreen() {
         {stats.total === 0 ? (
           <Card style={{ alignItems: 'center', paddingVertical: 34 }}>
             <Ionicons name="stats-chart-outline" size={30} color={t.secondary} />
-            <Text style={{ color: t.text, fontSize: 18, fontWeight: '600', marginTop: 14 }}>{tr('No calls in this period')}</Text>
-            <Text style={{ color: t.secondary, fontSize: 15, marginTop: 6, textAlign: 'center' }}>
+            <Text style={{ color: t.text, fontSize: fs(18), fontWeight: '600', marginTop: 14 }}>{tr('No calls in this period')}</Text>
+            <Text style={{ color: t.secondary, fontSize: fs(15), marginTop: 6, textAlign: 'center' }}>
               {tr('Try a longer period, or make a call.')}
             </Text>
           </Card>
@@ -104,20 +104,20 @@ export default function StatisticsScreen() {
           <>
             {/* breakdown */}
             <Card>
-              <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>{tr('Call breakdown')}</Text>
-              {trend ? <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{trend}</Text> : null}
+              <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700' }}>{tr('Call breakdown')}</Text>
+              {trend ? <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 2 }}>{trend}</Text> : null}
               <View style={{ alignItems: 'center', marginTop: 16, marginBottom: 18 }}>
-                <Text style={{ color: t.text, fontSize: 44, fontWeight: '700', letterSpacing: -0.5 }}>{stats.total}</Text>
-                <Text style={{ color: t.secondary, fontSize: 13 }}>{tr('total calls')}</Text>
+                <Text style={{ color: t.text, fontSize: fs(44), fontWeight: '700', letterSpacing: -0.5 }}>{stats.total}</Text>
+                <Text style={{ color: t.secondary, fontSize: fs(13) }}>{tr('total calls')}</Text>
               </View>
               <StackedBar slices={slices} />
               <View style={{ height: 18 }} />
               <ShareRows
                 slices={slices.map((s) => ({
                   ...s,
-                  labelNode: <Text style={{ color: t.text, fontSize: 15 }}>{s.label}</Text>,
+                  labelNode: <Text style={{ color: t.text, fontSize: fs(15) }}>{s.label}</Text>,
                   valueNode: (
-                    <Text style={{ color: t.secondary, fontSize: 13 }}>
+                    <Text style={{ color: t.secondary, fontSize: fs(13) }}>
                       {s.value} · {Math.round((s.value / stats.total) * 100)}%
                     </Text>
                   ),
@@ -132,26 +132,26 @@ export default function StatisticsScreen() {
                 <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: t.chartOutgoing + '2E' }}>
                   <Ionicons name="time-outline" size={17} color={t.chartOutgoing} />
                 </View>
-                <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', marginTop: 10 }} numberOfLines={1}>
+                <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700', marginTop: 10 }} numberOfLines={1}>
                   {formatDuration(stats.talkSeconds)}
                 </Text>
-                <Text style={{ color: t.secondary, fontSize: 12 }}>{tr('Talk time')}</Text>
+                <Text style={{ color: t.secondary, fontSize: fs(12) }}>{tr('Talk time')}</Text>
               </Glass>
               <Glass radius={24} style={{ flex: 1, padding: 16 }}>
                 <View style={{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: t.chartOther + '2E' }}>
                   <Ionicons name="call-outline" size={16} color={t.chartOther} />
                 </View>
-                <Text style={{ color: t.text, fontSize: 20, fontWeight: '700', marginTop: 10 }} numberOfLines={1}>
+                <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700', marginTop: 10 }} numberOfLines={1}>
                   {formatShort(stats.avgSeconds)}
                 </Text>
-                <Text style={{ color: t.secondary, fontSize: 12 }}>{tr('Avg length')}</Text>
+                <Text style={{ color: t.secondary, fontSize: fs(12) }}>{tr('Avg length')}</Text>
               </Glass>
             </View>
 
             {/* busiest days */}
             <Card>
-              <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>{tr('Busiest days')}</Text>
-              {peak ? <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>Peak around {peak}</Text> : null}
+              <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700' }}>{tr('Busiest days')}</Text>
+              {peak ? <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 2 }}>Peak around {peak}</Text> : null}
               <View style={{ marginTop: 16 }}>
                 <Bars
                   color={t.chartIncoming}
@@ -160,7 +160,7 @@ export default function StatisticsScreen() {
                     value: v,
                     highlight: i === stats.busiestWeekday,
                     label: (
-                      <Text style={{ color: i === stats.busiestWeekday ? t.text : t.secondary, fontSize: 11, fontWeight: '600' }}>
+                      <Text style={{ color: i === stats.busiestWeekday ? t.text : t.secondary, fontSize: fs(11), fontWeight: '600' }}>
                         {WEEKDAYS[i]}
                       </Text>
                     ),
@@ -172,7 +172,7 @@ export default function StatisticsScreen() {
             {/* most called */}
             {stats.topContacts.length ? (
               <Card>
-                <Text style={{ color: t.text, fontSize: 20, fontWeight: '700' }}>{tr('Most called')}</Text>
+                <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700' }}>{tr('Most called')}</Text>
                 <View style={{ marginTop: 6 }}>
                   {stats.topContacts.map((p, i) => {
                     const contact = byNumber.get(p.key) || null;
@@ -188,7 +188,7 @@ export default function StatisticsScreen() {
                           image={contactPhoto(contact)}
                         />
                         <View style={{ flex: 1, marginLeft: 12 }}>
-                          <Text style={{ color: t.text, fontSize: 15 }} numberOfLines={1}>
+                          <Text style={{ color: t.text, fontSize: fs(15) }} numberOfLines={1}>
                             {contact ? contactName(contact) : p.name}
                           </Text>
                           <View style={{ marginTop: 6 }}>
@@ -196,8 +196,8 @@ export default function StatisticsScreen() {
                           </View>
                         </View>
                         <View style={{ alignItems: 'flex-end', marginLeft: 12 }}>
-                          <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }}>{p.count}</Text>
-                          <Text style={{ color: t.tertiary, fontSize: 12 }}>{formatDuration(p.seconds)}</Text>
+                          <Text style={{ color: t.text, fontSize: fs(17), fontWeight: '600' }}>{p.count}</Text>
+                          <Text style={{ color: t.tertiary, fontSize: fs(12) }}>{formatDuration(p.seconds)}</Text>
                         </View>
                       </Pressable>
                     );

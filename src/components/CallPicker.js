@@ -3,10 +3,11 @@ import { Animated, Platform, StyleSheet, Text, View, useWindowDimensions } from 
 import { Pressable } from './Touch';
 import * as ExpoBlur from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { formatNumber, numberKey, prettyLabel } from '../phone';
 import { getPhoneAccounts } from '../dialer';
 import { Glass, GlassModeContext } from './Glass';
+import { ChromeText } from './ui';
 
 const { BlurView } = ExpoBlur;
 const HAS_TARGET_API = !!ExpoBlur.BlurTargetView;
@@ -77,9 +78,9 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
                 <Pressable key={p.id || i} onPress={() => onPickNumber(p)} style={{ marginBottom: 12 }}>
                   {({ pressed }) => (
                     <Glass radius={24} pressed={pressed} outline style={styles.numberPill}>
-                      <Text style={{ color: t.text, fontSize: 20, fontWeight: '600', letterSpacing: 0.5 }}>{formatNumber(p.number)}</Text>
+                      <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '600', letterSpacing: 0.5 }}>{formatNumber(p.number)}</Text>
                       {p.label || (picker.lastKey && picker.lastKey === numberKey(p.number)) ? (
-                        <Text style={{ color: t.secondary, fontSize: 12, marginTop: 1 }}>
+                        <Text style={{ color: t.secondary, fontSize: fs(12), marginTop: 1 }}>
                           {p.label ? prettyLabel(p.label) : ''}
                           {picker.lastKey && picker.lastKey === numberKey(p.number) ? (
                             <Text style={{ color: t.green, fontWeight: '600' }}>{p.label ? '  ·  ' : ''}Last called</Text>
@@ -93,18 +94,18 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
             </>
           ) : (
             <>
-              <Text style={{ color: t.secondary, fontSize: 15, marginBottom: 14 }}>{formatNumber(picker.number)}</Text>
+              <Text style={{ color: t.secondary, fontSize: fs(15), marginBottom: 14 }}>{formatNumber(picker.number)}</Text>
               <View style={{ flexDirection: 'row', gap: 14 }}>
                 {picker.accounts.map((a, i) => (
                   <Pressable key={a.key} onPress={() => onPickSim(a)}>
                     {({ pressed }) => (
                       <Glass radius={19} pressed={pressed} outline style={styles.simTile}>
                         <View style={[styles.simBadge, { backgroundColor: t.blue }]}>
-                          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>{i + 1}</Text>
+                          <Text style={{ color: '#fff', fontSize: fs(13), fontWeight: '800' }}>{i + 1}</Text>
                         </View>
-                        <Text style={{ color: t.text, fontSize: 16, fontWeight: '600', marginTop: 6 }} numberOfLines={1}>
+                        <ChromeText style={{ color: t.text, fontSize: fs(16), fontWeight: '600', marginTop: 6 }}>
                           {a.label || `SIM ${i + 1}`}
-                        </Text>
+                        </ChromeText>
                       </Glass>
                     )}
                   </Pressable>
@@ -120,7 +121,7 @@ export default function CallPicker({ picker, target, onClose, onPickNumber, onPi
 const styles = StyleSheet.create({
   // lower half of the screen, within thumb reach
   sheet: { position: 'absolute', left: 0, right: 0, alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 24 },
-  caption: { fontSize: 13, fontWeight: '600', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.6 },
+  caption: { fontSize: fs(13), fontWeight: '600', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.6 },
   numberPill: { minWidth: 250, paddingHorizontal: 26, paddingVertical: 12, alignItems: 'center' },
   simTile: { width: 132, paddingVertical: 12, paddingHorizontal: 10, alignItems: 'center' },
   simBadge: { width: 24, height: 24, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },

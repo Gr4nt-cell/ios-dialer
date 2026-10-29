@@ -61,3 +61,19 @@ export function useTheme() {
 }
 
 export const TAB_BAR_SPACE = 92;
+
+/**
+ * One knob for text size across the app.
+ *
+ * Every hard-coded fontSize and lineHeight goes through fs(), so the whole app
+ * can be re-proportioned by changing this number alone rather than by editing
+ * a hundred and seventy literals. Sizes land on half points, which Android
+ * renders cleanly.
+ *
+ * Type that is sized from the shape around it — the initials in an avatar, the
+ * digits on a dial key — is deliberately left alone: it is already a fraction
+ * of its container and shrinking it again would just leave a gap.
+ */
+export const FONT_SCALE = 0.85;
+
+export const fs = (n) => Math.round(n * FONT_SCALE * 2) / 2;

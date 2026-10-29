@@ -7,11 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, contactPhoto, formatNumber } from '../phone';
-import { Cell, Group, IconButton, Segmented, SheetHeader, TextButton } from '../components/ui';
+import { Cell, ChromeText, Group, IconButton, Segmented, SheetHeader, TextButton } from '../components/ui';
 import { LANGS, deviceLanguage, useT } from '../i18n';
 import LanguageWheel from '../components/LanguageWheel';
 import DepthPreview from '../components/DepthPreview';
@@ -22,12 +22,12 @@ import { useActionSheet } from '../components/ActionSheet';
 
 function SectionTitle({ children }) {
   const t = useTheme();
-  return <Text style={{ color: t.secondary, fontSize: 13, marginHorizontal: 32, marginBottom: 6, marginTop: 4, textTransform: 'uppercase' }}>{children}</Text>;
+  return <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 32, marginBottom: 6, marginTop: 4, textTransform: 'uppercase' }}>{children}</Text>;
 }
 
 function Footer({ children }) {
   const t = useTheme();
-  return <Text style={{ color: t.secondary, fontSize: 13, marginHorizontal: 32, marginTop: 6, marginBottom: 24, lineHeight: 18 }}>{children}</Text>;
+  return <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 32, marginTop: 6, marginBottom: 24, lineHeight: fs(18) }}>{children}</Text>;
 }
 
 function Swatch({ colors, name, selected, onPress, width, auto }) {
@@ -56,9 +56,9 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
               ) : null}
             </LinearGradient>
           </View>
-          <Text style={{ color: selected ? t.blue : t.secondary, fontSize: 12, marginTop: 4, fontWeight: selected ? '600' : '400' }} numberOfLines={1}>
+          <ChromeText style={{ color: selected ? t.blue : t.secondary, fontSize: fs(12), marginTop: 4, fontWeight: selected ? '600' : '400' }}>
             {name}
-          </Text>
+          </ChromeText>
         </>
       )}
     </Pressable>
@@ -70,8 +70,8 @@ function CallPreview({ colors }) {
     <LinearGradient colors={[colors[0], colors[1], colors[2]]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 150, borderRadius: 18, margin: 12, marginBottom: 4, padding: 14, justifyContent: 'space-between' }}>
       <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
       <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>calling mobile…</Text>
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>Jane Appleseed</Text>
+        <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: fs(12) }}>calling mobile…</Text>
+        <Text style={{ color: '#fff', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
         {['volume-medium', 'pause', 'mic-off-outline'].map((n) => (
@@ -102,7 +102,7 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       {btn('remove', Math.max(min, value - step), value <= min)}
-      <Text style={{ color: t.secondary, fontSize: 15, minWidth: 54, textAlign: 'center' }}>{format ? format(value) : value}</Text>
+      <Text style={{ color: t.secondary, fontSize: fs(15), minWidth: 54, textAlign: 'center' }}>{format ? format(value) : value}</Text>
       {btn('add', Math.min(max, value + step), value >= max)}
     </View>
   );
@@ -252,7 +252,7 @@ export default function SettingsScreen() {
   const chev = <Ionicons name="chevron-forward" size={18} color={t.tertiary} />;
   const valueRight = (txt) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <Text style={{ color: t.secondary, fontSize: 16 }}>{txt}</Text>
+      <Text style={{ color: t.secondary, fontSize: fs(16) }}>{txt}</Text>
       {chev}
     </View>
   );
@@ -295,9 +295,9 @@ export default function SettingsScreen() {
         status === 'granted' ? (
           <Ionicons name="checkmark-circle" size={20} color={t.green} />
         ) : status === 'unavailable' ? (
-          <Text style={{ color: t.secondary, fontSize: 15 }}>{tr('Needs app build')}</Text>
+          <Text style={{ color: t.secondary, fontSize: fs(15) }}>{tr('Needs app build')}</Text>
         ) : (
-          <Text style={{ color: t.blue, fontSize: 15 }}>{tr('Allow')}</Text>
+          <Text style={{ color: t.blue, fontSize: fs(15) }}>{tr('Allow')}</Text>
         )
       }
     />
@@ -351,7 +351,7 @@ export default function SettingsScreen() {
             value={tr('Language')}
             onPress={() => setLangOpen(true)}
             right={
-              <Text style={{ color: t.secondary, fontSize: 15 }}>
+              <Text style={{ color: t.secondary, fontSize: fs(15) }}>
                 {(LANGS.find((l) => l.code === activeLang) || LANGS[0]).name}
               </Text>
             }
@@ -365,7 +365,7 @@ export default function SettingsScreen() {
           <Cell
             value="Turn On Call Island"
             onPress={overlay.service || !Dialer ? undefined : () => Dialer.openAccessibilitySettings()}
-            right={overlay.service ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>{tr('Open')}</Text>}
+            right={overlay.service ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: fs(15) }}>{tr('Open')}</Text>}
           />
           {overlay.service ? (
             <>
@@ -389,7 +389,7 @@ export default function SettingsScreen() {
             </>
           ) : null}
           {!overlay.service ? (
-            <Cell value="Allow Restricted Settings" onPress={Dialer ? () => Dialer.openAppInfo() : undefined} right={<Text style={{ color: t.blue, fontSize: 15 }}>{tr('App Info')}</Text>} />
+            <Cell value="Allow Restricted Settings" onPress={Dialer ? () => Dialer.openAppInfo() : undefined} right={<Text style={{ color: t.blue, fontSize: fs(15) }}>{tr('App Info')}</Text>} />
           ) : null}
         </Group>
         <Footer>
@@ -403,7 +403,7 @@ export default function SettingsScreen() {
           <Cell
             value="Display over Other Apps"
             onPress={overlay.allowed || !Dialer ? undefined : () => Dialer.openOverlaySettings()}
-            right={overlay.allowed ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: 15 }}>{tr('Allow')}</Text>}
+            right={overlay.allowed ? <Ionicons name="checkmark-circle" size={20} color={t.green} /> : <Text style={{ color: t.blue, fontSize: fs(15) }}>{tr('Allow')}</Text>}
           />
           <Cell value="Show Calls on Rear Screen" right={<Switch value={overlay.rear !== false} onValueChange={(v) => setOverlayPref({ rear: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
         </Group>
@@ -428,7 +428,7 @@ export default function SettingsScreen() {
                 limits={{ x: 60, y: 80 }}
                 onAdjust={updateSettings}
               />
-              <Text style={{ color: t.tertiary, fontSize: 12, marginTop: 8 }}>{tr('Drag the preview to move the person')}</Text>
+              <Text style={{ color: t.tertiary, fontSize: fs(12), marginTop: 8 }}>{tr('Drag the preview to move the person')}</Text>
             </View>
             <Group>
               <Cell
@@ -617,7 +617,7 @@ export default function SettingsScreen() {
                 value={tr('Voice')}
                 onPress={chooseVoice}
                 right={
-                  <Text style={{ color: t.secondary, fontSize: 15, maxWidth: 170 }} numberOfLines={1}>
+                  <Text style={{ color: t.secondary, fontSize: fs(15), maxWidth: 170 }} numberOfLines={1}>
                     {voiceLabel}
                   </Text>
                 }
@@ -638,7 +638,7 @@ export default function SettingsScreen() {
         <SectionTitle>{tr('Voicemail')}</SectionTitle>
         <Group>
           <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: t.text, fontSize: 17, width: 110 }}>{tr('Number')}</Text>
+            <Text style={{ color: t.text, fontSize: fs(17), width: 110 }}>{tr('Number')}</Text>
             <TextInput
               value={vm}
               onChangeText={setVm}
@@ -647,7 +647,7 @@ export default function SettingsScreen() {
               placeholder={tr('Carrier default')}
               placeholderTextColor={t.secondary}
               keyboardType="phone-pad"
-              style={{ flex: 1, color: t.text, fontSize: 17, paddingVertical: 14, textAlign: 'right' }}
+              style={{ flex: 1, color: t.text, fontSize: fs(17), paddingVertical: 14, textAlign: 'right' }}
             />
           </View>
         </Group>
@@ -663,7 +663,7 @@ export default function SettingsScreen() {
                 value={match ? contactName(match.contact) : formatNumber(n)}
                 right={<TextButton title={tr('Unblock')} color={t.red} onPress={() => unblock(n)} />}
               >
-                {match ? <Text style={{ color: t.secondary, fontSize: 13 }}>{formatNumber(n)}</Text> : null}
+                {match ? <Text style={{ color: t.secondary, fontSize: fs(13) }}>{formatNumber(n)}</Text> : null}
               </Cell>
             );
           })}
@@ -674,7 +674,7 @@ export default function SettingsScreen() {
               placeholder={tr('Add number to block')}
               placeholderTextColor={t.secondary}
               keyboardType="phone-pad"
-              style={{ flex: 1, color: t.text, fontSize: 17, paddingVertical: 14 }}
+              style={{ flex: 1, color: t.text, fontSize: fs(17), paddingVertical: 14 }}
             />
             <TextButton
               title={tr('Block')}

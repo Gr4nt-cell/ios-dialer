@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
@@ -183,8 +183,8 @@ export default function KeypadScreen({ prefill }) {
       {available && !isDefault && !hideBanner ? (
         <View style={[styles.banner, { backgroundColor: t.dark ? '#1C1C1E' : '#F2F2F7' }]}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>{tr('Make Phone your default')}</Text>
-            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{tr('Use this call screen for every call.')}</Text>
+            <Text style={{ color: t.text, fontSize: fs(15), fontWeight: '600' }}>{tr('Make Phone your default')}</Text>
+            <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 2 }}>{tr('Use this call screen for every call.')}</Text>
           </View>
           <Pressable
             testID="set-default"
@@ -195,7 +195,7 @@ export default function KeypadScreen({ prefill }) {
             hitSlop={6}
             style={[styles.bannerButton, { backgroundColor: t.blue }]}
           >
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{tr('Set Default')}</Text>
+            <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '600' }}>{tr('Set Default')}</Text>
           </Pressable>
           <Pressable
             onPress={() => {
@@ -218,19 +218,19 @@ export default function KeypadScreen({ prefill }) {
         </Pressable>
         <View style={styles.subArea}>
           {exact ? (
-            <Text style={{ color: t.secondary, fontSize: 16 }} numberOfLines={1}>
+            <Text style={{ color: t.secondary, fontSize: fs(16) }} numberOfLines={1}>
               {contactName(exact.contact)}  ·  {exact.label}
             </Text>
           ) : top ? (
             <Pressable onPress={() => update(cleanNumber(top.number))} hitSlop={6}>
-              <Text style={{ color: t.text, fontSize: 16 }} numberOfLines={1}>
+              <Text style={{ color: t.text, fontSize: fs(16) }} numberOfLines={1}>
                 {contactName(top.contact)} <Text style={{ color: t.secondary }}>{top.label}</Text>
                 {suggestions.length > 1 ? <Text style={{ color: t.blue }}>{'   '}{suggestions.length - 1} more</Text> : null}
               </Text>
             </Pressable>
           ) : num ? (
             <Pressable onPress={() => nav.push({ name: 'newContact', number: num })} hitSlop={6}>
-              <Text style={{ color: t.blue, fontSize: 16 }}>{tr('Add Number')}</Text>
+              <Text style={{ color: t.blue, fontSize: fs(16) }}>{tr('Add Number')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, padding: 12, borderRadius: 14 },
   bannerButton: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14, marginLeft: 8 },
   displayArea: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: 28, paddingBottom: 14 },
-  number: { fontSize: 40, fontWeight: '400', textAlign: 'center', letterSpacing: 0.5 },
+  number: { fontSize: fs(40), fontWeight: '400', textAlign: 'center', letterSpacing: 0.5 },
   subArea: { height: 26, justifyContent: 'center', marginTop: 4 },
   key: { alignItems: 'center', justifyContent: 'center' },
 });

@@ -3,7 +3,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from './Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { initials } from '../phone';
 
 /**
@@ -55,13 +55,13 @@ export default function ContactCard({ width, height, name, label, image, colorKe
               <>
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.65)']} style={styles.shade} pointerEvents="none" />
                 <View style={styles.overlayText}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }} numberOfLines={1} allowFontScaling={false}>
+                  <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '700' }} numberOfLines={1} allowFontScaling={false}>
                     {name.split(' ')[0]}
                   </Text>
                   {label ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
                       <Ionicons name="call" size={10} color="rgba(255,255,255,0.8)" style={{ marginRight: 3 }} />
-                      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11 }} numberOfLines={1} allowFontScaling={false}>
+                      <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: fs(11) }} numberOfLines={1} allowFontScaling={false}>
                         {label}
                       </Text>
                     </View>
@@ -71,7 +71,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
             ) : null}
           </View>
           {!overlay ? (
-            <Text style={{ color: t.text, fontSize: 12, fontWeight: '500', marginTop: 5, textAlign: 'center' }} numberOfLines={2}>
+            <Text style={{ color: t.text, fontSize: fs(12), fontWeight: '500', marginTop: 5, textAlign: 'center' }} numberOfLines={2}>
               {name}
             </Text>
           ) : null}

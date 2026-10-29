@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { Image, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { gradientFor } from '../gradients';
 import { initials } from '../phone';
 import { depthTransform, useDepth } from '../depth';
@@ -110,11 +110,11 @@ const styles = StyleSheet.create({
   frame: { width: W, height: H, borderRadius: 26, overflow: 'hidden', borderWidth: 1, backgroundColor: '#1C1C1E' },
   // same proportions as the call screen's poster name, scaled to the frame
   nameWrap: { position: 'absolute', left: 0, right: 0, top: 18, paddingHorizontal: 8 },
-  status: { color: 'rgba(255,255,255,0.78)', fontSize: 9, fontWeight: '500', textAlign: 'center' },
+  status: { color: 'rgba(255,255,255,0.78)', fontSize: fs(9), fontWeight: '500', textAlign: 'center' },
   name: {
     color: '#fff',
-    fontSize: 22,
-    lineHeight: 25,
+    fontSize: fs(22),
+    lineHeight: fs(25),
     fontWeight: '700',
     letterSpacing: -0.2,
     textAlign: 'center',
@@ -133,6 +133,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#fff', fontSize: 20, fontWeight: '600' },
+  avatarText: { color: '#fff', fontSize: fs(20), fontWeight: '600' },
   hint: { position: 'absolute', bottom: 10, right: 10, opacity: 0.8 },
 });

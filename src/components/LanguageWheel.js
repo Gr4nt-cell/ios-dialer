@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Animated, Modal, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from './Touch';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { Glass, GlassShadow } from './Glass';
 import { useT } from '../i18n';
 import Wheel from './Wheel';
@@ -77,7 +77,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
                         numberOfLines={1}
                         style={{
                           color: isCentre ? t.text : t.secondary,
-                          fontSize: isCentre ? 18 : 16,
+                          fontSize: isCentre ? fs(18) : fs(16),
                           fontWeight: isCentre ? '700' : '500',
                         }}
                       >
@@ -92,7 +92,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
             <Pressable onPress={onClose} style={{ marginTop: 10, marginHorizontal: 16 }}>
               {({ pressed }) => (
                 <Glass radius={22} pressed={pressed} tint={t.blue} tintOpacity={0.92} style={styles.done}>
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>{tr('Done')}</Text>
+                  <Text style={{ color: '#fff', fontSize: fs(16), fontWeight: '600' }}>{tr('Done')}</Text>
                 </Glass>
               )}
             </Pressable>
@@ -105,7 +105,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
 
 const styles = StyleSheet.create({
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 17, fontWeight: '700', textAlign: 'center', marginBottom: 10 },
+  title: { fontSize: fs(17), fontWeight: '700', textAlign: 'center', marginBottom: 10 },
   selection: { position: 'absolute', left: 0, right: 0, zIndex: 2 },
   row: {
     height: ITEM_H - 10,

@@ -3,9 +3,37 @@ import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pressable } from './Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { initials } from '../phone';
 import { EXTENDED_BLUR, Glass } from './Glass';
+
+/**
+ * A label on a control: a button, a pill, a tab, a segment.
+ *
+ * Chrome labels sit in containers sized by the layout, not by the words, so
+ * when the words need more room than the container has they get cut to
+ * "Statis…" or "Edi…". Here the type shrinks a little instead, which keeps the
+ * whole word — and the control's shape — intact. Below the floor it does
+ * ellipsise, because unreadably small is worse than shortened.
+ *
+ * System font scaling is off for the same reason: these containers are sized
+ * in points, so a larger system font makes the text outgrow its button rather
+ * than the button grow with it. Body text elsewhere still scales normally.
+ */
+export function ChromeText({ children, style, min = 0.72, ...rest }) {
+  return (
+    <Text
+      {...rest}
+      numberOfLines={1}
+      allowFontScaling={false}
+      adjustsFontSizeToFit
+      minimumFontScale={min}
+      style={style}
+    >
+      {children}
+    </Text>
+  );
+}
 
 // ---------- Avatar ----------
 
@@ -41,13 +69,9 @@ export function TextButton({ title, onPress, color, bold, disabled, style, glass
             tintOpacity={0.92}
             style={{ height: 36, paddingHorizontal: 15, justifyContent: 'center', opacity: disabled ? 0.45 : 1 }}
           >
-            <Text
-              numberOfLines={1}
-              allowFontScaling={false}
-              style={{ color: prominent ? '#fff' : color || t.text, fontSize: 16, fontWeight: bold || prominent ? '600' : '500' }}
-            >
+            <ChromeText style={{ color: prominent ? '#fff' : color || t.text, fontSize: fs(16), fontWeight: bold || prominent ? '600' : '500' }}>
               {title}
-            </Text>
+            </ChromeText>
           </Glass>
         )}
       </Pressable>
@@ -56,16 +80,16 @@ export function TextButton({ title, onPress, color, bold, disabled, style, glass
   return (
     <Pressable onPress={onPress} disabled={disabled} hitSlop={10} style={style}>
       {({ pressed }) => (
-        <Text
+        <ChromeText
           style={{
             color: disabled ? t.tertiary : color || t.blue,
-            fontSize: 17,
+            fontSize: fs(17),
             fontWeight: bold ? '600' : '400',
             opacity: pressed ? 0.4 : 1,
           }}
         >
           {title}
-        </Text>
+        </ChromeText>
       )}
     </Pressable>
   );
@@ -171,11 +195,11 @@ export function Segmented({ options, value, onChange }) {
             <Pressable key={o.value} onPress={() => onChange(o.value)} style={{ flex: 1 }}>
               {active ? (
                 <Glass radius={15} style={styles.segmentItem} tint={t.dark ? 'rgba(255,255,255,0.22)' : '#FFFFFF'} tintOpacity={1}>
-                  <Text style={{ color: t.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{o.label}</Text>
+                  <ChromeText style={{ color: t.text, fontSize: fs(13), fontWeight: '600' }}>{o.label}</ChromeText>
                 </Glass>
               ) : (
                 <View style={styles.segmentItem}>
-                  <Text style={{ color: t.text, fontSize: 13, fontWeight: '500' }} numberOfLines={1}>{o.label}</Text>
+                  <ChromeText style={{ color: t.text, fontSize: fs(13), fontWeight: '500' }}>{o.label}</ChromeText>
                 </View>
               )}
             </Pressable>
@@ -210,8 +234,8 @@ export function Cell({ label, value, onPress, onLongPress, color, right, childre
       {({ pressed }) => (
         <View style={[styles.cell, pressed && { backgroundColor: t.dark ? '#2C2C2E' : '#E5E5EA' }]}>
           <View style={{ flex: 1 }}>
-            {label ? <Text style={{ color: t.text, fontSize: 13, marginBottom: 2 }}>{label}</Text> : null}
-            {value ? <Text style={{ color: color || t.text, fontSize: 17 }}>{value}</Text> : null}
+            {label ? <Text style={{ color: t.text, fontSize: fs(13), marginBottom: 2 }}>{label}</Text> : null}
+            {value ? <Text style={{ color: color || t.text, fontSize: fs(17) }}>{value}</Text> : null}
             {children}
           </View>
           {right}
@@ -231,8 +255,8 @@ export function EmptyState({ icon, title, message, action }) {
   return (
     <View style={{ alignItems: 'center', paddingHorizontal: 40, paddingTop: 80 }}>
       {icon ? <Ionicons name={icon} size={54} color={t.tertiary} /> : null}
-      <Text style={{ color: t.text, fontSize: 22, fontWeight: '700', marginTop: 14, textAlign: 'center' }}>{title}</Text>
-      {message ? <Text style={{ color: t.secondary, fontSize: 15, marginTop: 6, textAlign: 'center', lineHeight: 20 }}>{message}</Text> : null}
+      <Text style={{ color: t.text, fontSize: fs(22), fontWeight: '700', marginTop: 14, textAlign: 'center' }}>{title}</Text>
+      {message ? <Text style={{ color: t.secondary, fontSize: fs(15), marginTop: 6, textAlign: 'center', lineHeight: fs(20) }}>{message}</Text> : null}
       {action ? <View style={{ marginTop: 18 }}>{action}</View> : null}
     </View>
   );
@@ -248,9 +272,7 @@ export function SheetHeader({ title, left, right }) {
       <View style={styles.bar}>
         <View style={styles.barSide}>{left}</View>
         <View style={styles.barCenter}>
-          <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }} numberOfLines={1}>
-            {title}
-          </Text>
+          <ChromeText style={{ color: t.text, fontSize: fs(17), fontWeight: '600' }}>{title}</ChromeText>
         </View>
         <View style={[styles.barSide, { justifyContent: 'flex-end' }]}>{right}</View>
       </View>
@@ -266,9 +288,9 @@ const styles = StyleSheet.create({
   barLeft: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, marginRight: 8 },
   barRight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0, marginLeft: 8 },
   barCenter: { flex: 2, alignItems: 'center' },
-  largeTitle: { fontSize: 34, fontWeight: '700', letterSpacing: 0.37, paddingHorizontal: 16, marginBottom: 8 },
+  largeTitle: { fontSize: fs(34), fontWeight: '700', letterSpacing: 0.37, paddingHorizontal: 16, marginBottom: 8 },
   search: { marginHorizontal: 16, marginBottom: 10, height: 40 },
-  searchInput: { flex: 1, fontSize: 17, paddingVertical: 0 },
+  searchInput: { flex: 1, fontSize: fs(17), paddingVertical: 0 },
   segment: { width: 200 },
   segmentItem: { alignItems: 'center', justifyContent: 'center', height: 30, paddingHorizontal: 8 },
   cell: { minHeight: 52, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },

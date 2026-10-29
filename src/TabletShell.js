@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from './theme';
+import { fs, useTheme } from './theme';
 import { PaneProvider } from './device';
 import Sidebar, { SIDEBAR_WIDTH } from './components/Sidebar';
 import Boundary from './components/Boundary';
@@ -34,9 +34,9 @@ function Placeholder({ icon, title, message }) {
   return (
     <View style={styles.placeholder}>
       <Ionicons name={icon} size={64} color={t.tertiary} />
-      <Text style={{ color: t.secondary, fontSize: 20, fontWeight: '600', marginTop: 16 }}>{title}</Text>
+      <Text style={{ color: t.secondary, fontSize: fs(20), fontWeight: '600', marginTop: 16 }}>{title}</Text>
       {message ? (
-        <Text style={{ color: t.tertiary, fontSize: 15, marginTop: 6, textAlign: 'center', maxWidth: 320, lineHeight: 20 }}>
+        <Text style={{ color: t.tertiary, fontSize: fs(15), marginTop: 6, textAlign: 'center', maxWidth: 320, lineHeight: fs(20) }}>
           {message}
         </Text>
       ) : null}

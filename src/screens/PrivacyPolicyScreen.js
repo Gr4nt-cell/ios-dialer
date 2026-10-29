@@ -1,7 +1,7 @@
 import React from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { IconButton, SheetHeader, TextButton } from '../components/ui';
 import { Glass } from '../components/Glass';
@@ -86,19 +86,19 @@ export default function PrivacyPolicyScreen() {
     <View style={{ flex: 1 }}>
       <SheetHeader title={tr('Privacy Policy')} left={<IconButton glass name="chevron-back" onPress={nav.pop} />} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40, gap: 12 }}>
-        <Text style={{ color: t.secondary, fontSize: 13, marginHorizontal: 4 }}>Phone (com.gr4nt.dialer) · Last updated 20 October 2026</Text>
+        <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 4 }}>Phone (com.gr4nt.dialer) · Last updated 20 October 2026</Text>
         {SECTIONS.map((sec) => (
           <Glass key={sec.title} radius={20} style={{ padding: 16 }}>
-            <Text style={{ color: t.text, fontSize: 17, fontWeight: '700', marginBottom: 8 }}>{sec.title}</Text>
+            <Text style={{ color: t.text, fontSize: fs(17), fontWeight: '700', marginBottom: 8 }}>{sec.title}</Text>
             {(sec.body || []).map((p, i) => (
-              <Text key={i} style={{ color: t.text, fontSize: 15, lineHeight: 21, marginTop: i ? 8 : 0 }}>
+              <Text key={i} style={{ color: t.text, fontSize: fs(15), lineHeight: fs(21), marginTop: i ? 8 : 0 }}>
                 {p}
               </Text>
             ))}
             {(sec.items || []).map(([k, v], i) => (
               <View key={k} style={{ marginTop: i ? 10 : 0 }}>
-                <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>{k}</Text>
-                <Text style={{ color: t.secondary, fontSize: 14, lineHeight: 20, marginTop: 1 }}>{v}</Text>
+                <Text style={{ color: t.text, fontSize: fs(15), fontWeight: '600' }}>{k}</Text>
+                <Text style={{ color: t.secondary, fontSize: fs(14), lineHeight: fs(20), marginTop: 1 }}>{v}</Text>
               </View>
             ))}
           </Glass>

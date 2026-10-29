@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, durationLabel, formatNumber, numberKey, prettyLabel, sendMessage, timeLabel } from '../phone';
@@ -24,7 +24,7 @@ function Action({ icon, label, onPress, disabled, color }) {
       {({ pressed }) => (
         <Glass radius={18} pressed={pressed} style={[styles.action, { opacity: disabled ? 0.4 : 1 }]}>
           <Ionicons name={icon} size={22} color={color || t.text} />
-          <Text style={{ color: t.text, fontSize: 12, marginTop: 4 }} numberOfLines={1} allowFontScaling={false}>
+          <Text style={{ color: t.text, fontSize: fs(12), marginTop: 4 }} numberOfLines={1} allowFontScaling={false}>
             {label}
           </Text>
         </Glass>
@@ -291,12 +291,12 @@ export default function ContactDetailScreen({ route }) {
           </Pressable>
           {contact ? (
             <Pressable onPress={editPhoto} hitSlop={8} style={{ marginTop: 8 }}>
-              <Text style={{ color: t.blue, fontSize: 15 }}>{image ? 'Edit Photo' : 'Add Photo'}</Text>
+              <Text style={{ color: t.blue, fontSize: fs(15) }}>{image ? 'Edit Photo' : 'Add Photo'}</Text>
             </Pressable>
           ) : null}
-          <Text style={{ color: t.text, fontSize: 28, fontWeight: '600', marginTop: 8, textAlign: 'center', paddingHorizontal: 20 }}>{name}</Text>
+          <Text style={{ color: t.text, fontSize: fs(28), fontWeight: '600', marginTop: 8, textAlign: 'center', paddingHorizontal: 20 }}>{name}</Text>
           {contact && (contact.company || contact.jobTitle) ? (
-            <Text style={{ color: t.secondary, fontSize: 15, marginTop: 2 }}>{[contact.jobTitle, contact.company].filter(Boolean).join(' · ')}</Text>
+            <Text style={{ color: t.secondary, fontSize: fs(15), marginTop: 2 }}>{[contact.jobTitle, contact.company].filter(Boolean).join(' · ')}</Text>
           ) : null}
         </View>
 
@@ -310,14 +310,14 @@ export default function ContactDetailScreen({ route }) {
         {history.length ? (
           <Group style={{ marginBottom: 18 }}>
             <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-              <Text style={{ color: t.text, fontSize: 15, fontWeight: '600', marginBottom: 6 }}>
+              <Text style={{ color: t.text, fontSize: fs(15), fontWeight: '600', marginBottom: 6 }}>
                 {new Date(history[0].date).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
               </Text>
               {history.slice(0, 6).map((c) => (
                 <View key={c.id} style={{ flexDirection: 'row', paddingVertical: 3 }}>
-                  <Text style={{ color: t.secondary, fontSize: 15, width: 90 }}>{timeLabel(c.date)}</Text>
-                  <Text style={{ color: isMissedType(c.type) ? t.red : t.text, fontSize: 15, flex: 1 }}>{callTypeLabel(c.type)}</Text>
-                  {c.duration ? <Text style={{ color: t.secondary, fontSize: 15 }}>{durationLabel(c.duration)}</Text> : null}
+                  <Text style={{ color: t.secondary, fontSize: fs(15), width: 90 }}>{timeLabel(c.date)}</Text>
+                  <Text style={{ color: isMissedType(c.type) ? t.red : t.text, fontSize: fs(15), flex: 1 }}>{callTypeLabel(c.type)}</Text>
+                  {c.duration ? <Text style={{ color: t.secondary, fontSize: fs(15) }}>{durationLabel(c.duration)}</Text> : null}
                 </View>
               ))}
             </View>
@@ -339,7 +339,7 @@ export default function ContactDetailScreen({ route }) {
                 {lastCalled && lastCalled.key === numberKey(p.number) ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 3 }}>
                     <Ionicons name="arrow-up-outline" size={12} color={t.green} style={{ transform: [{ rotate: '45deg' }], marginRight: 3 }} />
-                    <Text style={{ color: t.green, fontSize: 12, fontWeight: '600' }}>Last called · {timeLabel(lastCalled.date)}</Text>
+                    <Text style={{ color: t.green, fontSize: fs(12), fontWeight: '600' }}>Last called · {timeLabel(lastCalled.date)}</Text>
                   </View>
                 ) : null}
               </Cell>

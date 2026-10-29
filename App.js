@@ -8,7 +8,7 @@ import { DataProvider, useData } from './src/DataContext';
 import { CallProvider, useCalls } from './src/CallContext';
 import { ActionSheetProvider } from './src/components/ActionSheet';
 import { NavContext } from './src/nav';
-import { useTheme } from './src/theme';
+import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
@@ -89,7 +89,7 @@ function ReturnToCall() {
         <View style={{ paddingTop: insets.top, backgroundColor: pressed ? '#28B14C' : '#30D158' }}>
           <View style={{ height: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
             <Ionicons name="call" size={13} color="#fff" />
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 6 }} numberOfLines={1}>
+            <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '600', marginLeft: 6 }} numberOfLines={1}>
               {name} · {status}
             </Text>
           </View>

@@ -3,7 +3,7 @@ import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, prettyLabel } from '../phone';
@@ -77,7 +77,7 @@ export default function PickFavoriteScreen({ route }) {
                 {({ pressed }) => (
                   <View style={[styles.row, pressed && { backgroundColor: t.dark ? '#1C1C1E' : '#E5E5EA' }]}>
                     <Avatar name={contactName(item)} image={item.image && item.image.uri} size={36} />
-                    <Text style={{ color: t.text, fontSize: 17, flex: 1, marginLeft: 12 }} numberOfLines={1}>
+                    <Text style={{ color: t.text, fontSize: fs(17), flex: 1, marginLeft: 12 }} numberOfLines={1}>
                       {contactName(item)}
                     </Text>
                     {adding ? (
@@ -93,8 +93,8 @@ export default function PickFavoriteScreen({ route }) {
                     <Pressable key={p.id || i} onPress={() => pick(item, p)} disabled={isFavorite(p.number)}>
                       <View style={[styles.phone, { borderTopColor: t.separator }]}>
                         <Ionicons name="call" size={14} color={isFavorite(p.number) ? t.tertiary : t.blue} />
-                        <Text style={{ color: t.secondary, fontSize: 15, width: 70, marginLeft: 8 }}>{prettyLabel(p.label)}</Text>
-                        <Text style={{ color: isFavorite(p.number) ? t.tertiary : t.blue, fontSize: 16 }}>{formatNumber(p.number)}</Text>
+                        <Text style={{ color: t.secondary, fontSize: fs(15), width: 70, marginLeft: 8 }}>{prettyLabel(p.label)}</Text>
+                        <Text style={{ color: isFavorite(p.number) ? t.tertiary : t.blue, fontSize: fs(16) }}>{formatNumber(p.number)}</Text>
                       </View>
                     </Pressable>
                   ))

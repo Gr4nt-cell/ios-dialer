@@ -3,10 +3,11 @@ import { Animated, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import Dialer from '../dialer';
 import { FlatBackdropContext, Glass, GlassShadow } from './Glass';
 import { useT } from '../i18n';
+import { ChromeText } from './ui';
 
 // 60% lighter than the system selection tick
 function tick() {
@@ -175,9 +176,9 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                       </View>
                     ) : null}
                   </View>
-                  <Text style={[styles.label, { color }]} numberOfLines={1} allowFontScaling={false}>
+                  <ChromeText style={[styles.label, { color }]}>
                     {tr(tab.label)}
-                  </Text>
+                  </ChromeText>
                 </View>
               );
             })}
@@ -191,7 +192,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 10, fontWeight: '600', marginTop: 2, letterSpacing: -0.1 },
+  label: { fontSize: fs(10), fontWeight: '600', marginTop: 2, letterSpacing: -0.1 },
   badge: { position: 'absolute', top: -4, right: -12, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  badgeText: { color: '#fff', fontSize: fs(11), fontWeight: '700' },
 });

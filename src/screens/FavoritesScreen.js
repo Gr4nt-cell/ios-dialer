@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useBottomSpace } from '../device';
 import { useData } from '../DataContext';
 import { useNav } from '../nav';
@@ -51,12 +51,12 @@ export default function FavoritesScreen() {
                   <Avatar name={name} image={contact && contact.image && contact.image.uri} size={44} />
                   <View style={[styles.body, { borderBottomColor: t.separator }]}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: t.text, fontSize: 17, fontWeight: '600' }} numberOfLines={1}>
+                      <Text style={{ color: t.text, fontSize: fs(17), fontWeight: '600' }} numberOfLines={1}>
                         {name}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                         <Ionicons name="call" size={12} color={t.secondary} />
-                        <Text style={{ color: t.secondary, fontSize: 14, marginLeft: 4 }}>{item.label}</Text>
+                        <Text style={{ color: t.secondary, fontSize: fs(14), marginLeft: 4 }}>{item.label}</Text>
                       </View>
                     </View>
                     {editing ? (

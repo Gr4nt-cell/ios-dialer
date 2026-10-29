@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Dialer from '../dialer';
 import { useActionSheet } from '../components/ActionSheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
+import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
 import { contactPhoto, prettyLabel } from '../phone';
 import { useNav } from '../nav';
@@ -28,7 +28,7 @@ function Field({ value, onChangeText, placeholder, keyboardType, autoFocus }) {
       keyboardType={keyboardType}
       autoFocus={autoFocus}
       autoCapitalize={keyboardType ? 'none' : 'words'}
-      style={{ color: t.text, fontSize: 17, paddingVertical: 12, flex: 1 }}
+      style={{ color: t.text, fontSize: fs(17), paddingVertical: 12, flex: 1 }}
     />
   );
 }
@@ -47,7 +47,7 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
             onPress={() => update(i, { label: labels[(labels.indexOf(it.label) + 1) % labels.length] })}
             style={{ flexDirection: 'row', alignItems: 'center', width: 86, marginLeft: 10 }}
           >
-            <Text style={{ color: t.blue, fontSize: 15 }}>{it.label}</Text>
+            <Text style={{ color: t.blue, fontSize: fs(15) }}>{it.label}</Text>
             <Ionicons name="chevron-forward" size={14} color={t.tertiary} />
           </Pressable>
           <Field value={it.value} onChangeText={(v) => update(i, { value: v })} placeholder={placeholder} keyboardType={keyboardType} />
@@ -57,7 +57,7 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
         {({ pressed }) => (
           <View style={[styles.multiRow, { borderBottomWidth: 0, opacity: pressed ? 0.5 : 1 }]}>
             <Ionicons name="add-circle" size={22} color={t.green} />
-            <Text style={{ color: t.text, fontSize: 17, marginLeft: 10 }}>{addTitle}</Text>
+            <Text style={{ color: t.text, fontSize: fs(17), marginLeft: 10 }}>{addTitle}</Text>
           </View>
         )}
       </Pressable>
@@ -199,7 +199,7 @@ export default function NewContactScreen({ route }) {
               <Avatar name={`${firstName} ${lastName}`} image={photo} size={110} />
             </Pressable>
             <Pressable onPress={choosePhoto} hitSlop={8} style={{ marginTop: 10 }}>
-              <Text style={{ color: t.blue, fontSize: 15 }}>{photo ? 'Edit Photo' : 'Add Photo'}</Text>
+              <Text style={{ color: t.blue, fontSize: fs(15) }}>{photo ? 'Edit Photo' : 'Add Photo'}</Text>
             </Pressable>
           </View>
           {route.number && !editing ? (
@@ -207,7 +207,7 @@ export default function NewContactScreen({ route }) {
               {({ pressed }) => (
                 <View style={[styles.group, styles.multiRow, { backgroundColor: t.card, borderBottomWidth: 0, opacity: pressed ? 0.5 : 1 }]}>
                   <Ionicons name="person-add" size={22} color={t.blue} />
-                  <Text style={{ color: t.blue, fontSize: 17, marginLeft: 10 }}>{tr('Add to Existing Contact')}</Text>
+                  <Text style={{ color: t.blue, fontSize: fs(17), marginLeft: 10 }}>{tr('Add to Existing Contact')}</Text>
                 </View>
               )}
             </Pressable>
