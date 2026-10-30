@@ -65,18 +65,18 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
   );
 }
 
-function CallPreview({ colors }) {
+function CallPreview({ colors, light }) {
   return (
     <LinearGradient colors={[colors[0], colors[1], colors[2]]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 150, borderRadius: 18, margin: 12, marginBottom: 4, padding: 14, justifyContent: 'space-between' }}>
-      <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} />
+      {!light ? <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} /> : null}
       <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: fs(12) }}>calling mobile…</Text>
-        <Text style={{ color: '#fff', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
+        <Text style={{ color: light ? '#53666D' : 'rgba(255,255,255,0.75)', fontSize: fs(12) }}>calling mobile…</Text>
+        <Text style={{ color: light ? '#22343A' : '#fff', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
-        {['volume-medium', 'pause', 'mic-off-outline'].map((n) => (
-          <View key={n} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name={n} size={16} color="#fff" />
+        {['volume-medium', 'pause', 'mic'].map((n) => (
+          <View key={n} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: light ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name={n} size={16} color={light ? '#26383E' : '#fff'} />
           </View>
         ))}
         <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#FF3B30', alignItems: 'center', justifyContent: 'center' }}>
@@ -191,7 +191,8 @@ export default function SettingsScreen() {
   const { width } = usePaneSize();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
   const bg = settings.callBackground || 'auto';
-  const previewColors = bg === 'auto' ? gradientFor('Jane Appleseed') : gradientFor('', bg);
+  const previewColors = gradientFor('Jane Appleseed', bg);
+  const lightCallBackground = bg === 'auto' || bg === 'fastscore';
 
   const depthOn = settings.callPhoto !== false;
   // preview with a built-in sample portrait (AI-generated, not a real person), so none of
@@ -484,15 +485,14 @@ export default function SettingsScreen() {
 
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>
-          <CallPreview colors={previewColors} />
+          <CallPreview colors={previewColors} light={lightCallBackground} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, paddingBottom: 2 }}>
-            <Swatch auto width={tileW} name="Automatic" colors={['#3A5BD9', '#D04A8C', '#2EE6A6', '#FF8A3D']} selected={bg === 'auto'} onPress={() => updateSettings({ callBackground: 'auto' })} />
             {GRADIENTS.map((g) => (
-              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id} onPress={() => updateSettings({ callBackground: g.id })} />
+              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'fastscore')} onPress={() => updateSettings({ callBackground: g.id })} />
             ))}
           </View>
         </Group>
-        <Footer>Used for callers without a photo. Automatic gives every contact their own colours.</Footer>
+        <Footer>Used for callers without a photo. Fast Score is the default background.</Footer>
 
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>

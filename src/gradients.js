@@ -1,5 +1,6 @@
 // Call-screen backgrounds. Each preset is [glow A, glow B, base].
 export const GRADIENTS = [
+  { id: 'fastscore', name: 'Fast Score', colors: ['#9BDEF3', '#F3E5E7', '#A5E7D2'] },
   { id: 'aurora', name: 'Aurora', colors: ['#2EE6A6', '#3A5BD9', '#06142B'] },
   { id: 'sunset', name: 'Sunset', colors: ['#FF8A3D', '#E0306E', '#2A0B1C'] },
   { id: 'ocean', name: 'Ocean', colors: ['#1FA2C9', '#2C5FD6', '#04162A'] },
@@ -24,6 +25,7 @@ export function gradientById(id) {
 export function gradientFor(key, choice = 'auto') {
   const picked = choice && choice !== 'auto' ? gradientById(choice) : null;
   if (picked) return picked.colors;
+  if (choice === 'auto') return gradientById('fastscore').colors;
   let h = 0;
   for (const ch of key || '?') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return gradientById(ROTATION[h % ROTATION.length]).colors;
