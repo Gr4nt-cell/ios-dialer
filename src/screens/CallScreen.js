@@ -134,7 +134,7 @@ function useZoom() {
 }
 
 // Screen backdrop. Caller photos are rendered in a bounded portrait frame.
-function Poster({ palette, light, plain = false }) {
+function Poster({ palette, light, plain = false, plainColor = WHITE }) {
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -150,7 +150,7 @@ function Poster({ palette, light, plain = false }) {
   }, [drift, plain]);
 
   if (plain) {
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: WHITE }]} pointerEvents="none" />;
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
   }
 
   const [c1, c2, base] = palette;
@@ -204,9 +204,6 @@ function CallerPhotoFrame({ photo, foreground, zoomStyle, adjust, width, height,
   if (!photo) return null;
   return (
     <View style={[styles.photoStage, { width, height }]} pointerEvents="none">
-      {/* A blurred duplicate creates a vivid halo so the photo sits in its own
-          colours instead of ending at a hard rectangular edge. */}
-      <Animated.Image source={{ uri: photo }} resizeMode="cover" blurRadius={38} style={[styles.photoHalo, zoomStyle]} />
       <View style={styles.photoFrame}>
         <Animated.Image source={{ uri: photo }} resizeMode="cover" style={[StyleSheet.absoluteFill, zoomStyle]} />
         <LinearGradient
@@ -223,30 +220,6 @@ function CallerPhotoFrame({ photo, foreground, zoomStyle, adjust, width, height,
         {/* Render last so the person sits in front of the caller name. */}
         {foreground ? <DepthLayer uri={foreground} zoomStyle={zoomStyle} adjust={adjust} /> : null}
       </View>
-    </View>
-  );
-}
-
-function PhotoColorWash({ photo }) {
-  if (!photo) return null;
-  return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <Animated.Image
-        source={{ uri: photo }}
-        resizeMode="cover"
-        blurRadius={38}
-        style={[StyleSheet.absoluteFill, { opacity: 1, transform: [{ scale: 1.34 }] }]}
-      />
-      <LinearGradient
-        colors={['rgba(255,255,255,0.01)', 'rgba(255,255,255,0.025)', 'rgba(255,255,255,0.05)']}
-        locations={[0, 0.48, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <LinearGradient
-        colors={['rgba(15,20,38,0)', 'rgba(15,20,38,0.06)']}
-        locations={[0.52, 1]}
-        style={StyleSheet.absoluteFill}
-      />
     </View>
   );
 }
@@ -391,8 +364,9 @@ export default function CallScreen() {
   const usePhoto = settings.callPhoto !== false && !!who.image;
   const depth = useDepth(usePhoto ? who.image : null, settings.callDepth !== false);
   const photo = usePhoto ? (depth ? depth.base : who.image) : null;
-  const plainBackground = usePhoto || settings.callBackground === 'plain' || settings.callBackground === 'auto' || !settings.callBackground;
-  const lightBackground = plainBackground || settings.callBackground === 'fastscore';
+  const plainBackground = settings.callBackground === 'plain' || settings.callBackground === 'auto' || !settings.callBackground;
+  const lightBackground = plainBackground ? !t.dark : settings.callBackground === 'fastscore';
+  const plainColor = t.dark ? t.bg : WHITE;
   const primaryText = lightBackground ? LIGHT_TEXT : WHITE;
   const secondaryText = lightBackground ? LIGHT_SECONDARY : DIM;
   const zoomStyle = useZoom();
@@ -401,8 +375,26 @@ export default function CallScreen() {
   // on a tablet the dial pad lives in its own column, so the left side never
   // swaps itself out for it
   const padOpen = keypad && !isTablet;
-  const photoWidth = Math.min(360, Math.max(220, screenWidth - 48));
-  const photoHeight = Math.min(300, Math.max(180, Math.round(screenHeight * 0.32)));
+  // Match the Contacts grid card, then enlarge the previous 2x frame by 30%.
+  // The same scale is applied to the photo and depth cut-out within the frame.
+  const contactCardWidth = Math.floor((screenWidth - 16 * 2 - 12 * 3) / 4);
+  const contactCardHeight = Math.round(contactCardWidth * 1.32);
+  const basePhotoScale = Math.min(
+    2,
+    360 / contactCardWidth,
+    (screenWidth - 48) / contactCardWidth,
+    300 / contactCardHeight,
+    (screenHeight * 0.34) / contactCardHeight
+  );
+  const photoScale = Math.min(
+    basePhotoScale * 1.3,
+    390 / contactCardWidth,
+    (screenWidth - 48) / contactCardWidth,
+    390 / contactCardHeight,
+    (screenHeight * 0.46) / contactCardHeight
+  );
+  const photoWidth = Math.round(contactCardWidth * photoScale);
+  const photoHeight = Math.round(contactCardHeight * photoScale);
   const photoPanel = usePhoto ? (
     <CallerPhotoFrame
       photo={photo}
@@ -443,11 +435,10 @@ export default function CallScreen() {
   const tap = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
   const wrap = (children, extra) => (
-    <FlatBackdropContext.Provider value={plainBackground && !usePhoto}>
-      <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: plainBackground ? WHITE : '#0B0C10' }, extra]}>
+    <FlatBackdropContext.Provider value={plainBackground}>
+      <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: plainBackground ? plainColor : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
-        <Poster palette={palette} light={lightBackground} plain={plainBackground && !usePhoto} />
-        {usePhoto ? <PhotoColorWash photo={photo} /> : null}
+        <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} />
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
@@ -940,15 +931,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
     overflow: 'visible',
-  },
-  photoHalo: {
-    position: 'absolute',
-    left: -34,
-    right: -34,
-    top: -34,
-    bottom: -34,
-    borderRadius: 60,
-    opacity: 0.94,
   },
   photoFrame: {
     flex: 1,
