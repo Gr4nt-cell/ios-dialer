@@ -3,6 +3,7 @@ import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
+import { Glass } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,7 +44,7 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
               borderRadius: 16,
               padding: 2,
               borderWidth: 2.5,
-              borderColor: selected ? t.blue : 'transparent',
+              borderColor: selected ? t.blue : colors.every((color) => color.toUpperCase() === '#FFFFFF') ? t.glassBorder : 'transparent',
               transform: [{ scale: pressed ? 0.95 : 1 }],
             }}
           >
@@ -67,7 +68,7 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
 
 function CallPreview({ colors, light }) {
   return (
-    <LinearGradient colors={[colors[0], colors[1], colors[2]]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 150, borderRadius: 18, margin: 12, marginBottom: 4, padding: 14, justifyContent: 'space-between' }}>
+    <LinearGradient colors={[colors[0], colors[1], colors[2]]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(107,132,161,0.18)', margin: 12, marginBottom: 4, padding: 14, justifyContent: 'space-between' }}>
       {!light ? <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} /> : null}
       <View style={{ alignItems: 'center' }}>
         <Text style={{ color: light ? '#53666D' : 'rgba(255,255,255,0.75)', fontSize: fs(12) }}>calling mobile…</Text>
@@ -75,13 +76,13 @@ function CallPreview({ colors, light }) {
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
         {['volume-medium', 'pause', 'mic'].map((n) => (
-          <View key={n} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: light ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+          <Glass key={n} dark={!light} liquid vivid outline soft radius={17} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name={n} size={16} color={light ? '#26383E' : '#fff'} />
-          </View>
+          </Glass>
         ))}
-        <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#FF3B30', alignItems: 'center', justifyContent: 'center' }}>
+        <Glass dark={!light} liquid vivid outline soft radius={17} tint="#FF3B30" tintOpacity={0.95} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="call" size={16} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
-        </View>
+        </Glass>
       </View>
     </LinearGradient>
   );
@@ -190,9 +191,9 @@ export default function SettingsScreen() {
   };
   const { width } = usePaneSize();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
-  const bg = settings.callBackground || 'auto';
+  const bg = settings.callBackground || 'plain';
   const previewColors = gradientFor('Jane Appleseed', bg);
-  const lightCallBackground = bg === 'auto' || bg === 'fastscore';
+  const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain';
 
   const depthOn = settings.callPhoto !== false;
   // preview with a built-in sample portrait (AI-generated, not a real person), so none of
@@ -358,7 +359,7 @@ export default function SettingsScreen() {
             }
           />
         </Group>
-        <Footer>Liquid Glass off replaces the frosted panels with solid cards, which is easier to read and lighter to draw. Tinted makes glass more opaque. The call screen always stays dark.</Footer>
+        <Footer>Liquid Glass off replaces the frosted panels with solid cards, which is easier to read and lighter to draw. Tinted makes glass more opaque.</Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>
@@ -488,11 +489,11 @@ export default function SettingsScreen() {
           <CallPreview colors={previewColors} light={lightCallBackground} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, paddingBottom: 2 }}>
             {GRADIENTS.map((g) => (
-              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'fastscore')} onPress={() => updateSettings({ callBackground: g.id })} />
+              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'plain')} onPress={() => updateSettings({ callBackground: g.id })} />
             ))}
           </View>
         </Group>
-        <Footer>Used for callers without a photo. Fast Score is the default background.</Footer>
+        <Footer>Used for callers without a photo. Plain White is the default background; other gradients remain available.</Footer>
 
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>

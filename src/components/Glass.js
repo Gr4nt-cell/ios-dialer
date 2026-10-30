@@ -39,17 +39,27 @@ export const FlatBackdropContext = createContext(false);
  * panel shadow each reads as far heavier than one shadow under one panel, so
  * they get a shallower one and end up looking like the date strip.
  */
-function lift(dark, soft) {
+function lift(dark, soft, liquid) {
   // boxShadow, not elevation: Android's elevation shadow is traced from a
   // polygonal approximation of the view's outline, which turned the round keys
   // into decagons. boxShadow follows the border radius exactly, so a circle
   // casts a circle. (React Native 0.76+ on Android.)
-  const a = soft ? (dark ? 0.16 : 0.045) : dark ? 0.26 : 0.075;
+  const a = liquid
+    ? soft
+      ? dark ? 0.19 : 0.09
+      : dark ? 0.29 : 0.14
+    : soft
+      ? dark ? 0.16 : 0.045
+      : dark ? 0.26 : 0.075;
   const y = soft ? 2 : 5;
   const blur = soft ? 8 : 18;
   return {
-    borderColor: dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)',
-    boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
+    borderColor: liquid
+      ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(104,139,180,0.25)'
+      : dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)',
+    boxShadow: liquid && !dark
+      ? `0px ${y}px ${blur}px rgba(56,91,137,${a})`
+      : `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
 
@@ -76,6 +86,7 @@ export function Glass({
   strong = false, // clearly visible edge, e.g. the date strip and letter panel
   vivid = false, // wide blur that lets the colour behind bleed through (tab bar)
   soft = false, // shallower shadow on a flat background, for small repeated controls
+  liquid = true, // brighter bevel and cool glass tint across glass surfaces
   fillScale = 1, // thins the fill further, e.g. a button over a photo
 }) {
   const t = useTheme();
@@ -87,7 +98,7 @@ export function Glass({
   // Android draws a shadow only for a view that has its own background, so a
   // lifted panel is opaque — over a flat backdrop there is nothing to see
   // through to anyway.
-  const lifted = flat ? lift(dark, soft) : null;
+  const lifted = flat ? lift(dark, soft, liquid && !plain) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
   const bp = blur && !plain && !flat ? blurProps(target) : null;
   const realBlur = !!bp;
@@ -142,24 +153,26 @@ export function Glass({
   const fill = tint
     ? tint
     : flat
-    ? dark ? '#272A30' : '#FCFCFD'
+    ? dark ? '#272A30' : liquid ? '#F6FAFF' : '#FCFCFD'
     : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.55)';
+  const rimTop = dark ? 'rgba(255,255,255,0.18)' : liquid ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
+    : liquid
+    ? dark ? 'rgba(220,238,255,0.28)' : 'rgba(105,143,185,0.25)'
     : strong
     ? dark ? 'rgba(220,228,240,0.18)' : 'rgba(80,86,96,0.16)'
     : outline
     ? dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.12)'
     : dark ? 'rgba(220,228,240,0.1)' : 'rgba(80,86,96,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.14)' : 'rgba(70,78,90,0.018)';
+  const edge = dark ? 'rgba(0,0,0,0.14)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
   const highlight = flat
-    ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
+    ? liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.78)' : dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
-    ? 'rgba(255,255,255,0.14)'
+    ? liquid ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.14)'
     : vivid
-    ? dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
-    : dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)';
+    ? liquid ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)' : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
+    : liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.42)' : dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)';
 
   // Android derives an elevation shadow from the view's outline, and a view
   // that also clips its children can hand it a coarse polygon instead of the
@@ -201,7 +214,7 @@ export function Glass({
       {lifted ? null : (
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? 1 : StyleSheet.hairlineWidth, borderColor: rim }]} />
       )}
-      {flat ? null : (
+      {flat && !liquid ? null : (
         <LinearGradient
           pointerEvents="none"
           colors={[rimTop, 'rgba(255,255,255,0)']}
