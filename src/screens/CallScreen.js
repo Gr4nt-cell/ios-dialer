@@ -131,12 +131,12 @@ function useZoom() {
   return { transform: [{ scale: zoom.interpolate({ inputRange: [0, 1], outputRange: [1, 1.07] }) }] };
 }
 
-// Background: the caller's photo (sharp, full screen) or drifting gradient glows.
-function Poster({ photo, palette, zoomStyle, light, plain = false }) {
+// Screen backdrop. Caller photos are rendered in a bounded portrait frame.
+function Poster({ palette, light, plain = false }) {
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (photo || plain) return undefined;
+    if (plain) return undefined;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(drift, { toValue: 1, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
@@ -145,18 +145,7 @@ function Poster({ photo, palette, zoomStyle, light, plain = false }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [drift, photo, plain]);
-
-  if (photo) {
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} />
-        <Animated.Image source={{ uri: photo }} resizeMode="cover" style={[StyleSheet.absoluteFill, zoomStyle]} />
-        <LinearGradient colors={['rgba(0,0,0,0.5)', 'rgba(0,0,0,0)']} style={{ position: 'absolute', left: 0, right: 0, top: 0, height: height * 0.3 }} />
-        <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.82)']} locations={[0, 0.4, 1]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: height * 0.55 }} />
-      </View>
-    );
-  }
+  }, [drift, plain]);
 
   if (plain) {
     return <View style={[StyleSheet.absoluteFill, { backgroundColor: WHITE }]} pointerEvents="none" />;
@@ -205,6 +194,16 @@ function DepthLayer({ uri, zoomStyle, adjust }) {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Animated.Image source={{ uri }} resizeMode="cover" style={[StyleSheet.absoluteFill, { transform, opacity: fade }]} />
+    </View>
+  );
+}
+
+function CallerPhotoFrame({ photo, foreground, zoomStyle, adjust, width, height }) {
+  if (!photo) return null;
+  return (
+    <View style={[styles.photoFrame, { width, height }]} pointerEvents="none">
+      <Animated.Image source={{ uri: photo }} resizeMode="cover" style={[StyleSheet.absoluteFill, zoomStyle]} />
+      {foreground ? <DepthLayer uri={foreground} zoomStyle={zoomStyle} adjust={adjust} /> : null}
     </View>
   );
 }
@@ -321,6 +320,7 @@ export default function CallScreen() {
   const { live, audio, ended, setMinimized, recording, startRecording, stopRecording } = useCalls();
   const { settings, resolve } = useData();
   const t = useTheme();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const identify = useIdentity();
   const [keypad, setKeypad] = useState(false);
   const isTablet = useIsTablet();
@@ -347,8 +347,8 @@ export default function CallScreen() {
   const usePhoto = settings.callPhoto !== false && !!who.image;
   const depth = useDepth(usePhoto ? who.image : null, settings.callDepth !== false);
   const photo = usePhoto ? (depth ? depth.base : who.image) : null;
-  const plainBackground = !photo && (settings.callBackground === 'plain' || settings.callBackground === 'auto' || !settings.callBackground);
-  const lightBackground = plainBackground || (!photo && settings.callBackground === 'fastscore');
+  const plainBackground = usePhoto || settings.callBackground === 'plain' || settings.callBackground === 'auto' || !settings.callBackground;
+  const lightBackground = plainBackground || settings.callBackground === 'fastscore';
   const primaryText = lightBackground ? LIGHT_TEXT : WHITE;
   const secondaryText = lightBackground ? LIGHT_SECONDARY : DIM;
   const zoomStyle = useZoom();
@@ -357,7 +357,18 @@ export default function CallScreen() {
   // on a tablet the dial pad lives in its own column, so the left side never
   // swaps itself out for it
   const padOpen = keypad && !isTablet;
-  const front = usePhoto && depth && !padOpen ? <DepthLayer uri={depth.foreground} zoomStyle={zoomStyle} adjust={settings} /> : null;
+  const photoWidth = Math.min(360, Math.max(220, screenWidth - 48));
+  const photoHeight = Math.min(300, Math.max(180, Math.round(screenHeight * 0.32)));
+  const photoPanel = usePhoto ? (
+    <CallerPhotoFrame
+      photo={photo}
+      foreground={depth?.foreground}
+      zoomStyle={zoomStyle}
+      adjust={settings}
+      width={photoWidth}
+      height={photoHeight}
+    />
+  ) : null;
 
 
   useTicker(live.some((c) => c.state === 'active'));
@@ -389,7 +400,7 @@ export default function CallScreen() {
     <FlatBackdropContext.Provider value={plainBackground}>
       <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: plainBackground ? WHITE : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
-        <Poster photo={photo} palette={palette} zoomStyle={zoomStyle} light={lightBackground} plain={plainBackground} />
+        <Poster palette={palette} light={lightBackground} plain={plainBackground} />
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
@@ -407,7 +418,7 @@ export default function CallScreen() {
           </Text>
           {usePhoto ? null : <Text style={[styles.status, lightBackground && { color: secondaryText }]}>{ended.disconnectLabel || 'Call Ended'}</Text>}
         </View>
-        {front}
+        {photoPanel}
       </>
     );
   }
@@ -443,7 +454,7 @@ export default function CallScreen() {
             </View>
           )}
         </View>
-        {front}
+        {photoPanel}
         <View style={{ flex: 1 }} />
         <View style={styles.pillRow}>
           <SmallPill icon="notifications-off" label={tr('Silence')} onPress={() => Dialer.silenceRinger && Dialer.silenceRinger()} light={lightBackground} />
@@ -616,7 +627,7 @@ export default function CallScreen() {
         </View>
       )}
 
-      {front}
+      {!padOpen ? photoPanel : null}
 
       {/* call waiting: a liquid-glass pill with Reject and Answer */}
       {ringing ? (
@@ -868,6 +879,16 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowRadius: 10,
+  },
+  photoFrame: {
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+    borderRadius: 26,
+    overflow: 'hidden',
+    backgroundColor: '#F2F3F5',
+    borderWidth: 1,
+    borderColor: 'rgba(40,52,60,0.18)',
   },
   heldStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11 },
   waitingPill: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingLeft: 14, paddingRight: 8 },
