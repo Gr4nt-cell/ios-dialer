@@ -417,6 +417,11 @@ class DialerModule : Module() {
       if (id == null) false else ContactTools.addNumber(ctx, id, label, number)
     }
 
+    AsyncFunction("mergeContacts") { ids: List<String> ->
+      val contactIds = ids.mapNotNull { it.toLongOrNull() }.distinct()
+      contactIds.size >= 2 && ContactTools.mergeContacts(ctx, contactIds)
+    }
+
     // ---------- caller announcement ----------
     Function("getAnnouncePrefs") { ->
       mapOf(

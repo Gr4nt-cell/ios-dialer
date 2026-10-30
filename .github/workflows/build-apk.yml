@@ -61,6 +61,17 @@ jobs:
       - name: Set the build number (versionCode)
         run: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> "$GITHUB_ENV"
 
+      - uses: actions/cache@v4
+        with:
+          path: |
+            android/local-maven/
+            modules/dialer/android/src/main/assets/tts/
+            modules/dialer/android/src/main/assets/espeak-ng-data/
+          key: offline-caller-voices-v1-${{ runner.os }}
+
+      - name: Prepare offline AI caller voices
+        run: bash scripts/prepare-voice-assets.sh
+
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
         env:

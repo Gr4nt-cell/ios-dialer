@@ -178,6 +178,33 @@ object ContactTools {
   } catch (_: Exception) { 1080 }
 
   /**
+   * Aggregates selected contacts without deleting or rewriting their raw rows.
+   * The contact provider keeps every account's details and presents them as one
+   * contact. The user confirms the operation in the contacts UI first.
+   */
+  fun mergeContacts(ctx: Context, contactIds: List<Long>): Boolean {
+    val rawIds = contactIds.distinct()
+      .flatMap { id -> rawContacts(ctx, id).map { it.id } }
+      .distinct()
+    if (rawIds.size < 2) return false
+
+    val keeper = rawIds.first()
+    val ops = rawIds.drop(1).map { rawId ->
+      ContentProviderOperation.newUpdate(ContactsContract.AggregationExceptions.CONTENT_URI)
+        .withValue(ContactsContract.AggregationExceptions.TYPE, ContactsContract.AggregationExceptions.TYPE_KEEP_TOGETHER)
+        .withValue(ContactsContract.AggregationExceptions.RAW_CONTACT_ID1, keeper)
+        .withValue(ContactsContract.AggregationExceptions.RAW_CONTACT_ID2, rawId)
+        .build()
+    }
+    return try {
+      ctx.contentResolver.applyBatch(ContactsContract.AUTHORITY, ArrayList(ops))
+      true
+    } catch (_: Exception) {
+      false
+    }
+  }
+
+  /**
    * Sets (or with a null [uri], removes) the photo of a contact.
    * Writes a full-size display photo; the provider makes the thumbnail.
    */

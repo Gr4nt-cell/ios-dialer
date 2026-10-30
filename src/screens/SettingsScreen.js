@@ -156,13 +156,12 @@ export default function SettingsScreen() {
   );
   const [voiceId, setVoiceId] = useState(() => (Dialer && Dialer.getAnnounceVoice ? Dialer.getAnnounceVoice() : null));
   const voices = useMemo(() => (Dialer && Dialer.getAnnounceVoices ? Dialer.getAnnounceVoices() : []), [announce.on]);
-  const voiceLabel = (voices.find((v) => v.id === voiceId) || {}).label || tr('Best available');
+  const voiceLabel = (voices.find((v) => v.id === voiceId) || {}).label || tr('Female');
 
-  // The engine's own list: which voices a phone has depends on what is
-  // installed, so there is nothing to hard-code here.
+  // These are the two offline neural voices bundled with the app.
   const chooseVoice = () => {
     if (!voices.length) {
-      Alert.alert(tr('No Voices Found'), tr('Install a speech engine, such as Google Speech Services, to choose a voice.'));
+      Alert.alert('Offline voices unavailable', 'The built-in AI voices are missing from this installation. Update the app and try again.');
       return;
     }
     sheet.show({
@@ -632,8 +631,9 @@ export default function SettingsScreen() {
           ) : null}
         </Group>
         <Footer>
-          Speaks the caller's name over the ringtone, using your phone's own voice — nothing is sent anywhere. It
-          follows the ring volume and stays quiet on silent or vibrate.
+          Speaks the caller's name over the ringtone using the app's built-in offline male or female AI voice. Names
+          stay on this device; no Google voice or online service is used. Announcements follow the ring volume and
+          stay quiet on silent or vibrate.
         </Footer>
 
         <SectionTitle>{tr('Voicemail')}</SectionTitle>

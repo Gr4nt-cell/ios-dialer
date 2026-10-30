@@ -2,108 +2,76 @@ package expo.modules.dialer
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioFormat
 import android.media.AudioManager
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.speech.tts.TextToSpeech
-import android.speech.tts.Voice
-import java.util.Locale
+import android.media.AudioTrack
+import android.util.Log
+import com.github.csukuangfj.piper.phonemize.piperPhonemizeInitialize
+import com.github.csukuangfj.piper.phonemize.piperPhonemizeText
+import com.k2fsa.sherpa.onnx.GenerationConfig
+import com.k2fsa.sherpa.onnx.OfflineTts
+import com.k2fsa.sherpa.onnx.OfflineTtsConfig
+import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
+import com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig
+import java.io.File
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Says who is calling, over the ringtone.
- *
- * Text-to-speech is the phone's own engine, so nothing is sent anywhere and it
- * works offline. It speaks on the ring stream, which means the ring volume
- * controls it and silent or vibrate mode keeps it quiet — a caller
- * announcement that talks through a silent phone is worse than none.
+ * Offline caller announcements using the app's bundled neural male and female
+ * voices. Caller names and numbers never leave the device and Android's
+ * TextToSpeech engine is not used.
  */
 object Announcer {
-  private const val PREFS = "dialer_overlay" // shared with the island prefs
+  private const val TAG = "CallerAnnouncer"
+  private const val PREFS = "dialer_overlay"
   private const val KEY_ON = "announce"
   private const val KEY_REPEAT = "announceRepeat"
   private const val KEY_UNKNOWN = "announceUnknown"
   private const val KEY_VOICE = "announceVoice"
 
-  private var tts: TextToSpeech? = null
-  private var ready = false
-  private var pending: String? = null
-  private var spoken = 0
-  private var target = 0
-  private val main = Handler(Looper.getMainLooper())
+  private val worker = Executors.newSingleThreadExecutor { task ->
+    Thread(task, "caller-announcement").apply { isDaemon = true }
+  }
+  private val playbackToken = AtomicInteger(0)
+  private val trackLock = Any()
+
+  @Volatile private var activeTrack: AudioTrack? = null
+  private var piperReady = false
+  private var cachedVoice: String? = null
+  private var cachedTts: OfflineTts? = null
 
   fun enabled(ctx: Context) = ctx.getSharedPreferences(PREFS, 0).getBoolean(KEY_ON, false)
   fun repeats(ctx: Context) = ctx.getSharedPreferences(PREFS, 0).getInt(KEY_REPEAT, 2)
   fun announcesUnknown(ctx: Context) = ctx.getSharedPreferences(PREFS, 0).getBoolean(KEY_UNKNOWN, false)
-  fun chosenVoice(ctx: Context): String? = ctx.getSharedPreferences(PREFS, 0).getString(KEY_VOICE, null)
 
-
+  fun chosenVoice(ctx: Context): String {
+    val stored = ctx.getSharedPreferences(PREFS, 0).getString(KEY_VOICE, null)
+    return if (stored == "male" || stored == "female") stored else "female"
+  }
 
   fun setVoice(ctx: Context, name: String?) {
-    ctx.getSharedPreferences(PREFS, 0).edit().putString(KEY_VOICE, name).apply()
-    applyVoice(ctx)
+    val voice = if (name == "male") "male" else "female"
+    ctx.getSharedPreferences(PREFS, 0).edit().putString(KEY_VOICE, voice).apply()
   }
 
-  /**
-   * The voices worth offering, best first.
-   *
-   * Phones ship a mix: old formant voices that sound robotic, and modern
-   * neural ones that don't. The neural ones report a higher quality and are
-   * usually marked local, so ranking on quality and dropping anything that
-   * needs the network puts the human-sounding ones at the top — and keeps the
-   * announcement working with no signal.
-   */
   fun voices(ctx: Context): List<Map<String, Any?>> {
-    val engine = tts ?: run { start(ctx); tts } ?: return emptyList()
-    val all = try { engine.voices ?: emptySet<Voice>() } catch (_: Exception) { return emptyList() }
-    val lang = Locale.getDefault().language
-    return all
-      .filter { !it.isNetworkConnectionRequired }
-      .filter { it.features?.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) != true }
-      .sortedWith(
-        compareByDescending<Voice> { it.locale.language == lang }
-          .thenByDescending { it.quality }
-          .thenBy { it.name },
-      )
-      .take(12)
-      .map {
-        mapOf(
-          "id" to it.name,
-          "label" to prettyVoice(it),
-          "quality" to it.quality,
-          "locale" to it.locale.toLanguageTag(),
-        )
-      }
+    if (!voiceAssetsAvailable(ctx)) return emptyList()
+    return listOf(
+      mapOf("id" to "female", "label" to "Female"),
+      mapOf("id" to "male", "label" to "Male"),
+    )
   }
 
-  /** "en-gb-x-gbd-local" is not a name anyone wants to read. */
-  private fun prettyVoice(v: Voice): String {
-    val place = v.locale.getDisplayName(Locale.getDefault())
-    val grade = when {
-      v.quality >= Voice.QUALITY_VERY_HIGH -> "very high"
-      v.quality >= Voice.QUALITY_HIGH -> "high"
-      v.quality >= Voice.QUALITY_NORMAL -> "normal"
-      else -> "low"
-    }
-    val variant = v.name.substringAfterLast('-', "").takeIf { it.isNotBlank() && it != "local" } ?: v.name.takeLast(4)
-    return "$place · $grade · $variant"
-  }
-
-  /** Picks the stored voice, or the best one available. */
-  private fun applyVoice(ctx: Context) {
-    val engine = tts ?: return
-    val all = try { engine.voices ?: emptySet<Voice>() } catch (_: Exception) { return }
-    if (all.isEmpty()) return
-    val want = chosenVoice(ctx)
-    val lang = Locale.getDefault().language
-    val pick = all.firstOrNull { it.name == want }
-      ?: all.filter { !it.isNetworkConnectionRequired }
-        .sortedWith(
-          compareByDescending<Voice> { it.locale.language == lang }
-            .thenByDescending { it.quality },
-        )
-        .firstOrNull()
-    if (pick != null) try { engine.voice = pick } catch (_: Exception) {}
+  private fun voiceAssetsAvailable(ctx: Context): Boolean = try {
+    ctx.assets.open("tts/voice-female.onnx").use { }
+    ctx.assets.open("tts/voice-female-tokens.txt").use { }
+    ctx.assets.open("tts/voice-male.onnx").use { }
+    ctx.assets.open("tts/voice-male-tokens.txt").use { }
+    ctx.assets.open("espeak-ng-data/phontab").use { }
+    true
+  } catch (_: Exception) {
+    false
   }
 
   fun setPrefs(ctx: Context, on: Boolean, repeat: Int, unknown: Boolean) {
@@ -114,16 +82,11 @@ object Announcer {
       .apply()
   }
 
-  /** Reads a number aloud a digit at a time; "0244..." as a number is unintelligible. */
   private fun spell(number: String): String =
-    number.filter { it.isDigit() || it == '+' }.map { if (it == '+') "plus" else it.toString() }.joinToString(" ")
+    number.filter { it.isDigit() || it == '+' }
+      .map { if (it == '+') "plus" else it.toString() }
+      .joinToString(" ")
 
-  /**
-   * Speaks the caller for an incoming call. Call it when the ringtone starts;
-   * it returns straight away and says nothing when the setting is off, the
-   * phone is not on its normal ringer profile, or the caller is unknown and
-   * unknown callers are not announced.
-   */
   fun announce(ctx: Context, number: String?) {
     if (!enabled(ctx)) return
     val audio = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -138,59 +101,156 @@ object Announcer {
       else -> spell(number)
     }
 
-    target = repeats(ctx)
-    spoken = 0
-    pending = "Call from $who"
-
-    val engine = tts
-    if (engine != null && ready) speakNow() else start(ctx)
+    enqueue(ctx, "Call from $who", repeats(ctx), preview = false)
   }
 
-  private fun start(ctx: Context) {
-    if (tts != null) return
+  fun preview(ctx: Context, line: String) {
+    enqueue(ctx, line, 1, preview = true)
+  }
+
+  private fun enqueue(ctx: Context, line: String, count: Int, preview: Boolean) {
     val app = ctx.applicationContext
-    tts = TextToSpeech(app) { status ->
-      ready = status == TextToSpeech.SUCCESS
-      if (!ready) return@TextToSpeech
-      tts?.language = Locale.getDefault().takeIf { tts?.isLanguageAvailable(it) == TextToSpeech.LANG_AVAILABLE } ?: Locale.US
-      applyVoice(app)
-      // a shade under normal reads as calmer and is easier to catch across a room
-      try { tts?.setSpeechRate(0.95f) } catch (_: Exception) {}
-      tts?.setAudioAttributes(
-        AudioAttributes.Builder()
-          .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-          .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-          .build(),
-      )
-      main.post { speakNow() }
+    val token = playbackToken.incrementAndGet()
+    worker.execute {
+      try {
+        if (token != playbackToken.get()) return@execute
+        val tts = ttsFor(app, chosenVoice(app))
+        val phonemes = piperPhonemizeText(line, "en-us")
+          ?: throw IllegalStateException("Could not phonemize the caller announcement")
+        val codepoints = try {
+          Array(phonemes.numSentences) { sentence -> phonemes.getPhonemes(sentence) }
+        } finally {
+          phonemes.close()
+        }
+        if (codepoints.isEmpty() || token != playbackToken.get()) return@execute
+
+        val audio = tts.generateWithConfig(
+          text = "",
+          config = GenerationConfig(phonemeCodepoints = codepoints),
+        )
+        for (repeatIndex in 0 until count.coerceIn(1, 5)) {
+          if (token != playbackToken.get()) break
+          playAudio(audio.samples, audio.sampleRate, token, preview)
+          if (repeatIndex + 1 < count && token == playbackToken.get()) Thread.sleep(4_000)
+        }
+      } catch (error: Exception) {
+        Log.w(TAG, "Offline caller announcement failed", error)
+      }
     }
   }
 
-  private fun speakNow() {
-    val line = pending ?: return
-    val engine = tts ?: return
-    if (spoken >= target) return
-    spoken++
-    val params = Bundle().apply { putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_RING) }
-    engine.speak(line, TextToSpeech.QUEUE_ADD, params, "caller-$spoken")
-    if (spoken < target) main.postDelayed({ speakNow() }, 4000)
+  private fun ttsFor(ctx: Context, voice: String): OfflineTts {
+    if (cachedVoice == voice && cachedTts != null) return cachedTts!!
+
+    cachedTts?.let { try { it.free() } catch (_: Exception) {} }
+    cachedTts = null
+    cachedVoice = null
+
+    if (!piperReady) {
+      piperPhonemizeInitialize(ctx)
+      piperReady = true
+    }
+
+    val modelDir = File(ctx.filesDir, "caller-voice").apply { mkdirs() }
+    val modelFile = File(modelDir, "voice-$voice.onnx")
+    val tokenFile = File(modelDir, "voice-$voice-tokens.txt")
+    copyAssetIfMissing(ctx, "tts/voice-$voice.onnx", modelFile)
+    copyAssetIfMissing(ctx, "tts/voice-$voice-tokens.txt", tokenFile)
+
+    val config = OfflineTtsConfig(
+      model = OfflineTtsModelConfig(
+        vits = OfflineTtsVitsModelConfig(
+          model = modelFile.absolutePath,
+          tokens = tokenFile.absolutePath,
+          noiseScale = 0.55f,
+          noiseScaleW = 0.8f,
+          lengthScale = 1.0f,
+        ),
+        numThreads = 2,
+        provider = "cpu",
+      ),
+    )
+    val engine = OfflineTts(config = config)
+    cachedVoice = voice
+    cachedTts = engine
+    return engine
   }
 
+  private fun copyAssetIfMissing(ctx: Context, assetName: String, destination: File) {
+    if (destination.isFile && destination.length() > 0) return
+    destination.parentFile?.mkdirs()
+    val temporary = File(destination.parentFile, "${destination.name}.tmp")
+    try {
+      ctx.assets.open(assetName).use { input ->
+        temporary.outputStream().use { output -> input.copyTo(output) }
+      }
+      if (!temporary.renameTo(destination)) throw IllegalStateException("Could not install voice asset: $assetName")
+    } catch (error: Exception) {
+      temporary.delete()
+      throw error
+    }
+  }
 
-  /** Stops talking: the call was answered, rejected, or silenced. */
+  private fun playAudio(samples: FloatArray, sampleRate: Int, token: Int, preview: Boolean) {
+    if (samples.isEmpty() || sampleRate <= 0 || token != playbackToken.get()) return
+    val minimumBuffer = AudioTrack.getMinBufferSize(
+      sampleRate,
+      AudioFormat.CHANNEL_OUT_MONO,
+      AudioFormat.ENCODING_PCM_FLOAT,
+    )
+    if (minimumBuffer <= 0) return
+
+    val attributes = AudioAttributes.Builder()
+      .setUsage(if (preview) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+      .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+      .build()
+    val format = AudioFormat.Builder()
+      .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+      .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+      .setSampleRate(sampleRate)
+      .build()
+
+    val track = AudioTrack.Builder()
+      .setAudioAttributes(attributes)
+      .setAudioFormat(format)
+      .setBufferSizeInBytes(maxOf(minimumBuffer, sampleRate * 4))
+      .setTransferMode(AudioTrack.MODE_STREAM)
+      .build()
+
+    synchronized(trackLock) {
+      if (token != playbackToken.get()) {
+        track.release()
+        return
+      }
+      activeTrack = track
+    }
+
+    try {
+      track.play()
+      var offset = 0
+      while (offset < samples.size && token == playbackToken.get()) {
+        val written = track.write(samples, offset, samples.size - offset, AudioTrack.WRITE_BLOCKING)
+        if (written <= 0) break
+        offset += written
+      }
+    } finally {
+      synchronized(trackLock) {
+        if (activeTrack === track) activeTrack = null
+      }
+      try { track.stop() } catch (_: Exception) {}
+      track.release()
+    }
+  }
+
+  /** Stops speech when the call is answered, rejected, or silenced. */
   fun stop() {
-    pending = null
-    spoken = 0
-    main.removeCallbacksAndMessages(null)
-    try { tts?.stop() } catch (_: Exception) {}
+    playbackToken.incrementAndGet()
+    synchronized(trackLock) {
+      val track = activeTrack
+      activeTrack = null
+      try { track?.pause() } catch (_: Exception) {}
+      try { track?.flush() } catch (_: Exception) {}
+      try { track?.stop() } catch (_: Exception) {}
+    }
   }
-
-  /** Speaks one line immediately, for the preview button in Settings. */
-  fun preview(ctx: Context, line: String) {
-    target = 1
-    spoken = 0
-    pending = line
-    if (tts != null && ready) speakNow() else start(ctx)
-  }
-
 }

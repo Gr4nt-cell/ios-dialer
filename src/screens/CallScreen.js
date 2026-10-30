@@ -198,12 +198,43 @@ function DepthLayer({ uri, zoomStyle, adjust }) {
   );
 }
 
-function CallerPhotoFrame({ photo, foreground, zoomStyle, adjust, width, height }) {
+function CallerPhotoFrame({ photo, foreground, zoomStyle, adjust, width, height, name, status }) {
   if (!photo) return null;
   return (
     <View style={[styles.photoFrame, { width, height }]} pointerEvents="none">
       <Animated.Image source={{ uri: photo }} resizeMode="cover" style={[StyleSheet.absoluteFill, zoomStyle]} />
+      <LinearGradient
+        colors={['rgba(0,0,0,0.64)', 'rgba(0,0,0,0.16)', 'transparent']}
+        locations={[0, 0.58, 1]}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, height: height * 0.62 }}
+      />
+      <View style={styles.photoIdentity}>
+        <Text style={styles.photoStatus} numberOfLines={1}>{status}</Text>
+        <Text style={styles.posterName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+          {name}
+        </Text>
+      </View>
+      {/* Render last so the person sits in front of the caller name. */}
       {foreground ? <DepthLayer uri={foreground} zoomStyle={zoomStyle} adjust={adjust} /> : null}
+    </View>
+  );
+}
+
+function PhotoColorWash({ photo }) {
+  if (!photo) return null;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Animated.Image
+        source={{ uri: photo }}
+        resizeMode="cover"
+        blurRadius={52}
+        style={[StyleSheet.absoluteFill, { opacity: 0.62, transform: [{ scale: 1.08 }] }]}
+      />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.30)', 'rgba(255,255,255,0.56)']}
+        locations={[0, 0.48, 1]}
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   );
 }
@@ -367,6 +398,8 @@ export default function CallScreen() {
       adjust={settings}
       width={photoWidth}
       height={photoHeight}
+      name={who.name}
+      status={!live.length && ended ? ended.disconnectLabel || 'Call Ended' : statusText(focus, who)}
     />
   ) : null;
 
@@ -401,6 +434,7 @@ export default function CallScreen() {
       <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: plainBackground ? WHITE : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
         <Poster palette={palette} light={lightBackground} plain={plainBackground} />
+        {usePhoto ? <PhotoColorWash photo={photo} /> : null}
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
@@ -410,14 +444,15 @@ export default function CallScreen() {
   if (!live.length && ended) {
     return wrap(
       <>
-        <View style={{ alignItems: 'center', marginTop: usePhoto ? 36 : 70 }}>
-          {usePhoto ? null : <BigAvatar name={who.name} image={who.image} light={lightBackground} />}
-          {usePhoto ? <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{ended.disconnectLabel || 'Call Ended'}</Text> : null}
-          <Text style={[nameStyle, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
-            {who.name}
-          </Text>
-          {usePhoto ? null : <Text style={[styles.status, lightBackground && { color: secondaryText }]}>{ended.disconnectLabel || 'Call Ended'}</Text>}
-        </View>
+        {!usePhoto ? (
+          <View style={{ alignItems: 'center', marginTop: 70 }}>
+            <BigAvatar name={who.name} image={who.image} light={lightBackground} />
+            <Text style={[nameStyle, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {who.name}
+            </Text>
+            <Text style={[styles.status, lightBackground && { color: secondaryText }]}>{ended.disconnectLabel || 'Call Ended'}</Text>
+          </View>
+        ) : null}
         {photoPanel}
       </>
     );
@@ -443,18 +478,17 @@ export default function CallScreen() {
       });
     return wrap(
       <>
-        <View style={{ alignItems: 'center', marginTop: usePhoto ? 30 : 48 }}>
-          <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(ringing, who)}</Text>
-          <Text style={[nameStyle, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
-            {who.name}
-          </Text>
-          {usePhoto ? null : (
+        {usePhoto ? photoPanel : (
+          <View style={{ alignItems: 'center', marginTop: 48 }}>
+            <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(ringing, who)}</Text>
+            <Text style={[nameStyle, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {who.name}
+            </Text>
             <View style={{ marginTop: 28 }}>
               <BigAvatar name={who.name} image={who.image} size={120} pulse light={lightBackground} />
             </View>
-          )}
-        </View>
-        {photoPanel}
+          </View>
+        )}
         <View style={{ flex: 1 }} />
         <View style={styles.pillRow}>
           <SmallPill icon="notifications-off" label={tr('Silence')} onPress={() => Dialer.silenceRinger && Dialer.silenceRinger()} light={lightBackground} />
@@ -615,10 +649,12 @@ export default function CallScreen() {
         </View>
       ) : (
         <View style={{ alignItems: 'center', marginTop: twoCalls ? 18 : usePhoto ? 22 : 40 }}>
-          <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(primary, who)}</Text>
-          <Text style={[nameStyle, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
-            {who.name}
-          </Text>
+          {!usePhoto ? <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(primary, who)}</Text> : null}
+          {!usePhoto ? (
+            <Text style={[nameStyle, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {who.name}
+            </Text>
+          ) : null}
           {!ringing && !twoCalls && !usePhoto ? (
             <View style={{ marginTop: 26 }}>
               <BigAvatar name={who.name} image={who.image} size={110} pulse={!connected} light={lightBackground} />
@@ -889,6 +925,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F3F5',
     borderWidth: 1,
     borderColor: 'rgba(40,52,60,0.18)',
+  },
+  photoIdentity: { position: 'absolute', top: 18, left: 14, right: 14, alignItems: 'center' },
+  photoStatus: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fs(16),
+    fontWeight: '500',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowRadius: 6,
   },
   heldStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 11 },
   waitingPill: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingLeft: 14, paddingRight: 8 },
