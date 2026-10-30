@@ -77,7 +77,22 @@ class DialerModule : Module() {
     }
 
     OnCreate {
-      (appContext.reactContext?.applicationContext as? Application)?.let { CallManager.hook(it) }
+      (appContext.reactContext?.applicationContext as? Application)?.let { app ->
+        CallManager.hook(app)
+
+        // Remove cached voice models and settings left by older caller-announcer versions.
+        val legacyKeys = arrayOf("announce", "announceRepeat", "announceUnknown", "announceVoice")
+        val prefs = app.getSharedPreferences("dialer_overlay", Context.MODE_PRIVATE)
+        val voiceCache = app.filesDir.resolve("caller-voice")
+        if (voiceCache.exists() || legacyKeys.any { prefs.contains(it) }) {
+          if (voiceCache.exists() && !voiceCache.deleteRecursively()) {
+            android.util.Log.w("Dialer", "Could not remove legacy caller voice cache")
+          }
+          prefs.edit().apply {
+            legacyKeys.forEach { remove(it) }
+          }.apply()
+        }
+      }
       appContext.currentActivity?.let {
         CallManager.setActivity(it)
         // the module loads after the main screen has started, so record that it's on screen
@@ -422,26 +437,6 @@ class DialerModule : Module() {
       contactIds.size >= 2 && ContactTools.mergeContacts(ctx, contactIds)
     }
 
-    // ---------- caller announcement ----------
-    Function("getAnnouncePrefs") { ->
-      mapOf(
-        "on" to Announcer.enabled(ctx),
-        "repeat" to Announcer.repeats(ctx),
-        "unknown" to Announcer.announcesUnknown(ctx),
-      )
-    }
-
-    Function("setAnnouncePrefs") { on: Boolean, repeat: Int, unknown: Boolean ->
-      Announcer.setPrefs(ctx, on, repeat, unknown)
-    }
-
-    Function("previewAnnounce") { line: String -> Announcer.preview(ctx, line) }
-
-    Function("getAnnounceVoices") { -> Announcer.voices(ctx) }
-    Function("getAnnounceVoice") { -> Announcer.chosenVoice(ctx) }
-    Function("setAnnounceVoice") { name: String? -> Announcer.setVoice(ctx, name) }
-
-    // the two voices packaged with the app
     Function("hasWhatsApp") { -> ContactTools.whatsAppPackage(ctx) != null }
 
     Function("openWhatsApp") { contactId: String?, number: String, kind: String ->

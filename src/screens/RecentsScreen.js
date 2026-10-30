@@ -19,7 +19,19 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
   const match = resolve(group.number);
   const missed = isMissedType(group.type);
   const title = match ? contactName(match.contact) : group.name || (group.number ? formatNumber(group.number) : 'Unknown');
-  const subtitle = match ? match.label : group.number ? (group.name ? formatNumber(group.number) : 'unknown') : 'No Caller ID';
+  const contactLabel = match ? (match.label || '').trim() : '';
+  const hideContactLabel = /^(mobile|unknown)\b/i.test(contactLabel);
+  const subtitle =
+    group.type === 'voicemail'
+      ? 'voicemail'
+      : group.type === 'blocked'
+        ? 'blocked'
+        : match
+          ? hideContactLabel ? '' : contactLabel
+          : group.number
+            ? group.name ? formatNumber(group.number) : ''
+            : 'No Caller ID';
+  const direction = group.type === 'outgoing' ? 'outgoing' : missed ? 'missed' : null;
   const count = group.calls.length;
 
   const openInfo = () =>
@@ -43,16 +55,23 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
                 {title}
                 {count > 1 ? ` (${count})` : ''}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
-                {group.type === 'outgoing' ? (
-                  <Ionicons name="arrow-up-outline" size={13} color={t.secondary} style={{ transform: [{ rotate: '45deg' }], marginRight: 3 }} />
-                ) : missed ? (
-                  <Ionicons name="arrow-down-outline" size={13} color={t.red} style={{ transform: [{ rotate: '45deg' }], marginRight: 3 }} />
-                ) : null}
-                <Text style={{ color: t.secondary, fontSize: fs(13.5), flexShrink: 1 }} numberOfLines={1} allowFontScaling={false}>
-                  {group.type === 'voicemail' ? 'voicemail' : group.type === 'blocked' ? 'blocked' : subtitle}
-                </Text>
-              </View>
+              {direction || subtitle ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
+                  {direction ? (
+                    <Ionicons
+                      name={direction === 'outgoing' ? 'arrow-up-outline' : 'arrow-down-outline'}
+                      size={13}
+                      color={direction === 'missed' ? t.red : t.secondary}
+                      style={{ transform: [{ rotate: '45deg' }], marginRight: subtitle ? 3 : 0 }}
+                    />
+                  ) : null}
+                  {subtitle ? (
+                    <Text style={{ color: t.secondary, fontSize: fs(13.5), flexShrink: 1 }} numberOfLines={1} allowFontScaling={false}>
+                      {subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
             {group.number && isBlocked(group.number) ? <Ionicons name="hand-left" size={14} color={t.red} style={{ marginRight: 6 }} /> : null}
             <Text style={{ color: t.secondary, fontSize: fs(13.5), marginRight: 10 }}>{showTime ? new Date(group.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : timeLabel(group.date)}</Text>

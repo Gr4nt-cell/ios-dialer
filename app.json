@@ -58,7 +58,6 @@
       ],
       "./plugins/withDefaultDialer",
       "./plugins/withReleaseOptimizations",
-      "./plugins/withLocalVoiceMaven",
       "expo-status-bar",
       "expo-font",
       "expo-asset",

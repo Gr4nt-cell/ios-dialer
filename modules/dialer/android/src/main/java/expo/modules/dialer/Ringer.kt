@@ -137,7 +137,6 @@ object Ringer {
     if (mode == AudioManager.RINGER_MODE_VIBRATE || vibrateWhenRinging) vibrate(ctx)
     if (mode == AudioManager.RINGER_MODE_NORMAL && audio.getStreamVolume(AudioManager.STREAM_RING) > 0) {
       play(ctx, ringtoneFor(ctx, call))
-      Announcer.announce(ctx, call.details.handle?.schemeSpecificPart)
     }
   }
 
@@ -339,7 +338,6 @@ object Ringer {
   }
 
   fun stop() {
-    Announcer.stop()
     main.removeCallbacks(watchdog)
     main.removeCallbacks(toneLoop)
     ringtone?.let { try { it.stop() } catch (_: Exception) {} }

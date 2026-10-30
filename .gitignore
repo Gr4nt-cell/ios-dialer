@@ -3,6 +3,3 @@ node_modules/
 /ios
 .expo/
 dist/
-modules/dialer/android/src/main/assets/tts/
-modules/dialer/android/src/main/assets/espeak-ng-data/
-android/local-maven/

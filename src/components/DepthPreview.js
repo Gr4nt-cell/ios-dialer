@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { Image, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { fs, useTheme } from '../theme';
+import { fs } from '../theme';
 import { gradientFor } from '../gradients';
 import { initials } from '../phone';
 import { depthTransform, useDepth } from '../depth';
@@ -17,7 +17,6 @@ const REFERENCE_WIDTH = 400; // the offsets are tuned against a real screen
  * you line up here is what you get on a call.
  */
 export default function DepthPreview({ image, name, settings, enabled = true, onAdjust, limits }) {
-  const t = useTheme();
   const depth = useDepth(enabled ? image : null, enabled);
   const palette = gradientFor(name || 'preview', settings?.callBackground);
   const factor = W / REFERENCE_WIDTH;
@@ -54,10 +53,7 @@ export default function DepthPreview({ image, name, settings, enabled = true, on
   );
 
   return (
-    <View
-      {...pan.panHandlers}
-      style={[styles.frame, { borderColor: t.dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)' }]}
-    >
+    <View {...pan.panHandlers} style={styles.frame}>
       <LinearGradient colors={palette} style={StyleSheet.absoluteFill} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} />
 
       {base ? <Image source={{ uri: base }} resizeMode="cover" style={StyleSheet.absoluteFill} /> : null}
@@ -107,7 +103,7 @@ export default function DepthPreview({ image, name, settings, enabled = true, on
 export const DEPTH_PREVIEW_WIDTH = W;
 
 const styles = StyleSheet.create({
-  frame: { width: W, height: H, borderRadius: 26, overflow: 'hidden', borderWidth: 1, backgroundColor: '#1C1C1E' },
+  frame: { width: W, height: H, borderRadius: 26, overflow: 'hidden', backgroundColor: 'transparent' },
   // same proportions as the call screen's poster name, scaled to the frame
   nameWrap: { position: 'absolute', left: 0, right: 0, top: 18, paddingHorizontal: 8 },
   status: { color: 'rgba(255,255,255,0.78)', fontSize: fs(9), fontWeight: '500', textAlign: 'center' },
