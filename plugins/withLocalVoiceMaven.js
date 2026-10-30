@@ -7,14 +7,38 @@ module.exports = function withLocalVoiceMaven(config) {
     let contents = modConfig.modResults.contents;
     if (contents.includes(MARKER)) return modConfig;
 
-    const managementStart = contents.indexOf('dependencyResolutionManagement');
-    const repositoriesStart = contents.indexOf('repositories {', managementStart);
-    if (managementStart < 0 || repositoriesStart < 0) {
-      throw new Error('Could not add the local voice repository to dependencyResolutionManagement.');
+    const managementMatch = /\bdependencyResolutionManagement\s*\{/.exec(contents);
+    if (!managementMatch) {
+      contents += `
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        ${MARKER}
+        maven { url = uri("$rootDir/local-maven") }
+    }
+}
+`;
+      modConfig.modResults.contents = contents;
+      return modConfig;
     }
 
-    const insertAt = repositoriesStart + 'repositories {'.length;
-    contents = `${contents.slice(0, insertAt)}\n        ${MARKER}\n        maven { url = uri("$rootDir/local-maven") }\n${contents.slice(insertAt)}`;
+    const repositoriesPattern = /\brepositories\s*\{/g;
+    repositoriesPattern.lastIndex = managementMatch.index + managementMatch[0].length;
+    const repositoriesMatch = repositoriesPattern.exec(contents);
+    if (repositoriesMatch) {
+      const insertAt = repositoriesMatch.index + repositoriesMatch[0].length;
+      contents = `${contents.slice(0, insertAt)}\n        ${MARKER}\n        maven { url = uri("$rootDir/local-maven") }\n${contents.slice(insertAt)}`;
+    } else {
+      const insertAt = managementMatch.index + managementMatch[0].length;
+      const repositoriesMode = /\brepositoriesMode\b/.test(contents)
+        ? ''
+        : '\n    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)';
+      contents = `${contents.slice(0, insertAt)}${repositoriesMode}\n    repositories {\n        google()\n        mavenCentral()\n        ${MARKER}\n        maven { url = uri("$rootDir/local-maven") }\n    }\n${contents.slice(insertAt)}`;
+    }
+
     modConfig.modResults.contents = contents;
     return modConfig;
   });
