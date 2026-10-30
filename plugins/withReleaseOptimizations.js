@@ -17,7 +17,6 @@ const RULES = `
 -keep class * extends expo.modules.kotlin.modules.Module { *; }
 -keep class * implements expo.modules.kotlin.records.Record { *; }
 -dontwarn expo.modules.**
--dontwarn com.google.mlkit.**
 `;
 
 function setProp(props, key, value) {

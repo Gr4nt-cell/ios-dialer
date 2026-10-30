@@ -15,9 +15,6 @@ import android.provider.Settings
 import android.telecom.TelecomManager
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
-import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
@@ -79,6 +76,11 @@ class DialerModule : Module() {
     OnCreate {
       (appContext.reactContext?.applicationContext as? Application)?.let { app ->
         CallManager.hook(app)
+
+        val legacyDepthCache = app.cacheDir.resolve("call-depth")
+        if (legacyDepthCache.exists() && !legacyDepthCache.deleteRecursively()) {
+          android.util.Log.w("Dialer", "Could not remove legacy call photo cache")
+        }
 
         // Remove cached voice models and settings left by older caller-announcer versions.
         val legacyKeys = arrayOf("announce", "announceRepeat", "announceUnknown", "announceVoice")
@@ -338,18 +340,6 @@ class DialerModule : Module() {
       true
     }
 
-    // Sample portrait (AI-generated, not a real person) for the depth preview in Settings,
-    // copied out of the app's assets so the depth cut-out can read it like any photo.
-    Function("previewPhotoUri") { ->
-      try {
-        val out = java.io.File(ctx.cacheDir, "preview_woman.jpg")
-        if (!out.exists() || out.length() == 0L) {
-          ctx.assets.open("preview_woman.jpg").use { input -> out.outputStream().use { input.copyTo(it) } }
-        }
-        android.net.Uri.fromFile(out).toString()
-      } catch (_: Exception) { null }
-    }
-
     // ---------- privacy ----------
 
     Function("getPrivacy") { -> PrivacyPrefs.all(ctx) }
@@ -447,77 +437,6 @@ class DialerModule : Module() {
 
     // The best photo per contact, for screens that show one large.
     Function("getDisplayPhotos") { -> ContactTools.displayPhotos(ctx) }
-
-    // ---------- call screen depth: cut the person out of their photo ----------
-
-    AsyncFunction("prepareDepth") { uri: String, maxSide: Int?, promise: Promise ->
-      val context = ctx
-      Thread {
-        var settled = false
-        fun done(value: Any?) {
-          if (settled) return
-          settled = true
-          promise.resolve(value)
-        }
-        try {
-          val bytes = ContactTools.readBytes(context, uri)
-          if (bytes == null) {
-            done(null)
-            return@Thread
-          }
-          // The cut-out is cached per photo AND per size: a cache written for a
-          // smaller screen would otherwise keep being served at that size.
-          val side = (maxSide ?: 1280).coerceIn(640, 2560)
-          val key = "${ContactTools.md5(bytes)}-$side"
-          val base = ContactTools.cacheFile(context, "$key-base.jpg")
-          val fg = ContactTools.cacheFile(context, "$key-fg.png")
-          val none = ContactTools.cacheFile(context, "$key-none")
-          val result = { mapOf("base" to Uri.fromFile(base).toString(), "foreground" to Uri.fromFile(fg).toString()) }
-          if (base.exists() && fg.exists()) {
-            done(result())
-            return@Thread
-          }
-          if (none.exists()) {
-            done(null)
-            return@Thread
-          }
-          val bmp = ContactTools.decode(bytes, side)
-          if (bmp == null) {
-            done(null)
-            return@Thread
-          }
-          ContactTools.writeJpeg(bmp, base)
-          val segmenter = SubjectSegmentation.getClient(
-            SubjectSegmenterOptions.Builder().enableForegroundBitmap().build(),
-          )
-          segmenter.process(InputImage.fromBitmap(bmp, 0))
-            .addOnSuccessListener { r ->
-              val cut = r.foregroundBitmap
-              if (cut == null) {
-                try { none.createNewFile() } catch (_: Exception) {}
-                done(null)
-              } else {
-                Thread {
-                  try {
-                    ContactTools.writePng(cut, fg)
-                    done(result())
-                  } catch (_: Throwable) {
-                    done(null)
-                  }
-                }.start()
-              }
-              segmenter.close()
-            }
-            .addOnFailureListener {
-              // usually the on-device model is still downloading; try again next call
-              done(null)
-              segmenter.close()
-            }
-        } catch (_: Throwable) {
-          done(null)
-        }
-      }.start()
-    }
 
     // ---------- call recording ----------
 

@@ -22,9 +22,6 @@ import android.telephony.TelephonyManager
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.security.MessageDigest
 import java.util.Locale
 
 object ContactTools {
@@ -81,9 +78,6 @@ object ContactTools {
     bmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
     return out.toByteArray()
   }
-
-  fun md5(bytes: ByteArray): String =
-    MessageDigest.getInstance("MD5").digest(bytes).joinToString("") { "%02x".format(it) }
 
   // ---------- contact photo ----------
 
@@ -357,22 +351,6 @@ object ContactTools {
         true
       } catch (_: Exception) { false }
     }
-  }
-
-  // ---------- depth (subject cut-out) cache ----------
-
-  fun cacheFile(ctx: Context, name: String): File {
-    val dir = File(ctx.cacheDir, "call-depth")
-    if (!dir.exists()) dir.mkdirs()
-    return File(dir, name)
-  }
-
-  fun writePng(bmp: Bitmap, file: File) {
-    FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
-  }
-
-  fun writeJpeg(bmp: Bitmap, file: File) {
-    FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) }
   }
 
   // ---------- writing contacts ----------

@@ -40,7 +40,7 @@ const SECTIONS = [
       'Call recordings are saved in the app’s private storage on your phone. Other apps can’t open them and they are never uploaded.',
       'Settings, favourites and blocked numbers are kept in the app’s private storage.',
       'Contacts and call history stay in Android’s own contacts and call-log databases. The app reads them and changes them only when you ask.',
-      'Contact photos are processed on the device for the call screen’s depth effect, using Google’s on-device ML Kit (Google Play services). The photo isn’t sent anywhere.',
+      'Contact photos are read from the phone’s contacts and displayed on the call screen when enabled. They aren’t uploaded.',
       'The app is excluded from Android cloud backups, so recordings and settings aren’t copied to Google Drive or any other backup service.',
     ],
   },

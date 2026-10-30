@@ -21,9 +21,6 @@
   </queries>
 
   <application>
-    <!-- Download the on-device subject segmentation model at install time (call screen depth effect). -->
-    <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="subject_segment" />
-
     <!-- Bound by Android when this app is the default phone app. Drives the in-call screen. -->
     <service
       android:name="expo.modules.dialer.DialerInCallService"

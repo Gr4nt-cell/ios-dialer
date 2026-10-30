@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
@@ -15,8 +15,6 @@ import { cleanNumber, contactName, contactPhoto, formatNumber } from '../phone';
 import { Cell, ChromeText, Group, IconButton, Segmented, SheetHeader, TextButton } from '../components/ui';
 import { LANGS, deviceLanguage, useT } from '../i18n';
 import LanguageWheel from '../components/LanguageWheel';
-import DepthPreview from '../components/DepthPreview';
-import { DEPTH_DEFAULTS, depthAvailable } from '../depth';
 import { useCalls } from '../CallContext';
 import Dialer from '../dialer';
 import { useActionSheet } from '../components/ActionSheet';
@@ -160,19 +158,6 @@ export default function SettingsScreen() {
   const bg = settings.callBackground || 'plain';
   const previewColors = gradientFor('Jane Appleseed', bg);
   const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain';
-
-  const depthOn = settings.callPhoto !== false;
-  // preview with a built-in sample portrait (AI-generated, not a real person), so none of
-  // your contacts' photos appear in Settings
-  const sample = useMemo(() => {
-    let image = null;
-    try {
-      image = Dialer && Dialer.previewPhotoUri ? Dialer.previewPhotoUri() : null;
-    } catch {
-      image = null;
-    }
-    return { image, name: 'Ama Mensah' };
-  }, []);
 
   const current = settings.language || 'system';
   const activeLang = current === 'system' ? deviceLanguage() : current;
@@ -380,75 +365,8 @@ export default function SettingsScreen() {
         <SectionTitle>{tr('Call Screen')}</SectionTitle>
         <Group>
           <Cell value="Contact Photos" right={toggle('callPhoto')} />
-          <Cell value="Depth Effect" right={<Switch value={settings.callDepth !== false && settings.callPhoto !== false} disabled={settings.callPhoto === false} onValueChange={(v) => updateSettings({ callDepth: v })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
         </Group>
-        <Footer>Shows a contact’s picture full screen while you’re on a call with them. Depth Effect places the person in front of their name, the way a poster looks.</Footer>
-
-        {depthOn ? (
-          <>
-            <SectionTitle>{tr('Depth Adjustment')}</SectionTitle>
-            <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <DepthPreview
-                image={sample.image}
-                name={sample.name}
-                settings={settings}
-                enabled={settings.callDepth !== false}
-                limits={{ x: 60, y: 80 }}
-                onAdjust={updateSettings}
-              />
-              <Text style={{ color: t.tertiary, fontSize: fs(12), marginTop: 8 }}>{tr('Drag the preview to move the person')}</Text>
-            </View>
-            <Group>
-              <Cell
-                value={tr('Size')}
-                right={
-                  <Stepper
-                    value={settings.depthScale ?? DEPTH_DEFAULTS.depthScale}
-                    min={100}
-                    max={170}
-                    step={5}
-                    onChange={(v) => updateSettings({ depthScale: v })}
-                    format={(v) => `${v}%`}
-                  />
-                }
-              />
-              <Cell
-                value={tr('Move Up / Down')}
-                right={
-                  <Stepper
-                    value={settings.depthY ?? DEPTH_DEFAULTS.depthY}
-                    min={-80}
-                    max={80}
-                    step={4}
-                    onChange={(v) => updateSettings({ depthY: v })}
-                    format={(v) => (v > 0 ? `↓ ${v}` : v < 0 ? `↑ ${-v}` : '0')}
-                  />
-                }
-              />
-              <Cell
-                value={tr('Move Left / Right')}
-                right={
-                  <Stepper
-                    value={settings.depthX ?? DEPTH_DEFAULTS.depthX}
-                    min={-60}
-                    max={60}
-                    step={4}
-                    onChange={(v) => updateSettings({ depthX: v })}
-                    format={(v) => (v > 0 ? `→ ${v}` : v < 0 ? `← ${-v}` : '0')}
-                  />
-                }
-              />
-              <Cell value={tr('Reset')} color={t.blue} onPress={() => updateSettings({ ...DEPTH_DEFAULTS })} />
-            </Group>
-            <Footer>
-              {sample.image
-                ? 'Line the person up against their name. The preview uses one of your contact photos and the same cut-out the call screen uses.'
-                : depthAvailable()
-                ? 'Add a photo to a contact to see the cut-out here. The controls still apply on a call.'
-                : 'Depth cut-outs need the installed app build; the controls still apply on a call.'}
-            </Footer>
-          </>
-        ) : null}
+        <Footer>Show the contact’s photo in the call screen when available.</Footer>
 
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>

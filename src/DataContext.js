@@ -9,7 +9,7 @@ import Dialer, { requestPhonePermissions } from './dialer';
 const DataContext = createContext(null);
 export const useData = () => useContext(DataContext);
 
-const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, callDepth: true, callBackground: 'plain', callBackgroundVersion: 1, autoRecord: false, language: 'system', depthScale: 100, depthX: 0, depthY: 0 };
+const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, callBackground: 'plain', callBackgroundVersion: 1, autoRecord: false, language: 'system' };
 
 const CALL_TYPES = { 1: 'incoming', 2: 'outgoing', 3: 'missed', 4: 'voicemail', 5: 'rejected', 6: 'blocked', 7: 'incoming' };
 const isMissedType = (t) => t === 'missed' || t === 'rejected' || t === 'blocked';
@@ -127,10 +127,13 @@ export function DataProvider({ children }) {
         load('lastSeenRecents', Date.now()),
       ]);
       const loadedSettings = { ...DEFAULT_SETTINGS, ...s };
+      const removedDepthKeys = ['callDepth', 'depthScale', 'depthX', 'depthY'];
+      const hadDepthSettings = removedDepthKeys.some((key) => Object.prototype.hasOwnProperty.call(s || {}, key));
+      removedDepthKeys.forEach((key) => delete loadedSettings[key]);
       // The previous default was Fast Score. Move that default (and legacy
       // Automatic) to the user's requested plain white background while
       // leaving any other explicitly chosen gradient untouched.
-      if ((s.callBackgroundVersion || 0) < 1) {
+      if ((s.callBackgroundVersion || 0) < 1 || hadDepthSettings) {
         if (loadedSettings.callBackground === 'fastscore' || loadedSettings.callBackground === 'auto') {
           loadedSettings.callBackground = 'plain';
         }

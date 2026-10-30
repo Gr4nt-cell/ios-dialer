@@ -38,24 +38,6 @@ jobs:
         with:
           fetch-depth: 0 # full history: the build number is the commit count
 
-      # The AI-generated portrait used by Settings > Depth Adjustment. Fetched once from the
-      # image service and committed, so later builds already have it.
-      - name: Fetch the depth-preview portrait (first build only)
-        run: |
-          F=modules/dialer/android/src/main/assets/preview_woman.jpg
-          if [ ! -s "$F" ]; then
-            mkdir -p "$(dirname "$F")"
-            curl -fsSL "https://cdn.gamma.app/uautxw44sktw1ty/design-anything/jCFhrdnHbcJSRbYgC6RkR/6yYfoJvfTUe_p6WB_9US0.jpg" -o "$F"
-            (convert "$F" -resize 900x -strip -quality 86 "$F.tmp" && mv "$F.tmp" "$F") || true
-            file "$F"; ls -l "$F"
-            COMMIT_PORTRAIT=1
-          fi
-          if [ "${COMMIT_PORTRAIT:-0}" = "1" ] && [ "${{ github.workflow }}" = "Build APK" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-            git add "$F" && git commit -m "Add the AI-generated depth preview portrait" && git push origin HEAD:main || true
-          fi
-
       - uses: actions/setup-node@v5
         with:
           node-version: 22
