@@ -91,6 +91,11 @@ jobs:
       - name: Set the build number (versionCode)
         run: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> "$GITHUB_ENV"
 
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: 1
+
       - uses: actions/cache@v4
         with:
           path: |
@@ -101,11 +106,6 @@ jobs:
 
       - name: Prepare offline AI caller voices
         run: bash scripts/prepare-voice-assets.sh
-
-      - name: Generate native Android project
-        run: npx expo prebuild --platform android --no-install
-        env:
-          CI: 1
 
       - name: Show release shrinking settings
         run: grep -nE "minifyEnabled|shrinkResources|enableProguard|enableShrink" android/app/build.gradle android/gradle.properties || true
