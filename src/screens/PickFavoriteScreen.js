@@ -8,6 +8,7 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, prettyLabel } from '../phone';
 import { Avatar, EmptyState, IconButton, SearchBar, SheetHeader } from '../components/ui';
+import { Glass } from '../components/Glass';
 import { useT } from '../i18n';
 import Dialer from '../dialer';
 
@@ -75,7 +76,7 @@ export default function PickFavoriteScreen({ route }) {
             <View>
               <Pressable onPress={() => (adding ? addTo(item) : phones.length === 1 ? pick(item, phones[0]) : setExpanded(open ? null : item.id))}>
                 {({ pressed }) => (
-                  <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
+                  <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
                     <Avatar name={contactName(item)} image={item.image && item.image.uri} size={36} />
                     <Text style={{ color: t.text, fontSize: fs(17), flex: 1, marginLeft: 12 }} numberOfLines={1}>
                       {contactName(item)}
@@ -85,17 +86,17 @@ export default function PickFavoriteScreen({ route }) {
                     ) : phones.length > 1 ? (
                       <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={t.tertiary} />
                     ) : null}
-                  </View>
+                  </Glass>
                 )}
               </Pressable>
               {open && !adding
                 ? phones.map((p, i) => (
                     <Pressable key={p.id || i} onPress={() => pick(item, p)} disabled={isFavorite(p.number)}>
-                      <View style={[styles.phone, { borderTopColor: t.separator }]}>
+                      <Glass strong vivid radius={15} style={styles.phone}>
                         <Ionicons name="call" size={14} color={isFavorite(p.number) ? t.tertiary : t.blue} />
                         <Text style={{ color: t.secondary, fontSize: fs(15), width: 70, marginLeft: 8 }}>{prettyLabel(p.label)}</Text>
                         <Text style={{ color: isFavorite(p.number) ? t.tertiary : t.blue, fontSize: fs(16) }}>{formatNumber(p.number)}</Text>
-                      </View>
+                      </Glass>
                     </Pressable>
                   ))
                 : null}
@@ -111,6 +112,6 @@ export default function PickFavoriteScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
-  phone: { flexDirection: 'row', alignItems: 'center', paddingLeft: 64, paddingRight: 16, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 12, marginVertical: 4 },
+  phone: { flexDirection: 'row', alignItems: 'center', paddingLeft: 64, paddingRight: 16, paddingVertical: 10, marginHorizontal: 20, marginBottom: 4 },
 });

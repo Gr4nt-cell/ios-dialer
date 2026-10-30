@@ -33,6 +33,18 @@ export const GlassRefractionContext = createContext(null);
 // to refract, so panels need a crisp edge and a shadow to read at all.
 export const FlatBackdropContext = createContext(false);
 
+function colorWithOpacity(color, opacity) {
+  const hex = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(color || '');
+  if (hex) {
+    const value = hex[1].length === 3 ? [...hex[1]].map((x) => x + x).join('') : hex[1];
+    const channels = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16));
+    return `rgba(${channels.join(',')},${opacity})`;
+  }
+  const rgb = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i.exec(color || '');
+  if (rgb) return `rgba(${rgb[1]},${rgb[2]},${rgb[3]},${Number(rgb[4] ?? 1) * opacity})`;
+  return color;
+}
+
 export function GlassRefractionProvider({ children, active = true }) {
   const progress = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -176,9 +188,9 @@ export function Glass({
   intensity = 60,
   pointerEvents,
   onLayout,
-  outline = false, // stronger edge, e.g. the floating tab bar
-  strong = false, // clearly visible edge, e.g. the date strip and letter panel
-  vivid = false, // wide blur that lets the colour behind bleed through (tab bar)
+  outline = false, // extra edge contrast for floating navigation
+  strong = true, // alphabet-bar rim across the app's glass surfaces
+  vivid = true, // translucent colour bleed is the shared app-wide surface
   soft = false, // shallower shadow on a flat background, for small repeated controls
   liquid = true, // brighter bevel and cool glass tint across glass surfaces
   fillScale = 1, // thins the fill further, e.g. a button over a photo
@@ -191,9 +203,8 @@ export function Glass({
   const dark = forceDark ?? t.dark;
   const plain = mode === 'plain';
   const showRefraction = liquid && !plain && !!refraction;
-  // Android draws a shadow only for a view that has its own background, so a
-  // lifted panel is opaque — over a flat backdrop there is nothing to see
-  // through to anyway.
+  // Flat backdrops still get the translucent fill; the stronger rim and shadow
+  // keep those surfaces distinct from the white or black behind them.
   const lifted = flat ? lift(dark, soft, liquid && !plain) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
   const bp = blur && !plain && !flat ? blurProps(target) : null;
@@ -243,13 +254,13 @@ export function Glass({
     : dark
     ? realBlur ? (tinted ? 0.74 : 0.56) : tinted ? 0.94 : 0.9
     : realBlur ? (tinted ? 0.88 : 0.76) : tinted ? 0.97 : 0.94;
-  // Over a flat backdrop a translucent fill just shows more of the same white
-  // or black, so the panel is given its own solid surface instead.
+  // Flat surfaces keep their own faint colour field and rely on the raised rim
+  // and shadow for definition, rather than becoming opaque.
   const a = alpha * fillScale;
   const fill = tint
-    ? tint
+    ? colorWithOpacity(tint, tintOpacity * fillScale * (vivid ? 0.86 : 1))
     : flat
-    ? dark ? '#272A30' : liquid ? '#F6FAFF' : '#FCFCFD'
+    ? dark ? `rgba(39,42,48,${a})` : `rgba(246,250,255,${a})`
     : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
   const rimTop = dark ? 'rgba(255,255,255,0.18)' : liquid ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.55)';
   const rim = flat
@@ -287,7 +298,7 @@ export function Glass({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity : 1 }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: lifted ? 'transparent' : fill }]} />
       {/* specular highlight */}
       <LinearGradient
         pointerEvents="none"

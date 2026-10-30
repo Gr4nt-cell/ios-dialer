@@ -9,6 +9,7 @@ import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, timeLabel } from '../phone';
 import { Avatar, EmptyState, LargeHeader, Segmented, TextButton } from '../components/ui';
+import { Glass } from '../components/Glass';
 import { useT } from '../i18n';
 
 export function RecentRow({ group, editing, onDelete, showTime }) {
@@ -27,7 +28,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
   return (
     <Pressable onPress={() => (editing ? null : group.number ? call(group.number) : null)} disabled={editing}>
       {({ pressed }) => (
-        <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
+        <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
           {editing ? (
             <Pressable onPress={onDelete} hitSlop={8} style={{ marginRight: 12 }}>
               <Ionicons name="remove-circle" size={24} color={t.red} />
@@ -61,7 +62,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
               </Pressable>
             ) : null}
           </View>
-        </View>
+        </Glass>
       )}
     </Pressable>
   );
@@ -110,7 +111,7 @@ export default function RecentsScreen() {
       right={editing ? <TextButton prominent title={tr('Done')} onPress={() => setEditing(false)} /> : null}
     >
       {callLogPerm === 'denied' ? (
-        <View style={[styles.banner, { backgroundColor: t.glass }]}>
+        <Glass strong vivid radius={12} style={styles.banner}>
           <Ionicons name="time-outline" size={22} color={t.blue} />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={{ color: t.text, fontSize: fs(13.5), fontWeight: '600' }}>{tr('Show your full call history')}</Text>
@@ -127,7 +128,7 @@ export default function RecentsScreen() {
           <Pressable onPress={() => Linking.openSettings()} hitSlop={8} style={{ marginLeft: 12 }}>
             <Ionicons name="settings-outline" size={18} color={t.secondary} />
           </Pressable>
-        </View>
+        </Glass>
       ) : null}
     </LargeHeader>
   );
@@ -158,7 +159,7 @@ export default function RecentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
-  rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingRight: 16, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 64 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16, marginHorizontal: 12, marginVertical: 4 },
+  rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingRight: 16, minHeight: 64 },
   banner: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, padding: 12, borderRadius: 12 },
 });

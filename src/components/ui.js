@@ -56,7 +56,7 @@ export function Avatar({ name, image, size = 40 }) {
 
 // ---------- Text button ----------
 
-export function TextButton({ title, onPress, color, bold, disabled, style, glass, prominent }) {
+export function TextButton({ title, onPress, color, bold, disabled, style, glass = true, prominent }) {
   const t = useTheme();
   if (glass || prominent) {
     return (
@@ -95,7 +95,7 @@ export function TextButton({ title, onPress, color, bold, disabled, style, glass
   );
 }
 
-export function IconButton({ name, onPress, color, size = 24, style, filled, glass, prominent, disabled, wide }) {
+export function IconButton({ name, onPress, color, size = 24, style, filled, glass = true, prominent, disabled, wide }) {
   const t = useTheme();
   if (glass || prominent) {
     return (
@@ -194,7 +194,7 @@ export function Segmented({ options, value, onChange }) {
           return (
             <Pressable key={o.value} onPress={() => onChange(o.value)} style={{ flex: 1 }}>
               {active ? (
-                <Glass radius={15} style={styles.segmentItem} tint={t.dark ? '#3B4048' : '#FCFCFD'} tintOpacity={1}>
+                <Glass radius={15} selected style={styles.segmentItem}>
                   <ChromeText style={{ color: t.text, fontSize: fs(13), fontWeight: '600' }}>{o.label}</ChromeText>
                 </Glass>
               ) : (
@@ -216,14 +216,14 @@ export function Group({ children, style }) {
   const t = useTheme();
   const items = React.Children.toArray(children).filter(Boolean);
   return (
-    <View style={[{ backgroundColor: t.glass, borderRadius: 22, marginHorizontal: 16, overflow: 'hidden', boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}` }, style]}>
+    <Glass strong vivid radius={22} style={[{ marginHorizontal: 16 }, style]}>
       {items.map((child, i) => (
         <View key={i}>
           {i > 0 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.separator, marginLeft: 16 }} /> : null}
           {child}
         </View>
       ))}
-    </View>
+    </Glass>
   );
 }
 

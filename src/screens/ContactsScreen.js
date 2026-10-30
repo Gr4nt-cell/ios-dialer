@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 import { usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { scrollTick } from '../haptics';
@@ -20,6 +20,7 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
 const COLUMNS = 4;
 const SIDE = 16;
 const GAP = 12;
+const ALL_KEY_WIDTH = 48;
 
 // First letter of the name as shown (A–Z, otherwise #).
 function letterOf(c) {
@@ -155,7 +156,7 @@ function ContactRow({ item, onOpen, onCall }) {
   return (
     <Pressable onPress={onOpen} onLongPress={first ? onCall : undefined} delayLongPress={350}>
       {({ pressed }) => (
-        <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
+        <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
           <View style={{ marginRight: 12 }}>
             <Avatar name={name} image={contactPhoto(item, false)} size={40} />
           </View>
@@ -164,7 +165,7 @@ function ContactRow({ item, onOpen, onCall }) {
               {name}
             </Text>
           </View>
-        </View>
+        </Glass>
       )}
     </Pressable>
   );
@@ -237,7 +238,7 @@ export default function ContactsScreen() {
 
   const cardW = Math.floor((width - SIDE * 2 - GAP * (COLUMNS - 1)) / COLUMNS);
   const cardH = Math.round(cardW * 1.32);
-  const keySize = Math.min(28, Math.max(25, Math.floor((width - SIDE * 2 - 54) / 12)));
+  const keySize = Math.max(15, Math.min(28, Math.floor((width - SIDE * 2 - 16 - ALL_KEY_WIDTH - 8) / 14)));
 
   const pick = (l) => {
     scrollTick();
@@ -296,7 +297,13 @@ export default function ContactsScreen() {
       ) : null}
       {!duplicateReview && !query && contacts.length ? (
         <Glass radius={22} strong blur={EXTENDED_BLUR} vivid intensity={90} style={styles.filter}>
-          <Pressable onPress={() => pick('all')} style={{ alignSelf: 'flex-start', marginBottom: 3 }}>
+          <View style={styles.letterPicker}>
+            <Pressable
+              onPress={() => pick('all')}
+              hitSlop={3}
+              accessibilityRole="button"
+              accessibilityLabel={`Show all ${contacts.length} contacts`}
+            >
             {({ pressed }) => (
               <View
                 style={[
@@ -304,19 +311,23 @@ export default function ContactsScreen() {
                   { backgroundColor: letter === 'all' ? t.blue : pressed ? (t.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)') : 'transparent' },
                 ]}
               >
-                <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: fs(12), fontWeight: '600' }}>
-                  {tr('All')} <Text style={{ fontWeight: '400', color: letter === 'all' ? 'rgba(255,255,255,0.85)' : t.secondary }}>({contacts.length})</Text>
+                <Text style={{ color: letter === 'all' ? '#fff' : t.text, fontSize: fs(12), fontWeight: '700' }}>{tr('All')}</Text>
+                <Text style={{ color: letter === 'all' ? 'rgba(255,255,255,0.85)' : t.secondary, fontSize: fs(9), fontWeight: '500' }}>
+                  {contacts.length}
                 </Text>
               </View>
             )}
-          </Pressable>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <View style={styles.letterRow}>
-              {LETTERS.map((l) => (
-                <LetterKey key={l} letter={l} size={keySize} selected={letter === l} available={!!counts[l]} onPress={() => pick(l)} />
+            </Pressable>
+            <View style={styles.letterRows}>
+              {[LETTERS.slice(0, 13), LETTERS.slice(13)].map((row, index) => (
+                <View key={index} style={styles.letterRow}>
+                  {row.map((l) => (
+                    <LetterKey key={l} letter={l} size={keySize} selected={letter === l} available={!!counts[l]} onPress={() => pick(l)} />
+                  ))}
+                </View>
               ))}
             </View>
-          </ScrollView>
+          </View>
         </Glass>
       ) : null}
       {!duplicateReview && !query && letter !== 'all' && list.length ? (
@@ -431,9 +442,11 @@ const styles = StyleSheet.create({
   duplicateAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
   duplicateCard: { marginHorizontal: SIDE, marginBottom: 12, padding: 14 },
   duplicatePerson: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
-  allChip: { paddingHorizontal: 10, height: 24, borderRadius: 12, justifyContent: 'center' },
-  letterRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
-  rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingRight: 16, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 64 },
+  letterPicker: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  allChip: { width: ALL_KEY_WIDTH, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 1 },
+  letterRows: { flex: 1 },
+  letterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16, marginHorizontal: 12, marginVertical: 4 },
+  rowBody: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingRight: 16, minHeight: 64 },
   toggle: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
 });

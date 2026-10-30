@@ -181,7 +181,7 @@ export default function KeypadScreen({ prefill }) {
       </View>
 
       {available && !isDefault && !hideBanner ? (
-        <View style={[styles.banner, { backgroundColor: t.glass }]}>
+        <Glass strong vivid radius={14} style={styles.banner}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.text, fontSize: fs(15), fontWeight: '600' }}>{tr('Make Phone your default')}</Text>
             <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 2 }}>{tr('Use this call screen for every call.')}</Text>
@@ -193,9 +193,12 @@ export default function KeypadScreen({ prefill }) {
               if (!ok && Dialer) Dialer.openDefaultAppsSettings();
             }}
             hitSlop={6}
-            style={[styles.bannerButton, { backgroundColor: t.blue }]}
           >
-            <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '600' }}>{tr('Set Default')}</Text>
+            {({ pressed }) => (
+              <Glass radius={14} pressed={pressed} tint={t.blue} tintOpacity={0.9} style={styles.bannerButton}>
+                <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '600' }}>{tr('Set Default')}</Text>
+              </Glass>
+            )}
           </Pressable>
           <Pressable
             onPress={() => {
@@ -207,7 +210,7 @@ export default function KeypadScreen({ prefill }) {
           >
             <Ionicons name="close" size={18} color={t.secondary} />
           </Pressable>
-        </View>
+        </Glass>
       ) : null}
 
       <View style={styles.displayArea}>

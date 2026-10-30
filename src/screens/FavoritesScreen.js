@@ -9,6 +9,7 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName } from '../phone';
 import { Avatar, EmptyState, IconButton, LargeHeader, TextButton } from '../components/ui';
+import { Glass } from '../components/Glass';
 import { useT } from '../i18n';
 
 export default function FavoritesScreen() {
@@ -42,7 +43,7 @@ export default function FavoritesScreen() {
           return (
             <Pressable onPress={() => (editing ? null : call(item.number))} disabled={editing}>
               {({ pressed }) => (
-                <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
+                <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
                   {editing ? (
                     <Pressable onPress={() => removeFavorite(item.id)} hitSlop={8} style={{ marginRight: 12 }}>
                       <Ionicons name="remove-circle" size={24} color={t.red} />
@@ -71,7 +72,7 @@ export default function FavoritesScreen() {
                       />
                     )}
                   </View>
-                </View>
+                </Glass>
               )}
             </Pressable>
           );
@@ -91,6 +92,6 @@ export default function FavoritesScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16 },
-  body: { flex: 1, flexDirection: 'row', alignItems: 'center', marginLeft: 12, paddingVertical: 10, paddingRight: 16, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 64 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16, marginHorizontal: 12, marginVertical: 4 },
+  body: { flex: 1, flexDirection: 'row', alignItems: 'center', marginLeft: 12, paddingVertical: 10, paddingRight: 16, minHeight: 64 },
 });

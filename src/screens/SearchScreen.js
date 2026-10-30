@@ -10,6 +10,7 @@ import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, prettyLabel, timeLabel } from '../phone';
 import { Avatar, EmptyState, LargeHeader, SearchBar } from '../components/ui';
 import { useT } from '../i18n';
+import { Glass } from '../components/Glass';
 
 export default function SearchScreen() {
   const tr = useT();
@@ -51,11 +52,15 @@ export default function SearchScreen() {
   const renderItem = ({ item }) => {
     if (item.kind === 'dial') {
       return (
-        <Pressable onPress={() => call(item.number)} style={styles.row}>
-          <View style={[styles.iconCircle, { backgroundColor: t.green }]}>
-            <Ionicons name="call" size={18} color="#fff" />
-          </View>
-          <Text style={{ color: t.text, fontSize: fs(17), marginLeft: 12 }}>Call {formatNumber(item.number)}</Text>
+        <Pressable onPress={() => call(item.number)}>
+          {({ pressed }) => (
+            <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
+              <View style={[styles.iconCircle, { backgroundColor: t.green }]}>
+                <Ionicons name="call" size={18} color="#fff" />
+              </View>
+              <Text style={{ color: t.text, fontSize: fs(17), marginLeft: 12 }}>Call {formatNumber(item.number)}</Text>
+            </Glass>
+          )}
         </Pressable>
       );
     }
@@ -63,31 +68,39 @@ export default function SearchScreen() {
       const c = item.contact;
       const phone = (c.phoneNumbers || [])[0];
       return (
-        <Pressable onPress={() => nav.push({ name: 'contact', contactId: c.id })} style={styles.row}>
-          <Avatar name={contactName(c)} image={c.image && c.image.uri} size={40} />
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={{ color: t.text, fontSize: fs(17) }} numberOfLines={1}>{contactName(c)}</Text>
-            {phone ? <Text style={{ color: t.secondary, fontSize: fs(14) }}>{prettyLabel(phone.label)} · {formatNumber(phone.number)}</Text> : null}
-          </View>
-          {phone ? (
-            <Pressable onPress={() => call(phone.number)} hitSlop={10}>
-              <Ionicons name="call-outline" size={22} color={t.blue} />
-            </Pressable>
-          ) : null}
+        <Pressable onPress={() => nav.push({ name: 'contact', contactId: c.id })}>
+          {({ pressed }) => (
+            <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
+              <Avatar name={contactName(c)} image={c.image && c.image.uri} size={40} />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={{ color: t.text, fontSize: fs(17) }} numberOfLines={1}>{contactName(c)}</Text>
+                {phone ? <Text style={{ color: t.secondary, fontSize: fs(14) }}>{prettyLabel(phone.label)} · {formatNumber(phone.number)}</Text> : null}
+              </View>
+              {phone ? (
+                <Pressable onPress={() => call(phone.number)} hitSlop={10}>
+                  <Ionicons name="call-outline" size={22} color={t.blue} />
+                </Pressable>
+              ) : null}
+            </Glass>
+          )}
         </Pressable>
       );
     }
     const g = item.group;
     const m = resolve(g.number);
     return (
-      <Pressable onPress={() => call(g.number)} style={styles.row}>
-        <View style={[styles.iconCircle, { backgroundColor: t.fill }]}>
-          <Ionicons name="time-outline" size={18} color={t.secondary} />
-        </View>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={{ color: t.text, fontSize: fs(17) }} numberOfLines={1}>{m ? contactName(m.contact) : g.name || formatNumber(g.number)}</Text>
-          <Text style={{ color: t.secondary, fontSize: fs(14) }}>{timeLabel(g.date)}</Text>
-        </View>
+      <Pressable onPress={() => call(g.number)}>
+        {({ pressed }) => (
+          <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
+            <View style={[styles.iconCircle, { backgroundColor: t.fill }]}>
+              <Ionicons name="time-outline" size={18} color={t.secondary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={{ color: t.text, fontSize: fs(17) }} numberOfLines={1}>{m ? contactName(m.contact) : g.name || formatNumber(g.number)}</Text>
+              <Text style={{ color: t.secondary, fontSize: fs(14) }}>{timeLabel(g.date)}</Text>
+            </View>
+          </Glass>
+        )}
       </Pressable>
     );
   };
@@ -114,6 +127,6 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 12, marginVertical: 4 },
   iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

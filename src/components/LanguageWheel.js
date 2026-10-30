@@ -64,15 +64,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
                 onCentre={(opt) => opt && opt.code !== value && onChange(opt.code)}
                 renderItem={({ item, isCentre, animated }) => (
                   <Animated.View style={[{ height: ITEM_H, justifyContent: 'center' }, animated]}>
-                    <View
-                      style={[
-                        styles.row,
-                        {
-                          backgroundColor: t.glass,
-                          borderColor: t.glassBorder,
-                        },
-                      ]}
-                    >
+                    <Glass strong vivid radius={(ITEM_H - 10) / 2} style={styles.row}>
                       <Text
                         numberOfLines={1}
                         style={{
@@ -83,7 +75,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
                       >
                         {item.name}
                       </Text>
-                    </View>
+                    </Glass>
                   </Animated.View>
                 )}
               />
@@ -110,8 +102,6 @@ const styles = StyleSheet.create({
   row: {
     height: ITEM_H - 10,
     marginHorizontal: 16,
-    borderRadius: (ITEM_H - 10) / 2,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,

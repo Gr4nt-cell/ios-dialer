@@ -12,6 +12,7 @@ import { useData } from '../DataContext';
 import { contactPhoto, prettyLabel } from '../phone';
 import { useNav } from '../nav';
 import { Avatar, IconButton, SheetHeader } from '../components/ui';
+import { Glass } from '../components/Glass';
 import { useT } from '../i18n';
 
 const PHONE_LABELS = ['mobile', 'home', 'work', 'main', 'other'];
@@ -37,7 +38,7 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
   const t = useTheme();
   const update = (i, patch) => setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
   return (
-    <View style={[styles.group, { backgroundColor: t.glass, boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}` }]}>
+    <Glass strong vivid radius={20} style={styles.group}>
       {items.map((it, i) => (
         <View key={i} style={[styles.multiRow, { borderBottomColor: t.separator }]}>
           <Pressable onPress={() => setItems(items.filter((_, j) => j !== i))} hitSlop={8}>
@@ -61,7 +62,7 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
           </View>
         )}
       </Pressable>
-    </View>
+    </Glass>
   );
 }
 
@@ -205,14 +206,14 @@ export default function NewContactScreen({ route }) {
           {route.number && !editing ? (
             <Pressable onPress={() => nav.push({ name: 'pickContact', mode: 'addNumber', number: route.number })}>
               {({ pressed }) => (
-                <View style={[styles.group, styles.multiRow, { backgroundColor: t.glass, boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}`, borderBottomWidth: 0, opacity: pressed ? 0.5 : 1 }]}>
+                <Glass strong vivid radius={20} pressed={pressed} style={[styles.group, styles.multiRow, { borderBottomWidth: 0 }]}>
                   <Ionicons name="person-add" size={22} color={t.blue} />
                   <Text style={{ color: t.blue, fontSize: fs(17), marginLeft: 10 }}>{tr('Add to Existing Contact')}</Text>
-                </View>
+                </Glass>
               )}
             </Pressable>
           ) : null}
-          <View style={[styles.group, { backgroundColor: t.glass, boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}` }]}>
+          <Glass strong vivid radius={20} style={styles.group}>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
               <Field value={firstName} onChangeText={setFirst} placeholder={tr('First name')} autoFocus={!route.number && !editing} />
             </View>
@@ -222,7 +223,7 @@ export default function NewContactScreen({ route }) {
             <View style={[styles.fieldRow, { borderBottomWidth: 0 }]}>
               <Field value={company} onChangeText={setCompany} placeholder={tr('Company')} />
             </View>
-          </View>
+          </Glass>
           <MultiRows items={phones} setItems={setPhones} labels={PHONE_LABELS} placeholder={tr('Phone')} keyboardType="phone-pad" addTitle="add phone" />
           <MultiRows items={emails} setItems={setEmails} labels={EMAIL_LABELS} placeholder={tr('Email')} keyboardType="email-address" addTitle="add email" />
         </ScrollView>
