@@ -37,7 +37,7 @@ function MultiRows({ items, setItems, labels, placeholder, keyboardType, addTitl
   const t = useTheme();
   const update = (i, patch) => setItems(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
   return (
-    <View style={[styles.group, { backgroundColor: t.card }]}>
+    <View style={[styles.group, { backgroundColor: t.glass, boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}` }]}>
       {items.map((it, i) => (
         <View key={i} style={[styles.multiRow, { borderBottomColor: t.separator }]}>
           <Pressable onPress={() => setItems(items.filter((_, j) => j !== i))} hitSlop={8}>
@@ -205,14 +205,14 @@ export default function NewContactScreen({ route }) {
           {route.number && !editing ? (
             <Pressable onPress={() => nav.push({ name: 'pickContact', mode: 'addNumber', number: route.number })}>
               {({ pressed }) => (
-                <View style={[styles.group, styles.multiRow, { backgroundColor: t.card, borderBottomWidth: 0, opacity: pressed ? 0.5 : 1 }]}>
+                <View style={[styles.group, styles.multiRow, { backgroundColor: t.glass, boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}`, borderBottomWidth: 0, opacity: pressed ? 0.5 : 1 }]}>
                   <Ionicons name="person-add" size={22} color={t.blue} />
                   <Text style={{ color: t.blue, fontSize: fs(17), marginLeft: 10 }}>{tr('Add to Existing Contact')}</Text>
                 </View>
               )}
             </Pressable>
           ) : null}
-          <View style={[styles.group, { backgroundColor: t.card }]}>
+          <View style={[styles.group, { backgroundColor: t.glass, boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}` }]}>
             <View style={[styles.fieldRow, { borderBottomColor: t.separator }]}>
               <Field value={firstName} onChangeText={setFirst} placeholder={tr('First name')} autoFocus={!route.number && !editing} />
             </View>
@@ -232,7 +232,7 @@ export default function NewContactScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  group: { marginHorizontal: 16, borderRadius: 12, marginBottom: 20, overflow: 'hidden' },
+  group: { marginHorizontal: 16, borderRadius: 20, marginBottom: 20, overflow: 'hidden' },
   fieldRow: { paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row' },
   multiRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },
 });

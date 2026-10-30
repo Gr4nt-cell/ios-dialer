@@ -75,7 +75,7 @@ export default function PickFavoriteScreen({ route }) {
             <View>
               <Pressable onPress={() => (adding ? addTo(item) : phones.length === 1 ? pick(item, phones[0]) : setExpanded(open ? null : item.id))}>
                 {({ pressed }) => (
-                  <View style={[styles.row, pressed && { backgroundColor: t.dark ? '#1C1C1E' : '#E5E5EA' }]}>
+                  <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
                     <Avatar name={contactName(item)} image={item.image && item.image.uri} size={36} />
                     <Text style={{ color: t.text, fontSize: fs(17), flex: 1, marginLeft: 12 }} numberOfLines={1}>
                       {contactName(item)}

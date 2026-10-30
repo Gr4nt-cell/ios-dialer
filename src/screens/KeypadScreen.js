@@ -37,7 +37,7 @@ function Key({ digit, letters, size, onDown, onLong }) {
           radius={size / 2}
           pressed={pressed}
           soft
-          tint={t.dark ? 'rgba(255,255,255,0.13)' : 'rgba(120,120,128,0.09)'}
+          tint={t.key}
           tintOpacity={1}
           style={[styles.key, { width: size, height: size }]}
         >
@@ -181,7 +181,7 @@ export default function KeypadScreen({ prefill }) {
       </View>
 
       {available && !isDefault && !hideBanner ? (
-        <View style={[styles.banner, { backgroundColor: t.dark ? '#1C1C1E' : '#F2F2F7' }]}>
+        <View style={[styles.banner, { backgroundColor: t.glass }]}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.text, fontSize: fs(15), fontWeight: '600' }}>{tr('Make Phone your default')}</Text>
             <Text style={{ color: t.secondary, fontSize: fs(13), marginTop: 2 }}>{tr('Use this call screen for every call.')}</Text>

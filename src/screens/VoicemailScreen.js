@@ -24,7 +24,7 @@ export default function VoicemailScreen() {
     <View style={{ flex: 1, paddingBottom: tabBarSpace + insets.bottom }}>
       <LargeHeader title={tr('Voicemail')} right={<IconButton glass name="settings-outline" onPress={() => nav.push({ name: 'settings' })} />} />
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36 }}>
-        <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: t.glass, borderWidth: 1, borderColor: t.glassBorder, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="recording-outline" size={44} color={t.secondary} />
         </View>
         <Text style={{ color: t.text, fontSize: fs(22), fontWeight: '700', marginTop: 18 }}>{tr('Voicemail')}</Text>

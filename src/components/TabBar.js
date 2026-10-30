@@ -156,7 +156,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                   radius={27}
                   selected
                   style={{ flex: 1, boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }}
-                  tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'}
+                  tint={t.dark ? 'rgba(218,228,242,0.1)' : 'rgba(90,99,112,0.055)'}
                   tintOpacity={0.9}
                 />
               </FlatBackdropContext.Provider>

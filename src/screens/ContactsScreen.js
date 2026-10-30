@@ -57,7 +57,7 @@ function ContactRow({ item, onOpen, onCall }) {
   return (
     <Pressable onPress={onOpen} onLongPress={first ? onCall : undefined} delayLongPress={350}>
       {({ pressed }) => (
-        <View style={[styles.row, pressed && { backgroundColor: t.dark ? '#1C1C1E' : '#E5E5EA' }]}>
+        <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
           <View style={{ marginRight: 12 }}>
             <Avatar name={name} image={contactPhoto(item, false)} size={40} />
           </View>
@@ -76,7 +76,7 @@ function ViewToggle({ mode, onChange }) {
   const t = useTheme();
   const opt = (m, icon) => (
     <Pressable onPress={() => onChange(m)} hitSlop={4}>
-      <View style={[styles.toggleKey, mode === m && { backgroundColor: t.dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.1)' }]}>
+      <View style={[styles.toggleKey, mode === m && { backgroundColor: t.dark ? 'rgba(220,228,240,0.12)' : 'rgba(90,99,112,0.065)' }]}>
         <Ionicons name={icon} size={17} color={mode === m ? t.text : t.secondary} />
       </View>
     </Pressable>

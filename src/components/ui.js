@@ -123,7 +123,7 @@ export function IconButton({ name, onPress, color, size = 24, style, filled, gla
     <Pressable onPress={onPress} hitSlop={10} style={style} disabled={disabled}>
       {({ pressed }) =>
         filled ? (
-          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 }}>
+          <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: t.glassBorder, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.5 : 1 }}>
             <Ionicons name={name} size={size - 4} color={color || t.text} />
           </View>
         ) : (
@@ -194,7 +194,7 @@ export function Segmented({ options, value, onChange }) {
           return (
             <Pressable key={o.value} onPress={() => onChange(o.value)} style={{ flex: 1 }}>
               {active ? (
-                <Glass radius={15} style={styles.segmentItem} tint={t.dark ? 'rgba(255,255,255,0.22)' : '#FFFFFF'} tintOpacity={1}>
+                <Glass radius={15} style={styles.segmentItem} tint={t.dark ? '#3B4048' : '#FCFCFD'} tintOpacity={1}>
                   <ChromeText style={{ color: t.text, fontSize: fs(13), fontWeight: '600' }}>{o.label}</ChromeText>
                 </Glass>
               ) : (
@@ -216,7 +216,7 @@ export function Group({ children, style }) {
   const t = useTheme();
   const items = React.Children.toArray(children).filter(Boolean);
   return (
-    <View style={[{ backgroundColor: t.card, borderRadius: 22, marginHorizontal: 16, overflow: 'hidden' }, style]}>
+    <View style={[{ backgroundColor: t.glass, borderRadius: 22, marginHorizontal: 16, overflow: 'hidden', boxShadow: `inset 0px 0px 0px 1px ${t.glassBorder}` }, style]}>
       {items.map((child, i) => (
         <View key={i}>
           {i > 0 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.separator, marginLeft: 16 }} /> : null}
@@ -232,7 +232,7 @@ export function Cell({ label, value, onPress, onLongPress, color, right, childre
   return (
     <Pressable onPress={onPress} onLongPress={onLongPress} disabled={!onPress && !onLongPress}>
       {({ pressed }) => (
-        <View style={[styles.cell, pressed && { backgroundColor: t.dark ? '#2C2C2E' : '#E5E5EA' }]}>
+        <View style={[styles.cell, pressed && { backgroundColor: t.fill }]}>
           <View style={{ flex: 1 }}>
             {label ? <Text style={{ color: t.text, fontSize: fs(13), marginBottom: 2 }}>{label}</Text> : null}
             {value ? <Text style={{ color: color || t.text, fontSize: fs(17) }}>{value}</Text> : null}

@@ -4,8 +4,8 @@ import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
-// Liquid-glass style material: real background blur where Android supports it,
-// a translucent fill, a bright specular rim on top and a darker lower edge.
+// Soft-glass material: a milky translucent fill, a delicate neutral rim and
+// diffuse depth. Real background blur stays limited to supported surfaces.
 
 const { BlurView } = ExpoBlur;
 // Newer expo-blur (SDK 55+) blurs a BlurTargetView; SDK 54 uses experimentalBlurMethod.
@@ -44,11 +44,11 @@ function lift(dark, soft) {
   // polygonal approximation of the view's outline, which turned the round keys
   // into decagons. boxShadow follows the border radius exactly, so a circle
   // casts a circle. (React Native 0.76+ on Android.)
-  const a = soft ? (dark ? 0.21 : 0.056) : dark ? 0.385 : 0.112;
-  const y = soft ? 1 : 3;
-  const blur = soft ? 4 : 9;
+  const a = soft ? (dark ? 0.16 : 0.045) : dark ? 0.26 : 0.075;
+  const y = soft ? 2 : 5;
+  const blur = soft ? 8 : 18;
   return {
-    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
+    borderColor: dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)',
     boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
@@ -126,43 +126,40 @@ export function Glass({
   }
 
   // fill strength: stronger when there's no real blur behind it, and in Tinted mode
-  // Light mode is kept very clear (mostly see-through, defined by its rim);
-  // dark mode needs a little more body to read on black.
-  // "vivid" keeps the fill barely there so the blurred colour stays saturated
-  // instead of being washed out by a milky layer.
-  // Without real blur, "vivid" still stays well clear of the milky default so
-  // the colour of the background washes keeps coming through.
+  // A soft frosted fill gives controls body without a hard reflective edge.
+  // Vivid keeps more of the existing background visible; tinted stays denser.
+  // Sheets without a live blur need enough body for their labels to read.
   const alpha = vivid
     ? realBlur
-      ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
-      : dark ? (tinted ? 0.66 : 0.38) : tinted ? 0.58 : 0.2
+      ? dark ? (tinted ? 0.5 : 0.3) : tinted ? 0.78 : 0.62
+      : dark ? (tinted ? 0.8 : 0.65) : tinted ? 0.9 : 0.78
     : dark
-    ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.86 : 0.58
-    : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;
+    ? realBlur ? (tinted ? 0.74 : 0.56) : tinted ? 0.94 : 0.9
+    : realBlur ? (tinted ? 0.88 : 0.76) : tinted ? 0.97 : 0.94;
   // Over a flat backdrop a translucent fill just shows more of the same white
   // or black, so the panel is given its own solid surface instead.
   const a = alpha * fillScale;
   const fill = tint
     ? tint
     : flat
-    ? dark ? '#1C1C1E' : '#FFFFFF'
-    : dark ? `rgba(44,44,48,${a})` : `rgba(255,255,255,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
+    ? dark ? '#272A30' : '#FCFCFD'
+    : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
+  const rimTop = dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
     : strong
-    ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
+    ? dark ? 'rgba(220,228,240,0.18)' : 'rgba(80,86,96,0.16)'
     : outline
-    ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
-    : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
+    ? dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.12)'
+    : dark ? 'rgba(220,228,240,0.1)' : 'rgba(80,86,96,0.08)';
+  const edge = dark ? 'rgba(0,0,0,0.14)' : 'rgba(70,78,90,0.018)';
   const highlight = flat
     ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
-    ? 'rgba(255,255,255,0.3)'
+    ? 'rgba(255,255,255,0.14)'
     : vivid
-    ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.55)'
-    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)';
+    ? dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
+    : dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)';
 
   // Android derives an elevation shadow from the view's outline, and a view
   // that also clips its children can hand it a coarse polygon instead of the
@@ -202,7 +199,7 @@ export function Glass({
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around (on the outer view when lifted) */}
       {lifted ? null : (
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? 1 : StyleSheet.hairlineWidth, borderColor: rim }]} />
       )}
       {flat ? null : (
         <LinearGradient
@@ -225,7 +222,7 @@ export function Glass({
           {
             borderRadius: radius,
             backgroundColor: fill,
-            borderWidth: strong || outline ? 1.4 : 1,
+            borderWidth: 1,
             transform: [{ scale: pressed ? 1.04 : 1 }],
           },
           lifted,
@@ -260,10 +257,10 @@ export function GlassShadow({ children, style, radius = 999 }) {
       style={[
         {
           borderRadius: radius,
-          shadowColor: '#000',
-          shadowOpacity: t.dark ? 0.5 : 0.14,
-          shadowRadius: 20,
-          shadowOffset: { width: 0, height: 8 },
+          shadowColor: '#171B23',
+          shadowOpacity: t.dark ? 0.28 : 0.09,
+          shadowRadius: 22,
+          shadowOffset: { width: 0, height: 6 },
         },
         style,
       ]}
