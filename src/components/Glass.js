@@ -1,5 +1,5 @@
-import React, { createContext, useContext } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
@@ -27,10 +27,49 @@ export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
+export const GlassRefractionContext = createContext(null);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
 export const FlatBackdropContext = createContext(false);
+
+export function GlassRefractionProvider({ children, active = true }) {
+  const progress = useRef(new Animated.Value(0)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (mounted) setReduceMotion(!!enabled);
+      })
+      .catch(() => {});
+    const listener = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled) => setReduceMotion(!!enabled));
+    return () => {
+      mounted = false;
+      listener.remove();
+    };
+  }, []);
+
+  const enabled = active && !reduceMotion;
+  useEffect(() => {
+    progress.stopAnimation();
+    progress.setValue(0);
+    if (!enabled) return undefined;
+    const loop = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 12000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [enabled, progress]);
+
+  return <GlassRefractionContext.Provider value={enabled ? progress : null}>{children}</GlassRefractionContext.Provider>;
+}
 
 /**
  * Edge and shadow that lift a panel off a flat background.
@@ -69,6 +108,61 @@ function blurProps(target) {
   return { experimentalBlurMethod: 'dimezisBlurView' };
 }
 
+function RefractionSweep({ progress, dark }) {
+  const [surfaceWidth, setSurfaceWidth] = useState(0);
+  const bandWidth = Math.max(28, Math.min(surfaceWidth * 0.44, 156));
+  const translateX = useMemo(
+    () =>
+      surfaceWidth
+        ? progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-bandWidth, surfaceWidth + bandWidth],
+          })
+        : null,
+    [bandWidth, progress, surfaceWidth]
+  );
+
+  return (
+    <View
+      pointerEvents="none"
+      onLayout={(event) => {
+        const nextWidth = event.nativeEvent.layout.width;
+        if (Math.abs(nextWidth - surfaceWidth) > 1) setSurfaceWidth(nextWidth);
+      }}
+      style={StyleSheet.absoluteFill}
+    >
+      {translateX ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              top: '-30%',
+              bottom: '-30%',
+              width: bandWidth,
+              opacity: dark ? 0.44 : 0.36,
+            },
+            { transform: [{ translateX }, { rotate: '16deg' }] },
+          ]}
+        >
+          <LinearGradient
+            colors={
+              dark
+                ? ['rgba(255,255,255,0)', 'rgba(188,225,255,0.08)', 'rgba(255,255,255,0.4)', 'rgba(188,225,255,0.1)', 'rgba(255,255,255,0)']
+                : ['rgba(255,255,255,0)', 'rgba(115,190,242,0.06)', 'rgba(255,255,255,0.58)', 'rgba(125,204,246,0.14)', 'rgba(255,255,255,0)']
+            }
+            locations={[0, 0.22, 0.5, 0.76, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
 export function Glass({
   children,
   style,
@@ -92,9 +186,11 @@ export function Glass({
   const t = useTheme();
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
+  const refraction = useContext(GlassRefractionContext);
   const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
   const plain = mode === 'plain';
+  const showRefraction = liquid && !plain && !!refraction;
   // Android draws a shadow only for a view that has its own background, so a
   // lifted panel is opaque — over a flat backdrop there is nothing to see
   // through to anyway.
@@ -200,6 +296,7 @@ export function Glass({
         end={{ x: 0.5, y: 0.55 }}
         style={StyleSheet.absoluteFill}
       />
+      {showRefraction ? <RefractionSweep progress={refraction} dark={dark} /> : null}
       {/* darker lower edge for depth */}
       <LinearGradient
         pointerEvents="none"

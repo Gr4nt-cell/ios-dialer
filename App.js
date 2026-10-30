@@ -12,7 +12,7 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassModeContext, GlassTargetContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -255,6 +255,7 @@ function Main() {
   return (
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
+      <GlassRefractionProvider active={settings.liquidGlass !== false}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
       {/* the app always uses the plain backdrop now */}
       <FlatBackdropContext.Provider value>
@@ -297,6 +298,7 @@ function Main() {
       </GlassTargetContext.Provider>
       </FlatBackdropContext.Provider>
       </GlassModeContext.Provider>
+      </GlassRefractionProvider>
     </NavContext.Provider>
     </I18nProvider>
   );
