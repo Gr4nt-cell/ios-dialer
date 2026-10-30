@@ -42,7 +42,7 @@ export default function FavoritesScreen() {
           return (
             <Pressable onPress={() => (editing ? null : call(item.number))} disabled={editing}>
               {({ pressed }) => (
-                <View style={[styles.row, pressed && { backgroundColor: t.dark ? '#1C1C1E' : '#E5E5EA' }]}>
+                <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
                   {editing ? (
                     <Pressable onPress={() => removeFavorite(item.id)} hitSlop={8} style={{ marginRight: 12 }}>
                       <Ionicons name="remove-circle" size={24} color={t.red} />

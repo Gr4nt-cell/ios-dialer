@@ -27,7 +27,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
   return (
     <Pressable onPress={() => (editing ? null : group.number ? call(group.number) : null)} disabled={editing}>
       {({ pressed }) => (
-        <View style={[styles.row, pressed && { backgroundColor: t.dark ? '#1C1C1E' : '#E5E5EA' }]}>
+        <View style={[styles.row, pressed && { backgroundColor: t.fill }]}>
           {editing ? (
             <Pressable onPress={onDelete} hitSlop={8} style={{ marginRight: 12 }}>
               <Ionicons name="remove-circle" size={24} color={t.red} />
@@ -110,7 +110,7 @@ export default function RecentsScreen() {
       right={editing ? <TextButton prominent title={tr('Done')} onPress={() => setEditing(false)} /> : null}
     >
       {callLogPerm === 'denied' ? (
-        <View style={[styles.banner, { backgroundColor: t.dark ? '#1C1C1E' : '#F2F2F7' }]}>
+        <View style={[styles.banner, { backgroundColor: t.glass }]}>
           <Ionicons name="time-outline" size={22} color={t.blue} />
           <View style={{ flex: 1, marginLeft: 10 }}>
             <Text style={{ color: t.text, fontSize: fs(13.5), fontWeight: '600' }}>{tr('Show your full call history')}</Text>

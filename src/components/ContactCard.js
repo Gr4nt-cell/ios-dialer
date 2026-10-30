@@ -25,7 +25,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
                 width,
                 height,
                 borderRadius: radius,
-                borderColor: t.dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.9)',
+                borderColor: t.glassBorder,
                 transform: [{ scale: pressed ? 0.95 : 1 }],
               },
             ]}
@@ -33,10 +33,10 @@ export default function ContactCard({ width, height, name, label, image, colorKe
             {image ? (
               <Image source={{ uri: image }} resizeMode="cover" style={StyleSheet.absoluteFill} />
             ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: t.dark ? '#3A3A3C' : '#E9E9EE', alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 }]}>
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 }]}>
                 {/* soft frosted highlight for the liquid-glass look */}
                 <LinearGradient
-                  colors={t.dark ? ['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.02)', 'rgba(0,0,0,0.12)'] : ['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.25)', 'rgba(0,0,0,0.04)']}
+                  colors={t.dark ? ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.02)', 'rgba(0,0,0,0.06)'] : ['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.4)', 'rgba(90,99,112,0.02)']}
                   locations={[0, 0.5, 1]}
                   start={{ x: 0.2, y: 0 }}
                   end={{ x: 0.8, y: 1 }}

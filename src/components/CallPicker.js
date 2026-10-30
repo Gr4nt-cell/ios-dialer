@@ -32,7 +32,7 @@ function Backdrop({ target, onClose }) {
       {blurProps ? (
         <BlurView {...blurProps} intensity={45} tint={t.dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'} style={StyleSheet.absoluteFill} />
       ) : null}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: t.dark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.35)' }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: t.dark ? 'rgba(9,12,18,0.45)' : 'rgba(235,238,242,0.35)' }]} />
     </Pressable>
   );
 }

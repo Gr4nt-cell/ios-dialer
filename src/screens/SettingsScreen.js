@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
-import { Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
@@ -93,7 +93,7 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
   const btn = (icon, next, disabled) => (
     <Pressable onPress={() => !disabled && onChange(next)} hitSlop={6} disabled={disabled}>
       {({ pressed }) => (
-        <View style={{ width: 32, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? t.fill : t.dark ? '#2C2C2E' : '#EFEFF4', opacity: disabled ? 0.4 : 1 }}>
+        <View style={{ width: 32, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? t.fill : t.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: t.glassBorder, opacity: disabled ? 0.4 : 1 }}>
           <Ionicons name={icon} size={16} color={t.text} />
         </View>
       )}

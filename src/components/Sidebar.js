@@ -47,7 +47,7 @@ export default function Sidebar({ tabs, active, onChange, onSettings, badges = {
   const COLUMN = SIDEBAR_WIDTH - 16;
 
   return (
-    <View style={[styles.rail, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 14 }]}>
+    <View style={[styles.rail, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 14, backgroundColor: t.glass }]}>
       <View style={{ alignItems: 'center' }}>
         <View style={{ width: COLUMN, height: ITEM * tabs.length }}>
           <Animated.View

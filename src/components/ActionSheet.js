@@ -29,7 +29,7 @@ function Sheet({ sheet, onClose }) {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable feedback="none" style={styles.backdrop} onPress={onClose} />
+      <Pressable feedback="none" style={[styles.backdrop, { backgroundColor: t.dark ? 'rgba(9,12,18,0.48)' : 'rgba(91,99,111,0.18)' }]} onPress={onClose} />
       {/* each choice is its own glass pill, like the number picker */}
       <Animated.View
         style={[
@@ -85,7 +85,7 @@ export function ActionSheetProvider({ children }) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  backdrop: { ...StyleSheet.absoluteFillObject },
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', paddingHorizontal: 24 },
   caption: { fontSize: fs(13), fontWeight: '600', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.6, textAlign: 'center' },
   message: { fontSize: fs(13), marginTop: -6, marginBottom: 12, textAlign: 'center' },

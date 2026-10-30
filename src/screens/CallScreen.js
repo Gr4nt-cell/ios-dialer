@@ -31,7 +31,7 @@ const WHITE = '#FFFFFF';
 // the way a media player's transport buttons sit over video. Brighter than the
 // old 16% wash, which read as a flat grey circle rather than something with a
 // surface to it.
-const CONTROL_TINT = 'rgba(255,255,255,0.26)';
+const CONTROL_TINT = 'rgba(245,248,252,0.2)';
 const DIM = 'rgba(255,255,255,0.72)';
 const RED = '#FF3B30';
 const GREEN = '#30D158';

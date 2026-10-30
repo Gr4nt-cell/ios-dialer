@@ -29,7 +29,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
         <View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: t.dark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.4)' },
+            { backgroundColor: t.dark ? 'rgba(9,12,18,0.48)' : 'rgba(91,99,111,0.18)' },
           ]}
         />
       </Pressable>
@@ -47,8 +47,8 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
                     height: ITEM_H,
                     marginHorizontal: 16,
                     borderRadius: ITEM_H / 2,
-                    borderWidth: 1.5,
-                    borderColor: t.dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.18)',
+                    borderWidth: 1,
+                    borderColor: t.glassBorder,
                   }}
                 />
               </View>
@@ -68,8 +68,8 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
                       style={[
                         styles.row,
                         {
-                          backgroundColor: t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.55)',
-                          borderColor: t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.9)',
+                          backgroundColor: t.glass,
+                          borderColor: t.glassBorder,
                         },
                       ]}
                     >
