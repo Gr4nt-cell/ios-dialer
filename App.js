@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Linking, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, BackHandler, Easing, Linking, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -51,46 +51,75 @@ const ROUTES = {
 // screen; the rest (the forms and pickers) stay modal, where they belong.
 const PANE_ROUTES = new Set(['contact', 'settings', 'recordings', 'privacyPolicy', 'statistics']);
 
+function rgba(hex, alpha) {
+  const value = hex.replace('#', '');
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+  return `rgba(${red},${green},${blue},${alpha})`;
+}
+
+function RefractionOrb({ color, size, delay, style }) {
+  const progress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(progress, { toValue: 1, duration: 18000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(progress, { toValue: 0, duration: 18000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    const timer = setTimeout(() => animation.start(), delay);
+    return () => {
+      clearTimeout(timer);
+      animation.stop();
+    };
+  }, [delay, progress]);
+
+  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
+  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 60] });
+  const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', width: size, height: size, borderRadius: size / 2, overflow: 'hidden', opacity: 0.75 },
+        style,
+        { transform: [{ translateX }, { translateY }, { scale }] },
+      ]}
+    >
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: rgba(color, 0.035) }]} />
+      <LinearGradient
+        colors={[rgba(color, 0), rgba(color, 0.24), rgba(color, 0)]}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={[rgba(color, 0), rgba(color, 0.24), rgba(color, 0)]}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
+    </Animated.View>
+  );
+}
+
 function LightRefractionBackground({ theme }) {
   if (theme.dark) return null;
   const colors = theme.refraction;
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden', backgroundColor: colors.fallback }]}>
       <LinearGradient
         colors={colors.base}
-        locations={[0, 0.24, 0.5, 0.74, 1]}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <LinearGradient
-        colors={colors.blue}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', top: 0, left: 0, width: '82%', height: '58%' }}
-      />
-      <LinearGradient
-        colors={colors.rose}
-        locations={[0, 0.5, 1]}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ position: 'absolute', top: '18%', right: 0, width: '78%', height: '64%' }}
-      />
-      <LinearGradient
-        colors={colors.lavender}
-        locations={[0, 0.42, 1]}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={{ position: 'absolute', bottom: 0, left: 0, width: '78%', height: '52%' }}
-      />
-      <LinearGradient
-        colors={colors.mint}
-        locations={[0, 0.5, 1]}
-        start={{ x: 1, y: 1 }}
-        end={{ x: 0, y: 0 }}
-        style={{ position: 'absolute', bottom: 0, right: 0, width: '78%', height: '52%' }}
-      />
+      <RefractionOrb color={colors.orbs.blue} size={320} delay={0} style={{ top: -60, left: -80 }} />
+      <RefractionOrb color={colors.orbs.rose} size={280} delay={6000} style={{ top: '35%', right: -90 }} />
+      <RefractionOrb color={colors.orbs.mint} size={300} delay={12000} style={{ bottom: -80, left: '10%' }} />
+      <RefractionOrb color={colors.orbs.lavender} size={200} delay={3000} style={{ top: '60%', left: -60 }} />
     </View>
   );
 }

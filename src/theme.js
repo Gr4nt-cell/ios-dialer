@@ -2,7 +2,7 @@ import { useColorScheme } from 'react-native';
 
 const light = {
   dark: false,
-  bg: '#F5F5F5',
+  bg: '#e9edf7',
   grouped: '#F2F3F4',
   card: '#FCFCFD',
   text: '#18191B',
@@ -22,11 +22,14 @@ const light = {
   glassBorder: 'rgba(80,86,96,0.12)',
   glassFillScale: 0.3,
   refraction: {
-    base: ['#C9DFFF', '#EAF0FC', '#F5EAF5', '#F7E7F0', '#E1F5EE'],
-    blue: ['rgba(112,169,255,0.48)', 'rgba(147,202,255,0.25)', 'rgba(147,202,255,0)'],
-    rose: ['rgba(255,163,199,0)', 'rgba(255,158,197,0.42)', 'rgba(255,178,210,0)'],
-    lavender: ['rgba(179,161,255,0.38)', 'rgba(185,171,255,0.18)', 'rgba(185,171,255,0)'],
-    mint: ['rgba(124,229,199,0)', 'rgba(133,231,203,0.42)', 'rgba(133,231,203,0)'],
+    fallback: '#e9edf7',
+    base: ['#eef2ff', '#f7eef6', '#e8f6f3'],
+    orbs: {
+      blue: '#7fb6ff',
+      rose: '#ffb3d1',
+      mint: '#9be7cf',
+      lavender: '#c9b6ff',
+    },
   },
   // chart hues are their own palette, checked for colour-blind separation
   // and contrast against this scheme's surface
