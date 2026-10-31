@@ -105,6 +105,7 @@ function RefractionOrb({ color, size, delay, style }) {
 }
 
 function GradientGlowBackground({ theme }) {
+  if (theme.dark) return null;
   const colors = theme.refraction;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden', backgroundColor: colors.fallback }]}>
@@ -332,7 +333,7 @@ function Main() {
       <GlassFillScaleContext.Provider value={t.glassFillScale}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
       {/* Keep live blur limited to the tab bar; app surfaces use translucent fills. */}
-      <FlatBackdropContext.Provider value={false}>
+      <FlatBackdropContext.Provider value={t.dark}>
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
