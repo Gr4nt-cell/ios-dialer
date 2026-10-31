@@ -64,6 +64,7 @@ function FavoritesRow() {
         <Animated.View style={[{ width: SLOT, alignItems: 'center', justifyContent: 'center', height: ROW_H }, animated]}>
           <ContactCard
             overlay
+            edgeShadow
             width={CARD_W}
             height={CARD_H}
             name={name}

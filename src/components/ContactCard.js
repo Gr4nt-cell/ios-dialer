@@ -12,11 +12,12 @@ import { Glass, KeypadGlass } from './Glass';
  * - overlay: name drawn on the card (favourites)
  * - otherwise the name sits underneath the card (contacts grid)
  */
-export default function ContactCard({ width, height, name, label, image, colorKey, onPress, onLongPress, overlay, radius = 22, glass = true }) {
+export default function ContactCard({ width, height, name, label, image, colorKey, onPress, onLongPress, overlay, radius = 22, glass = true, edgeShadow = false }) {
   const t = useTheme();
   const letters = initials(name);
   const keypadMaterial = glass && !image && !t.dark;
   const CardGlass = keypadMaterial ? KeypadGlass : Glass;
+  const favoriteEdgeShadow = edgeShadow && !t.dark ? { boxShadow: '0px 4px 14px rgba(52, 78, 121, 0.22)' } : null;
   const face = image ? (
     <Image
       source={{ uri: image }}
@@ -98,7 +99,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
               radius={radius}
               strong
               vivid
-              style={[keypadMaterial ? null : styles.glassCard, { width, height, transform: [{ scale: pressed ? 0.95 : 1 }] }]}
+              style={[keypadMaterial ? null : styles.glassCard, favoriteEdgeShadow, { width, height, transform: [{ scale: pressed ? 0.95 : 1 }] }]}
             >
               <View style={[styles.glassContent, { borderRadius: Math.max(0, radius - 1) }]}>{cardContents}</View>
             </CardGlass>
