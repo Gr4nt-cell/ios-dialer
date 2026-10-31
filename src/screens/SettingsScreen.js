@@ -377,7 +377,7 @@ export default function SettingsScreen() {
             ))}
           </View>
         </Group>
-        <Footer>Used for callers without a photo. Plain White is the default background; other gradients remain available.</Footer>
+        <Footer>Light mode uses the selected call background. Dark mode follows the app’s dark appearance.</Footer>
 
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>

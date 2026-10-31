@@ -22,13 +22,13 @@ const light = {
   glassBorder: 'rgba(255,255,255,0.78)',
   glassFillScale: 0.56,
   refraction: {
-    fallback: '#F4F7FF',
-    base: ['#EDF4FF', '#FBF5FC', '#EDFAF6'],
+    fallback: '#F1EDF7',
+    base: ['#EAF1FF', '#F6ECF5', '#E8F4F1'],
     orbs: {
-      blue: '#70ADFF',
-      rose: '#FFA6CF',
-      mint: '#79DFC5',
-      lavender: '#B09AFF',
+      blue: '#78AEFA',
+      rose: '#F7A6C8',
+      mint: '#85DFC7',
+      lavender: '#B5A4E9',
     },
   },
   // chart hues are their own palette, checked for colour-blind separation

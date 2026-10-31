@@ -16,6 +16,7 @@ import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
 import { FlatBackdropContext, Glass, CallControlGlass } from '../components/Glass';
 import { gradientFor } from '../gradients';
+import { callAppearance } from '../callAppearance';
 import { useActionSheet } from '../components/ActionSheet';
 import { useT } from '../i18n';
 import { ChromeText } from '../components/ui';
@@ -205,7 +206,8 @@ function BigAvatar({ name, image, size = 104, pulse, light = false }) {
 }
 
 function CallButton({ icon, label, onPress, on, disabled, color, size = 76, iconSize, hangup, light = false }) {
-  const tint = color || (light ? undefined : on ? '#FFFFFF' : CONTROL_TINT);
+  const t = useTheme();
+  const tint = color || (light ? undefined : on ? '#FFFFFF' : t.dark ? t.key : CONTROL_TINT);
   return (
     <Pressable
       onPress={onPress}
@@ -252,10 +254,11 @@ function EndKey({ onPress, light = false }) {
 }
 
 function SmallPill({ icon, label, onPress, light = false }) {
+  const t = useTheme();
   return (
     <Pressable onPress={onPress} accessibilityLabel={label} style={{ alignItems: 'center', width: 110 }}>
       {({ pressed }) => (
-        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={light ? undefined : CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
+        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={light ? undefined : t.dark ? t.key : CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={21} color={light ? LIGHT_TEXT : WHITE} />
         </CallControlGlass>
       )}
@@ -303,11 +306,12 @@ export default function CallScreen() {
   const who = identify(focus);
   const palette = useMemo(() => gradientFor(who.key, settings.callBackground), [who.key, settings.callBackground]);
   const avatarPhoto = settings.callPhoto !== false ? who.image : null;
-  const plainBackground = settings.callBackground === 'plain' || settings.callBackground === 'auto' || !settings.callBackground;
-  const lightBackground = plainBackground ? !t.dark : settings.callBackground === 'fastscore';
-  const plainColor = t.dark ? t.bg : WHITE;
-  const primaryText = lightBackground ? LIGHT_TEXT : WHITE;
-  const secondaryText = lightBackground ? LIGHT_SECONDARY : DIM;
+  const appearance = callAppearance(t, settings.callBackground);
+  const plainBackground = appearance.plain;
+  const lightBackground = appearance.light;
+  const plainColor = appearance.background;
+  const primaryText = appearance.text;
+  const secondaryText = appearance.secondary;
   // on a tablet the dial pad lives in its own column, so the left side never
   // swaps itself out for it
   const padOpen = keypad && !isTablet;
@@ -351,15 +355,15 @@ export default function CallScreen() {
     return wrap(
       <View style={{ alignItems: 'center', marginTop: 70 }}>
         <BigAvatar name={who.name} image={avatarPhoto} light={lightBackground} />
-        <Text style={[styles.name, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+        <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
           {who.name}
         </Text>
-        <Text style={[styles.status, lightBackground && { color: secondaryText }]}>{ended.disconnectLabel || 'Call Ended'}</Text>
+        <Text style={[styles.status, (lightBackground || t.dark) && { color: secondaryText }]}>{ended.disconnectLabel || 'Call Ended'}</Text>
       </View>
     );
   }
 
-  if (!live.length) return <View style={[styles.root, { backgroundColor: '#000' }]} />;
+  if (!live.length) return <View style={[styles.root, { backgroundColor: t.bg }]} />;
 
   // ---------- incoming call ----------
   if (ringing && !primary) {
@@ -380,8 +384,8 @@ export default function CallScreen() {
     return wrap(
       <>
         <View style={{ alignItems: 'center', marginTop: 48 }}>
-          <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(ringing, who)}</Text>
-          <Text style={[styles.name, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+          <Text style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(ringing, who)}</Text>
+          <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
             {who.name}
           </Text>
           <View style={{ marginTop: 28 }}>
@@ -529,8 +533,8 @@ export default function CallScreen() {
       {/* caller */}
       {padOpen ? (
         <View style={{ alignItems: 'center', marginTop: 34, paddingHorizontal: 24 }}>
-          <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{who.name}</Text>
-          <Text style={[styles.name, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }, { fontWeight: '300', letterSpacing: 1.5 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+          <Text style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]}>{who.name}</Text>
+          <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }, { fontWeight: '300', letterSpacing: 1.5 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
             {dtmf || ' '}
           </Text>
           {isUssdCode(dtmf) ? (
@@ -548,8 +552,8 @@ export default function CallScreen() {
         </View>
       ) : (
         <View style={{ alignItems: 'center', marginTop: twoCalls ? 18 : 40 }}>
-          <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(primary, who)}</Text>
-          <Text style={[styles.name, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
+          <Text style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(primary, who)}</Text>
+          <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
             {who.name}
           </Text>
           {!ringing && !twoCalls ? (
@@ -643,7 +647,7 @@ export default function CallScreen() {
               {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
                 <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 12 }}>
                   {({ pressed }) => (
-            <CallControlGlass light={lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
+            <CallControlGlass light={lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : t.dark ? t.key : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
               <Text style={{ color: primaryText, fontSize: fs(32), lineHeight: fs(38) }}>{d}</Text>
               {l ? <Text style={{ color: primaryText, fontSize: fs(9), fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
                     </CallControlGlass>
@@ -736,11 +740,11 @@ export default function CallScreen() {
         <View style={{ flex: 1, minWidth: 0 }}>{body}</View>
         <View style={styles.padColumn}>
           <Glass dark={!lightBackground} liquid vivid outline radius={32} style={styles.padPanel}>
-            <Text style={[styles.statusTop, lightBackground && { color: secondaryText, textShadowColor: 'transparent' }]} numberOfLines={1}>
+            <Text style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]} numberOfLines={1}>
               {who.name}
             </Text>
             <Text
-              style={[styles.name, lightBackground && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }, { fontWeight: '300', letterSpacing: 1.5, fontSize: fs(30), marginTop: 2 }]}
+              style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }, { fontWeight: '300', letterSpacing: 1.5, fontSize: fs(30), marginTop: 2 }]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.5}
@@ -767,7 +771,7 @@ export default function CallScreen() {
                   {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
                     <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 10 }}>
                       {({ pressed }) => (
-                        <CallControlGlass light={lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
+                        <CallControlGlass light={lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : t.dark ? t.key : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
                           <Text style={{ color: primaryText, fontSize: fs(32), lineHeight: fs(38) }}>{d}</Text>
                           {l ? <Text style={{ color: primaryText, fontSize: fs(9), fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
                         </CallControlGlass>

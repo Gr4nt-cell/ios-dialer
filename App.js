@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, BackHandler, Linking, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, BackHandler, Linking, Modal, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -75,14 +75,15 @@ function RefractionOrb({ color, size, reverse = false, style }) {
       style={[
         { position: 'absolute', width: size, height: size },
         style,
+        Platform.OS === 'android' && Platform.Version >= 31 ? { filter: [{ blur: 18 }] } : null,
         { transform },
       ]}
     >
       {/* Concentric low-opacity fills approximate a soft radial glow without
           adding a blur target, a shader, or a new native dependency. */}
-      {Array.from({ length: 18 }, (_, index) => {
-        const inset = index * size * 0.024;
-        return <View key={index} style={{ position: 'absolute', top: inset, right: inset, bottom: inset, left: inset, borderRadius: size / 2, backgroundColor: rgba(color, 0.024) }} />;
+      {Array.from({ length: 24 }, (_, index) => {
+        const inset = index * size * 0.019;
+        return <View key={index} style={{ position: 'absolute', top: inset, right: inset, bottom: inset, left: inset, borderRadius: size / 2, backgroundColor: rgba(color, 0.036) }} />;
       })}
     </Animated.View>
   );
@@ -92,7 +93,9 @@ function GradientGlowBackground({ theme }) {
   const { width, height } = useWindowDimensions();
   if (theme.dark) return null;
   const colors = theme.refraction;
-  const spread = Math.min(620, Math.max(400, Math.min(width, height) * 1.15));
+  // Match the reference: broad blue at the upper left, rose on the right,
+  // lavender at the lower left and mint underneath the floating tab bar.
+  const spread = Math.min(1400, Math.max(width * 1.7, Math.min(height * 0.9, width * 2.15)));
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden', backgroundColor: colors.fallback }]}>
       <LinearGradient
@@ -102,10 +105,10 @@ function GradientGlowBackground({ theme }) {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <RefractionOrb color={colors.orbs.blue} size={spread} style={{ top: -spread * 0.28, left: -spread * 0.35 }} />
-      <RefractionOrb color={colors.orbs.rose} size={spread * 0.95} reverse style={{ top: '26%', right: -spread * 0.4 }} />
-      <RefractionOrb color={colors.orbs.mint} size={spread * 1.1} style={{ bottom: -spread * 0.3, right: -spread * 0.15 }} />
-      <RefractionOrb color={colors.orbs.lavender} size={spread * 0.85} reverse style={{ top: '53%', left: -spread * 0.4 }} />
+      <RefractionOrb color={colors.orbs.blue} size={spread} style={{ top: height * 0.2 - spread / 2, left: width * 0.22 - spread / 2 }} />
+      <RefractionOrb color={colors.orbs.rose} size={spread * 0.95} reverse style={{ top: height * 0.58 - spread * 0.475, left: width * 0.98 - spread * 0.475 }} />
+      <RefractionOrb color={colors.orbs.mint} size={spread * 0.88} style={{ top: height * 0.95 - spread * 0.44, left: width * 0.7 - spread * 0.44 }} />
+      <RefractionOrb color={colors.orbs.lavender} size={spread * 0.78} reverse style={{ top: height * 0.82 - spread * 0.39, left: width * 0.02 - spread * 0.39 }} />
     </View>
   );
 }
