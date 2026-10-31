@@ -203,6 +203,9 @@ export function Glass({
   const glassFillScale = useContext(GlassFillScaleContext);
   const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
+  // Explicitly themed surfaces (the photo/gradient call screen) keep their
+  // existing material, as does every surface when the system theme is dark.
+  const lightLiquid = liquid && !t.dark && !dark && forceDark == null;
   const surfaceFillScale = dark ? 1 : glassFillScale;
   const plain = mode === 'plain';
   const showRefraction = liquid && !plain && !!refraction;
@@ -269,13 +272,13 @@ export function Glass({
   const rim = flat
     ? lifted.borderColor
     : liquid
-    ? dark ? 'rgba(220,238,255,0.28)' : 'rgba(105,143,185,0.25)'
+    ? dark ? 'rgba(220,238,255,0.28)' : lightLiquid ? t.glassBorder : 'rgba(105,143,185,0.25)'
     : strong
     ? dark ? 'rgba(220,228,240,0.18)' : 'rgba(80,86,96,0.16)'
     : outline
     ? dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.12)'
     : dark ? 'rgba(220,228,240,0.1)' : 'rgba(80,86,96,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.14)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
+  const edge = dark ? 'rgba(0,0,0,0.14)' : lightLiquid ? 'rgba(90,111,174,0.06)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
   const highlight = flat
     ? liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.78)' : dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
@@ -302,6 +305,16 @@ export function Glass({
         />
       ) : null}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: lifted ? 'transparent' : fill }]} />
+      {lightLiquid && !tint ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(185,218,255,0.12)', 'rgba(255,255,255,0)', 'rgba(211,194,255,0.10)']}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       {/* specular highlight */}
       <LinearGradient
         pointerEvents="none"
@@ -365,7 +378,11 @@ export function Glass({
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
-      style={[{ borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] }, style]}
+      style={[
+        { borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] },
+        lightLiquid ? { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(74,99,155,${soft ? 0.08 : 0.1})` } : null,
+        style,
+      ]}
     >
       {decoration}
       {children}

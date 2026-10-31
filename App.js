@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, BackHandler, Easing, Linking, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, BackHandler, Linking, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,7 +13,7 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -59,54 +59,40 @@ function rgba(hex, alpha) {
   return `rgba(${red},${green},${blue},${alpha})`;
 }
 
-function RefractionOrb({ color, size, delay, style }) {
-  const progress = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const animation = Animated.loop(Animated.sequence([
-      Animated.timing(progress, { toValue: 1, duration: 18000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(progress, { toValue: 0, duration: 18000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-    ]));
-    const timer = setTimeout(() => animation.start(), delay);
-    return () => {
-      clearTimeout(timer);
-      animation.stop();
-    };
-  }, [delay, progress]);
-
-  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 40] });
-  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 60] });
-  const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.15] });
+function RefractionOrb({ color, size, reverse = false, style }) {
+  // Share the existing motion clock. Reduced motion and the glass-off setting
+  // leave a static colour field instead of starting four independent loops.
+  const progress = useContext(GlassRefractionContext);
+  const direction = reverse ? -1 : 1;
+  const transform = progress ? [
+    { translateX: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 20 * direction, 0] }) },
+    { translateY: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 28, 0] }) },
+    { scale: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.08, 1] }) },
+  ] : [];
   return (
     <Animated.View
       pointerEvents="none"
       style={[
-        { position: 'absolute', width: size, height: size, borderRadius: size / 2, overflow: 'hidden', opacity: 0.75 },
+        { position: 'absolute', width: size, height: size },
         style,
-        { transform: [{ translateX }, { translateY }, { scale }] },
+        { transform },
       ]}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: rgba(color, 0.035) }]} />
-      <LinearGradient
-        colors={[rgba(color, 0), rgba(color, 0.24), rgba(color, 0)]}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <LinearGradient
-        colors={[rgba(color, 0), rgba(color, 0.24), rgba(color, 0)]}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {/* Concentric low-opacity fills approximate a soft radial glow without
+          adding a blur target, a shader, or a new native dependency. */}
+      {Array.from({ length: 18 }, (_, index) => {
+        const inset = index * size * 0.024;
+        return <View key={index} style={{ position: 'absolute', top: inset, right: inset, bottom: inset, left: inset, borderRadius: size / 2, backgroundColor: rgba(color, 0.024) }} />;
+      })}
     </Animated.View>
   );
 }
 
 function GradientGlowBackground({ theme }) {
+  const { width, height } = useWindowDimensions();
   if (theme.dark) return null;
   const colors = theme.refraction;
+  const spread = Math.min(620, Math.max(400, Math.min(width, height) * 1.15));
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden', backgroundColor: colors.fallback }]}>
       <LinearGradient
@@ -116,10 +102,10 @@ function GradientGlowBackground({ theme }) {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <RefractionOrb color={colors.orbs.blue} size={320} delay={0} style={{ top: -60, left: -80 }} />
-      <RefractionOrb color={colors.orbs.rose} size={280} delay={6000} style={{ top: '35%', right: -90 }} />
-      <RefractionOrb color={colors.orbs.mint} size={300} delay={12000} style={{ bottom: -80, left: '10%' }} />
-      <RefractionOrb color={colors.orbs.lavender} size={200} delay={3000} style={{ top: '60%', left: -60 }} />
+      <RefractionOrb color={colors.orbs.blue} size={spread} style={{ top: -spread * 0.28, left: -spread * 0.35 }} />
+      <RefractionOrb color={colors.orbs.rose} size={spread * 0.95} reverse style={{ top: '26%', right: -spread * 0.4 }} />
+      <RefractionOrb color={colors.orbs.mint} size={spread * 1.1} style={{ bottom: -spread * 0.3, right: -spread * 0.15 }} />
+      <RefractionOrb color={colors.orbs.lavender} size={spread * 0.85} reverse style={{ top: '53%', left: -spread * 0.4 }} />
     </View>
   );
 }
