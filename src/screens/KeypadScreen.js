@@ -38,7 +38,7 @@ function Key({ digit, letters, size, onDown, onLong }) {
           pressed={pressed}
           soft
           tint={t.key}
-          tintOpacity={1}
+          tintOpacity={t.dark ? 1 : 0.28}
           style={[styles.key, { width: size, height: size }]}
         >
           <Text
