@@ -410,3 +410,30 @@ export function GlassShadow({ children, style, radius = 999 }) {
     </View>
   );
 }
+
+
+/** The keypad material, shared by light-mode cards and in-call controls. */
+export function KeypadGlass({ children, ...props }) {
+  const t = useTheme();
+  const surface = (
+    <Glass {...props} soft tint={props.tint ?? t.key} tintOpacity={props.tintOpacity ?? (t.dark ? 1 : 0.28)}>
+      {children}
+    </Glass>
+  );
+  // A plain white call backdrop must not substitute its heavier lifted material.
+  // This keeps the fill, white rim, sheen and soft depth identical to the keypad.
+  return t.dark ? surface : <FlatBackdropContext.Provider value={false}>{surface}</FlatBackdropContext.Provider>;
+}
+
+/** Preserve the original call material except on light-mode, light-background controls. */
+export function CallControlGlass({ light, children, ...props }) {
+  const t = useTheme();
+  if (light && !t.dark) {
+    return (
+      <KeypadGlass {...props} dark={undefined} fillScale={1} tintOpacity={props.tint ? 1 : undefined}>
+        {children}
+      </KeypadGlass>
+    );
+  }
+  return <Glass {...props} dark={!light}>{children}</Glass>;
+}

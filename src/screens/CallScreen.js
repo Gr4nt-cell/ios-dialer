@@ -14,7 +14,7 @@ import { useData } from '../DataContext';
 import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
-import { FlatBackdropContext, Glass } from '../components/Glass';
+import { FlatBackdropContext, Glass, CallControlGlass } from '../components/Glass';
 import { gradientFor } from '../gradients';
 import { useActionSheet } from '../components/ActionSheet';
 import { useT } from '../i18n';
@@ -214,8 +214,8 @@ function CallButton({ icon, label, onPress, on, disabled, color, size = 76, icon
       style={{ alignItems: 'center', width: Math.max(COL, size + 26), opacity: disabled ? 0.35 : 1 }}
     >
       {({ pressed }) => (
-        <Glass
-          dark={!light}
+        <CallControlGlass
+          light={light}
           vivid
           outline
           soft
@@ -231,7 +231,7 @@ function CallButton({ icon, label, onPress, on, disabled, color, size = 76, icon
             color={color ? WHITE : on && !light ? '#111' : light ? LIGHT_TEXT : WHITE}
             style={hangup ? { transform: [{ rotate: '135deg' }] } : null}
           />
-        </Glass>
+        </CallControlGlass>
       )}
     </Pressable>
   );
@@ -243,9 +243,9 @@ function EndKey({ onPress, light = false }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={tr('End')} style={{ width: COL, alignItems: 'center' }}>
       {({ pressed }) => (
-        <Glass dark={!light} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
+        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="call" size={32} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
-        </Glass>
+        </CallControlGlass>
       )}
     </Pressable>
   );
@@ -255,9 +255,9 @@ function SmallPill({ icon, label, onPress, light = false }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={label} style={{ alignItems: 'center', width: 110 }}>
       {({ pressed }) => (
-        <Glass dark={!light} liquid vivid outline soft radius={26} pressed={pressed} tint={light ? undefined : CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
+        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={light ? undefined : CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={21} color={light ? LIGHT_TEXT : WHITE} />
-        </Glass>
+        </CallControlGlass>
       )}
     </Pressable>
   );
@@ -498,9 +498,9 @@ export default function CallScreen() {
       <View style={styles.topRow}>
         <Pressable onPress={() => setMinimized(true)} hitSlop={12}>
           {({ pressed }) => (
-            <Glass dark={!lightBackground} liquid vivid outline soft fillScale={0.7} radius={19} pressed={pressed} style={styles.topBtn}>
+            <CallControlGlass light={lightBackground} liquid vivid outline soft fillScale={0.7} radius={19} pressed={pressed} style={styles.topBtn}>
               <Ionicons name="chevron-down" size={20} color={primaryText} />
-            </Glass>
+            </CallControlGlass>
           )}
         </Pressable>
         {primary.isConference ? (
@@ -515,13 +515,13 @@ export default function CallScreen() {
         const hw = identify(h);
         return (
           <Pressable key={h.id} onPress={() => Dialer.swap()} style={{ marginHorizontal: 20, marginTop: 10 }}>
-            <Glass dark={!lightBackground} liquid radius={20} style={styles.heldStrip}>
+            <CallControlGlass light={lightBackground} liquid radius={20} style={styles.heldStrip}>
               <Ionicons name="pause-circle" size={20} color={secondaryText} />
               <Text style={{ color: primaryText, fontSize: fs(15), fontWeight: '600', flex: 1, marginLeft: 8 }} numberOfLines={1}>
                 {hw.name}
               </Text>
               <Text style={{ color: secondaryText, fontSize: fs(13) }}>On hold · tap to swap</Text>
-            </Glass>
+            </CallControlGlass>
           </Pressable>
         );
       })}
@@ -536,12 +536,12 @@ export default function CallScreen() {
           {isUssdCode(dtmf) ? (
             <Pressable onPress={sendUssd} disabled={ussdBusy} hitSlop={10} style={{ marginTop: 10 }}>
               {({ pressed }) => (
-              <Glass dark={!lightBackground} liquid vivid outline soft radius={18} pressed={pressed} style={{ height: 36, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' }}>
+              <CallControlGlass light={lightBackground} liquid vivid outline soft radius={18} pressed={pressed} style={{ height: 36, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons name="arrow-forward-circle" size={17} color={primaryText} />
                   <Text allowFontScaling={false} style={{ color: primaryText, fontSize: fs(15), fontWeight: '600', marginLeft: 7 }}>
                     {ussdBusy ? tr('Running…') : tr('Run Code')}
                   </Text>
-                </Glass>
+                </CallControlGlass>
               )}
             </Pressable>
           ) : null}
@@ -578,9 +578,9 @@ export default function CallScreen() {
               hitSlop={6}
             >
               {({ pressed }) => (
-                  <Glass dark={!lightBackground} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} tintOpacity={0.92} style={[styles.waitingBtn, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}>
+                  <CallControlGlass light={lightBackground} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} tintOpacity={0.92} style={[styles.waitingBtn, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}>
                   <Ionicons name="call" size={24} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
-                  </Glass>
+                  </CallControlGlass>
               )}
             </Pressable>
             <Pressable
@@ -599,9 +599,9 @@ export default function CallScreen() {
               style={{ marginLeft: 10 }}
             >
               {({ pressed }) => (
-                  <Glass dark={!lightBackground} liquid vivid outline soft radius={26} pressed={pressed} tint={GREEN} tintOpacity={0.92} style={[styles.waitingBtn, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}>
+                  <CallControlGlass light={lightBackground} liquid vivid outline soft radius={26} pressed={pressed} tint={GREEN} tintOpacity={0.92} style={[styles.waitingBtn, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}>
                   <Ionicons name="call" size={24} color={WHITE} />
-                  </Glass>
+                  </CallControlGlass>
               )}
             </Pressable>
           </Glass>
@@ -623,14 +623,14 @@ export default function CallScreen() {
             {(primary.accounts || []).map((a, i) => (
               <Pressable key={a.key} onPress={() => { tap(); Dialer.selectAccount(primary.id, a.key); }}>
                 {({ pressed }) => (
-            <Glass dark={!lightBackground} liquid vivid outline radius={14} pressed={pressed} style={styles.simTile}>
+            <CallControlGlass light={lightBackground} liquid vivid outline radius={14} pressed={pressed} style={styles.simTile}>
                     <View style={[styles.simBadge, { backgroundColor: t.blue }]}>
                       <Text style={{ color: '#fff', fontSize: fs(10), fontWeight: '800' }}>{i + 1}</Text>
                     </View>
                     <ChromeText style={{ color: t.text, fontSize: fs(12), fontWeight: '600', marginTop: 5 }}>
                       {a.label || `SIM ${i + 1}`}
                     </ChromeText>
-                  </Glass>
+                  </CallControlGlass>
                 )}
               </Pressable>
             ))}
@@ -643,10 +643,10 @@ export default function CallScreen() {
               {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
                 <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 12 }}>
                   {({ pressed }) => (
-            <Glass dark={!lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
+            <CallControlGlass light={lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
               <Text style={{ color: primaryText, fontSize: fs(32), lineHeight: fs(38) }}>{d}</Text>
               {l ? <Text style={{ color: primaryText, fontSize: fs(9), fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
-                    </Glass>
+                    </CallControlGlass>
                   )}
                 </Pressable>
               ))}
@@ -715,9 +715,9 @@ export default function CallScreen() {
         )}
         {padOpen ? (
           <Pressable onPress={() => setKeypad(false)} hitSlop={12} style={{ width: COL, alignItems: 'center', paddingTop: 18 }}>
-            <Glass dark={!lightBackground} liquid radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center' }}>
+            <CallControlGlass light={lightBackground} liquid radius={18} style={{ paddingHorizontal: 18, height: 36, justifyContent: 'center' }}>
               <Text style={{ color: primaryText, fontSize: fs(15), fontWeight: '600' }}>{tr('Hide')}</Text>
-            </Glass>
+            </CallControlGlass>
           </Pressable>
         ) : primary.state === 'select_account' || isTablet ? (
           <View style={{ width: COL }} />
@@ -751,12 +751,12 @@ export default function CallScreen() {
             {isUssdCode(dtmf) ? (
               <Pressable onPress={sendUssd} disabled={ussdBusy} hitSlop={10} style={{ marginTop: 8 }}>
                 {({ pressed }) => (
-                  <Glass dark={!lightBackground} liquid vivid outline soft radius={18} pressed={pressed} style={styles.runCode}>
+                  <CallControlGlass light={lightBackground} liquid vivid outline soft radius={18} pressed={pressed} style={styles.runCode}>
                     <Ionicons name="arrow-forward-circle" size={17} color={primaryText} />
                     <Text allowFontScaling={false} style={{ color: primaryText, fontSize: fs(15), fontWeight: '600', marginLeft: 7 }}>
                       {ussdBusy ? tr('Running…') : tr('Run Code')}
                     </Text>
-                  </Glass>
+                  </CallControlGlass>
                 )}
               </Pressable>
             ) : null}
@@ -767,10 +767,10 @@ export default function CallScreen() {
                   {DTMF_KEYS.slice(row * 3, row * 3 + 3).map(([d, l]) => (
                     <Pressable key={d} onPress={() => pressDtmf(d)} style={{ marginHorizontal: 10 }}>
                       {({ pressed }) => (
-                        <Glass dark={!lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
+                        <CallControlGlass light={lightBackground} liquid vivid outline soft radius={36} pressed={pressed} tint={lightBackground ? undefined : CONTROL_TINT} tintOpacity={1} style={styles.dtmfKey}>
                           <Text style={{ color: primaryText, fontSize: fs(32), lineHeight: fs(38) }}>{d}</Text>
                           {l ? <Text style={{ color: primaryText, fontSize: fs(9), fontWeight: '700', letterSpacing: 2 }}>{l}</Text> : null}
-                        </Glass>
+                        </CallControlGlass>
                       )}
                     </Pressable>
                   ))}

@@ -12,7 +12,7 @@ import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
 import { playTone, preloadTones } from '../sounds';
 import { IconButton } from '../components/ui';
-import { Glass } from '../components/Glass';
+import { Glass, KeypadGlass } from '../components/Glass';
 import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
 import { runUssdThroughOperator } from '../ussd';
 import { useCalls } from '../CallContext';
@@ -33,12 +33,9 @@ function Key({ digit, letters, size, onDown, onLong }) {
   return (
     <Pressable testID={`key-${digit}`} onPressIn={() => onDown(digit)} onLongPress={() => onLong(digit)} delayLongPress={450}>
       {({ pressed }) => (
-        <Glass
+        <KeypadGlass
           radius={size / 2}
           pressed={pressed}
-          soft
-          tint={t.key}
-          tintOpacity={t.dark ? 1 : 0.28}
           style={[styles.key, { width: size, height: size }]}
         >
           <Text
@@ -57,7 +54,7 @@ function Key({ digit, letters, size, onDown, onLong }) {
           ) : letters ? (
             <Text style={{ color: t.keyText, fontSize: size * 0.13, fontWeight: '700', letterSpacing: 2, marginTop: -1 }}>{letters}</Text>
           ) : null}
-        </Glass>
+        </KeypadGlass>
       )}
     </Pressable>
   );

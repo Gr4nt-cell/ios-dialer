@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fs, useTheme } from '../theme';
 import { initials } from '../phone';
-import { Glass } from './Glass';
+import { Glass, KeypadGlass } from './Glass';
 
 /**
  * Tall rounded "poster" card: the contact's photo, or their own gradient with initials.
@@ -15,6 +15,8 @@ import { Glass } from './Glass';
 export default function ContactCard({ width, height, name, label, image, colorKey, onPress, onLongPress, overlay, radius = 22, glass = true }) {
   const t = useTheme();
   const letters = initials(name);
+  const keypadMaterial = glass && !image && !t.dark;
+  const CardGlass = keypadMaterial ? KeypadGlass : Glass;
   const face = image ? (
     <Image
       source={{ uri: image }}
@@ -28,7 +30,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
         { backgroundColor: glass ? 'transparent' : t.fill, alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 },
       ]}
     >
-      <LinearGradient
+      {!keypadMaterial ? <LinearGradient
         colors={
           glass
             ? t.dark
@@ -42,18 +44,18 @@ export default function ContactCard({ width, height, name, label, image, colorKe
         start={{ x: 0.2, y: 0 }}
         end={{ x: 0.8, y: 1 }}
         style={StyleSheet.absoluteFill}
-      />
+      /> : null}
       {letters ? (
-        <Text style={{ color: t.dark ? '#C7C7CC' : '#8E8E93', fontSize: Math.round(width * 0.36), fontWeight: '600', letterSpacing: 0.5 }}>{letters}</Text>
+        <Text style={{ color: keypadMaterial ? t.secondary : t.dark ? '#C7C7CC' : '#8E8E93', fontSize: Math.round(width * 0.36), fontWeight: '600', letterSpacing: 0.5 }}>{letters}</Text>
       ) : (
-        <Ionicons name="person" size={Math.round(width * 0.42)} color={t.dark ? '#AEAEB2' : '#A1A1A6'} />
+        <Ionicons name="person" size={Math.round(width * 0.42)} color={keypadMaterial ? t.secondary : t.dark ? '#AEAEB2' : '#A1A1A6'} />
       )}
     </View>
   );
   const cardContents = (
     <>
       {face}
-      {glass ? (
+      {glass && !keypadMaterial ? (
         <LinearGradient
           colors={t.dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0)', 'rgba(10,12,18,0.12)'] : ['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.02)', 'rgba(35,50,70,0.06)']}
           locations={[0, 0.42, 1]}
@@ -61,22 +63,22 @@ export default function ContactCard({ width, height, name, label, image, colorKe
           pointerEvents="none"
         />
       ) : null}
-      <LinearGradient
+      {!keypadMaterial ? <LinearGradient
         colors={glass ? ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)'] : ['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']}
         style={styles.sheen}
         pointerEvents="none"
-      />
+      /> : null}
       {overlay ? (
         <>
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.65)']} style={styles.shade} pointerEvents="none" />
+          {!keypadMaterial ? <LinearGradient colors={['transparent', 'rgba(0,0,0,0.65)']} style={styles.shade} pointerEvents="none" /> : null}
           <View style={styles.overlayText}>
-            <Text style={{ color: '#fff', fontSize: fs(14), fontWeight: '700' }} numberOfLines={1} allowFontScaling={false}>
+            <Text style={{ color: keypadMaterial ? t.text : '#fff', fontSize: fs(14), fontWeight: '700' }} numberOfLines={1} allowFontScaling={false}>
               {name.split(' ')[0]}
             </Text>
             {label ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
-                <Ionicons name="call" size={10} color="rgba(255,255,255,0.8)" style={{ marginRight: 3 }} />
-                <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: fs(11) }} numberOfLines={1} allowFontScaling={false}>
+                <Ionicons name="call" size={10} color={keypadMaterial ? t.secondary : 'rgba(255,255,255,0.8)'} style={{ marginRight: 3 }} />
+                <Text style={{ color: keypadMaterial ? t.secondary : 'rgba(255,255,255,0.8)', fontSize: fs(11) }} numberOfLines={1} allowFontScaling={false}>
                   {label}
                 </Text>
               </View>
@@ -92,14 +94,14 @@ export default function ContactCard({ width, height, name, label, image, colorKe
       {({ pressed }) => (
         <>
           {glass ? (
-            <Glass
+            <CardGlass
               radius={radius}
               strong
               vivid
-              style={[styles.glassCard, { width, height, transform: [{ scale: pressed ? 0.95 : 1 }] }]}
+              style={[keypadMaterial ? null : styles.glassCard, { width, height, transform: [{ scale: pressed ? 0.95 : 1 }] }]}
             >
               <View style={[styles.glassContent, { borderRadius: Math.max(0, radius - 1) }]}>{cardContents}</View>
-            </Glass>
+            </CardGlass>
           ) : (
             <View
               style={[
