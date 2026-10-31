@@ -67,7 +67,7 @@ export default function TabletShell({
   const detailSize = useMemo(() => ({ width: detailW, height: windowHeight }), [detailW, windowHeight]);
 
   return (
-    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: t.bg }}>
+    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: t.dark ? t.bg : 'transparent' }}>
       <Sidebar tabs={tabs} active={activeTab} onChange={onChangeTab} onSettings={onSettings} badges={badges} />
 
       <View style={[styles.column, { width: LIST_W, borderRightColor: t.separator }]}>

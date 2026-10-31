@@ -27,6 +27,7 @@ export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
+export const GlassFillScaleContext = createContext(1);
 export const GlassRefractionContext = createContext(null);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
@@ -199,8 +200,10 @@ export function Glass({
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
   const refraction = useContext(GlassRefractionContext);
+  const glassFillScale = useContext(GlassFillScaleContext);
   const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
+  const surfaceFillScale = dark ? 1 : glassFillScale;
   const plain = mode === 'plain';
   const showRefraction = liquid && !plain && !!refraction;
   // Flat backdrops still get the translucent fill; the stronger rim and shadow
@@ -256,7 +259,7 @@ export function Glass({
     : realBlur ? (tinted ? 0.88 : 0.76) : tinted ? 0.97 : 0.94;
   // Flat surfaces keep their own faint colour field and rely on the raised rim
   // and shadow for definition, rather than becoming opaque.
-  const a = alpha * fillScale;
+  const a = alpha * fillScale * surfaceFillScale;
   const fill = tint
     ? colorWithOpacity(tint, tintOpacity * fillScale * (vivid ? 0.86 : 1))
     : flat

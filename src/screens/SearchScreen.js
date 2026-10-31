@@ -117,7 +117,7 @@ export default function SearchScreen() {
         keyboardDismissMode="on-drag"
         renderItem={renderItem}
         renderSectionHeader={({ section }) =>
-          section.title ? <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.bg }}>{section.title}</Text> : null
+          section.title ? <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.dark ? t.bg : 'transparent' }}>{section.title}</Text> : null
         }
         ListEmptyComponent={q ? <EmptyState icon="search" title={tr('No Results')} message={`Nothing matches “${q}”.`} /> : <EmptyState icon="search" title={tr('Search')} message={tr('Find people, recent calls, or type a number to call it.')} />}
         contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}

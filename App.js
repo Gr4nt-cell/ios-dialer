@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Linking, Modal, Text, View, useWindowDimensions } from 'react-native';
+import { BackHandler, Linking, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataProvider, useData } from './src/DataContext';
@@ -12,7 +13,7 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -49,6 +50,50 @@ const ROUTES = {
 // On a tablet these fill the pane beside the list instead of covering the
 // screen; the rest (the forms and pickers) stay modal, where they belong.
 const PANE_ROUTES = new Set(['contact', 'settings', 'recordings', 'privacyPolicy', 'statistics']);
+
+function LightRefractionBackground({ theme }) {
+  if (theme.dark) return null;
+  const colors = theme.refraction;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <LinearGradient
+        colors={colors.base}
+        locations={[0, 0.24, 0.5, 0.74, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={colors.blue}
+        locations={[0, 0.55, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '82%', height: '58%' }}
+      />
+      <LinearGradient
+        colors={colors.rose}
+        locations={[0, 0.5, 1]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{ position: 'absolute', top: '18%', right: 0, width: '78%', height: '64%' }}
+      />
+      <LinearGradient
+        colors={colors.lavender}
+        locations={[0, 0.42, 1]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 0 }}
+        style={{ position: 'absolute', bottom: 0, left: 0, width: '78%', height: '52%' }}
+      />
+      <LinearGradient
+        colors={colors.mint}
+        locations={[0, 0.5, 1]}
+        start={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 0 }}
+        style={{ position: 'absolute', bottom: 0, right: 0, width: '78%', height: '52%' }}
+      />
+    </View>
+  );
+}
 
 function islandOn() {
   try {
@@ -245,7 +290,7 @@ function Main() {
     />
   ) : (
     <>
-      <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
+      <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.dark ? t.bg : 'transparent' }}>
         <Boundary resetKey={shownTab}>{screen}</Boundary>
       </BlurTargetView>
       <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
@@ -256,12 +301,14 @@ function Main() {
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
       <GlassRefractionProvider active={settings.liquidGlass !== false}>
+      <GlassFillScaleContext.Provider value={t.glassFillScale}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
-      {/* the app always uses the plain backdrop now */}
+      {/* Keep live blur limited to the tab bar; app surfaces use translucent fills. */}
       <FlatBackdropContext.Provider value>
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <LightRefractionBackground theme={t} />
         {shell}
         <ReturnToCall />
       </View>
@@ -272,6 +319,7 @@ function Main() {
           <Modal key={route.key} visible animationType="slide" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
             <SafeAreaProvider>
               <View style={{ flex: 1, backgroundColor: t.bg }}>
+                <LightRefractionBackground theme={t} />
                 <Boundary resetKey={route.key}>
                   <Screen route={route} />
                 </Boundary>
@@ -289,15 +337,18 @@ function Main() {
           <SafeAreaProvider>
             {/* the call screen has its own photo or gradient behind the glass,
                 so it never wants the flat-background treatment */}
-            <FlatBackdropContext.Provider value={false}>
-              <CallScreen />
-            </FlatBackdropContext.Provider>
+            <GlassFillScaleContext.Provider value={1}>
+              <FlatBackdropContext.Provider value={false}>
+                <CallScreen />
+              </FlatBackdropContext.Provider>
+            </GlassFillScaleContext.Provider>
           </SafeAreaProvider>
         </Modal>
       ) : null}
       </GlassTargetContext.Provider>
       </FlatBackdropContext.Provider>
       </GlassModeContext.Provider>
+      </GlassFillScaleContext.Provider>
       </GlassRefractionProvider>
     </NavContext.Provider>
     </I18nProvider>
