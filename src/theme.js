@@ -60,7 +60,17 @@ const dark = {
   avatar: ['#6C6C72', '#4C4C52'],
   glass: 'rgba(38,41,47,0.86)',
   glassBorder: 'rgba(220,228,240,0.12)',
-  glassFillScale: 1,
+  glassFillScale: 0.76,
+  refraction: {
+    fallback: '#101522',
+    base: ['#0c1424', '#171321', '#0b1b1b'],
+    orbs: {
+      blue: '#347dff',
+      rose: '#a94d8c',
+      mint: '#28a88a',
+      lavender: '#7452c7',
+    },
+  },
   chartIncoming: '#3B93F0',
   chartOutgoing: '#1DB069',
   chartMissed: '#C73A2E',
