@@ -203,7 +203,7 @@ export function Glass({
   const glassFillScale = useContext(GlassFillScaleContext);
   const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
-  const surfaceFillScale = glassFillScale;
+  const surfaceFillScale = dark ? 1 : glassFillScale;
   const plain = mode === 'plain';
   const showRefraction = liquid && !plain && !!refraction;
   // Flat backdrops still get the translucent fill; the stronger rim and shadow
