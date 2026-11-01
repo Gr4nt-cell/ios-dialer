@@ -83,7 +83,7 @@ jobs:
           APK=android/app/build/outputs/apk/release/app-release.apk
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           "$BT/apksigner" verify --verbose --print-certs "$APK" | tee "$RUNNER_TEMP/apk-signer.txt"
-          grep -q "CN=Gr4nt" "$RUNNER_TEMP/apk-signer.txt" || {
+          grep -q "CN=ios-dialer" "$RUNNER_TEMP/apk-signer.txt" || {
             echo "::error::APK was not signed with the existing iOS Dialer upload key."
             exit 1
           }
