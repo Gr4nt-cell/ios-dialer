@@ -54,7 +54,7 @@ export default function DateStrip({ value, onChange, marked }) {
     <Glass radius={21} strong blur={EXTENDED_BLUR} vivid intensity={90} style={{ marginHorizontal: 16, paddingTop: 8, paddingBottom: 7 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 22, marginBottom: 7 }}>
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10}>
-          <Text style={{ color: t.secondary, fontSize: fs(12), fontWeight: '500' }}>{monthLabel(prev)}</Text>
+          <Text style={{ color: t.secondary, fontSize: fs(12), fontWeight: '600' }}>{monthLabel(prev)}</Text>
         </Pressable>
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: t.text, fontSize: fs(15.5), fontWeight: '700' }}>
@@ -63,7 +63,7 @@ export default function DateStrip({ value, onChange, marked }) {
           <View style={{ height: 2, width: 22, borderRadius: 2, backgroundColor: t.blue, marginTop: 2 }} />
         </View>
         <Pressable onPress={() => shiftMonth(1)} hitSlop={10}>
-          <Text style={{ color: t.secondary, fontSize: fs(12), fontWeight: '500' }}>{monthLabel(next)}</Text>
+          <Text style={{ color: t.secondary, fontSize: fs(12), fontWeight: '600' }}>{monthLabel(next)}</Text>
         </Pressable>
       </View>
       <ScrollView
@@ -80,7 +80,7 @@ export default function DateStrip({ value, onChange, marked }) {
           const has = marked && marked.has(d.toDateString());
           return (
             <Pressable key={d.getDate()} onPress={() => select(d)} style={{ width: DAY_W, alignItems: 'center' }}>
-              <Text style={{ color: t.tertiary, fontSize: fs(9.5), fontWeight: '600', marginBottom: 3 }}>{WEEKDAYS[d.getDay()]}</Text>
+              <Text style={{ color: t.tertiary, fontSize: fs(9.5), fontWeight: '700', marginBottom: 3 }}>{WEEKDAYS[d.getDay()]}</Text>
               <View
                 style={{
                   width: 29,
@@ -97,7 +97,7 @@ export default function DateStrip({ value, onChange, marked }) {
                   style={{
                     color: selected ? '#fff' : isToday ? t.blue : future ? t.tertiary : t.text,
                     fontSize: fs(14),
-                    fontWeight: selected || isToday ? '700' : '500',
+                    fontWeight: selected || isToday ? '700' : '600',
                   }}
                 >
                   {d.getDate()}
