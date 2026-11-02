@@ -374,13 +374,35 @@ export function Glass({
     );
   }
 
+  // On Android, clipping a view and drawing a boxShadow on that same view can
+  // leave its children unpainted after Appearance.setColorScheme changes the
+  // app from dark to light. Keep the shadow on the outer layer and clip only
+  // the decorative glass layers; render labels and controls above that layer.
+  if (lightLiquid && Platform.OS === 'android') {
+    return (
+      <View
+        pointerEvents={pointerEvents}
+        onLayout={onLayout}
+        style={[
+          { borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] },
+          { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(74,99,155,${soft ? 0.08 : 0.1})` },
+          style,
+        ]}
+      >
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
+          {decoration}
+        </View>
+        {children}
+      </View>
+    );
+  }
+
   return (
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
       style={[
         { borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] },
-        lightLiquid ? { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(74,99,155,${soft ? 0.08 : 0.1})` } : null,
         style,
       ]}
     >
