@@ -1,8 +1,7 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, BackHandler, Linking, Modal, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BackHandler, Linking, Modal, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataProvider, useData } from './src/DataContext';
@@ -13,7 +12,8 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
+import { GlowBackdrop } from './src/components/GlowBackdrop';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
 import FavoritesScreen from './src/screens/FavoritesScreen';
@@ -50,68 +50,6 @@ const ROUTES = {
 // On a tablet these fill the pane beside the list instead of covering the
 // screen; the rest (the forms and pickers) stay modal, where they belong.
 const PANE_ROUTES = new Set(['contact', 'settings', 'recordings', 'privacyPolicy', 'statistics']);
-
-function rgba(hex, alpha) {
-  const value = hex.replace('#', '');
-  const red = parseInt(value.slice(0, 2), 16);
-  const green = parseInt(value.slice(2, 4), 16);
-  const blue = parseInt(value.slice(4, 6), 16);
-  return `rgba(${red},${green},${blue},${alpha})`;
-}
-
-function RefractionOrb({ color, size, reverse = false, style }) {
-  // Share the existing motion clock. Reduced motion and the glass-off setting
-  // leave a static colour field instead of starting four independent loops.
-  const progress = useContext(GlassRefractionContext);
-  const direction = reverse ? -1 : 1;
-  const transform = progress ? [
-    { translateX: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 20 * direction, 0] }) },
-    { translateY: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 28, 0] }) },
-    { scale: progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.08, 1] }) },
-  ] : [];
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        { position: 'absolute', width: size, height: size },
-        style,
-        Platform.OS === 'android' && Platform.Version >= 31 ? { filter: [{ blur: 18 }] } : null,
-        { transform },
-      ]}
-    >
-      {/* Concentric low-opacity fills approximate a soft radial glow without
-          adding a blur target, a shader, or a new native dependency. */}
-      {Array.from({ length: 24 }, (_, index) => {
-        const inset = index * size * 0.019;
-        return <View key={index} style={{ position: 'absolute', top: inset, right: inset, bottom: inset, left: inset, borderRadius: size / 2, backgroundColor: rgba(color, 0.036) }} />;
-      })}
-    </Animated.View>
-  );
-}
-
-function GradientGlowBackground({ theme }) {
-  const { width, height } = useWindowDimensions();
-  if (theme.dark) return null;
-  const colors = theme.refraction;
-  // Match the reference: broad blue at the upper left, rose on the right,
-  // lavender at the lower left and mint underneath the floating tab bar.
-  const spread = Math.min(1400, Math.max(width * 1.7, Math.min(height * 0.9, width * 2.15)));
-  return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden', backgroundColor: colors.fallback }]}>
-      <LinearGradient
-        colors={colors.base}
-        locations={[0, 0.5, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <RefractionOrb color={colors.orbs.blue} size={spread} style={{ top: height * 0.2 - spread / 2, left: width * 0.22 - spread / 2 }} />
-      <RefractionOrb color={colors.orbs.rose} size={spread * 0.95} reverse style={{ top: height * 0.58 - spread * 0.475, left: width * 0.98 - spread * 0.475 }} />
-      <RefractionOrb color={colors.orbs.mint} size={spread * 0.88} style={{ top: height * 0.95 - spread * 0.44, left: width * 0.7 - spread * 0.44 }} />
-      <RefractionOrb color={colors.orbs.lavender} size={spread * 0.78} reverse style={{ top: height * 0.82 - spread * 0.39, left: width * 0.02 - spread * 0.39 }} />
-    </View>
-  );
-}
 
 function islandOn() {
   try {
@@ -326,7 +264,7 @@ function Main() {
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
-        <GradientGlowBackground theme={t} />
+        <GlowBackdrop />
         {shell}
         <ReturnToCall />
       </View>
@@ -337,7 +275,7 @@ function Main() {
           <Modal key={route.key} visible animationType="slide" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
             <SafeAreaProvider>
               <View style={{ flex: 1, backgroundColor: t.bg }}>
-                <GradientGlowBackground theme={t} />
+                <GlowBackdrop />
                 <Boundary resetKey={route.key}>
                   <Screen route={route} />
                 </Boundary>

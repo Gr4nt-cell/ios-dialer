@@ -255,8 +255,8 @@ export function Glass({
   // Sheets without a live blur need enough body for their labels to read.
   const alpha = vivid
     ? realBlur
-      ? dark ? (tinted ? 0.5 : 0.3) : tinted ? 0.78 : 0.62
-      : dark ? (tinted ? 0.8 : 0.65) : tinted ? 0.9 : 0.78
+      ? dark ? (tinted ? 0.48 : 0.2) : tinted ? 0.4 : 0.12
+      : dark ? (tinted ? 0.6 : 0.34) : tinted ? 0.5 : 0.22
     : dark
     ? realBlur ? (tinted ? 0.74 : 0.56) : tinted ? 0.94 : 0.9
     : realBlur ? (tinted ? 0.88 : 0.76) : tinted ? 0.97 : 0.94;
@@ -268,7 +268,7 @@ export function Glass({
     : flat
     ? dark ? `rgba(39,42,48,${a})` : `rgba(246,250,255,${a})`
     : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.18)' : liquid ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.55)';
+  const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
     : liquid
@@ -278,13 +278,13 @@ export function Glass({
     : outline
     ? dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.12)'
     : dark ? 'rgba(220,228,240,0.1)' : 'rgba(80,86,96,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.14)' : lightLiquid ? 'rgba(90,111,174,0.06)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
+  const edge = dark ? 'rgba(0,0,0,0.35)' : lightLiquid ? 'rgba(90,111,174,0.04)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
   const highlight = flat
     ? liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.78)' : dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
     ? liquid ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.14)'
     : vivid
-    ? liquid ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)' : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
+    ? liquid ? dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)' : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
     : liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.42)' : dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)';
 
   // Android derives an elevation shadow from the view's outline, and a view
@@ -420,10 +420,10 @@ export function GlassShadow({ children, style, radius = 999 }) {
       style={[
         {
           borderRadius: radius,
-          shadowColor: '#171B23',
-          shadowOpacity: t.dark ? 0.28 : 0.09,
-          shadowRadius: 22,
-          shadowOffset: { width: 0, height: 6 },
+          shadowColor: '#000',
+          shadowOpacity: t.dark ? 0.5 : 0.14,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 8 },
         },
         style,
       ]}
