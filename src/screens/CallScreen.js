@@ -15,6 +15,7 @@ import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
 import { FlatBackdropContext, Glass, CallControlGlass } from '../components/Glass';
+import { GlowBackdrop } from '../components/GlowBackdrop';
 import { gradientFor } from '../gradients';
 import { callAppearance } from '../callAppearance';
 import { useActionSheet } from '../components/ActionSheet';
@@ -341,9 +342,10 @@ export default function CallScreen() {
   const tap = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
   const wrap = (children, extra) => (
-    <FlatBackdropContext.Provider value={plainBackground}>
-      <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: plainBackground ? plainColor : '#0B0C10' }, extra]}>
+    <FlatBackdropContext.Provider value={plainBackground && !t.dark}>
+      <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
+        {t.dark ? <GlowBackdrop /> : null}
         <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} />
         {children}
       </Animated.View>

@@ -9,10 +9,26 @@ export function GlowBackdrop({ style }) {
   const t = useTheme();
   const [a, b, c] = t.glow;
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: t.base }, style]}>
-      <LinearGradient colors={[a, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.75, y: 0.55 }} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={['transparent', b]} start={{ x: 0.2, y: 0.3 }} end={{ x: 1, y: 0.75 }} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={['transparent', c]} start={{ x: 0.7, y: 0.45 }} end={{ x: 0.1, y: 1 }} style={StyleSheet.absoluteFill} />
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, style]}>
+      <LinearGradient
+        colors={t.backdrop}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {t.dark ? (
+        <>
+          <LinearGradient colors={[a, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.75, y: 0.55 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['transparent', b]} start={{ x: 0.2, y: 0.3 }} end={{ x: 1, y: 0.75 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['transparent', c]} start={{ x: 0.7, y: 0.45 }} end={{ x: 0.1, y: 1 }} style={StyleSheet.absoluteFill} />
+        </>
+      ) : (
+        <>
+          <LinearGradient colors={[a, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.85, y: 0.7 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={[b, 'transparent']} start={{ x: 1, y: 1 }} end={{ x: 0.2, y: 0.25 }} style={StyleSheet.absoluteFill} />
+        </>
+      )}
     </View>
   );
 }

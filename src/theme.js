@@ -2,8 +2,9 @@ import { useColorScheme } from 'react-native';
 
 const light = {
   dark: false,
-  glow: ['rgba(10,132,255,0.30)', 'rgba(46,230,166,0.24)', 'rgba(255,126,179,0.22)'],
-  base: '#F4F6FB',
+  backdrop: ['#D6FFF0', '#F4FBFA', '#FFF0DF'],
+  glow: ['rgba(99,244,204,0.65)', 'rgba(255,179,124,0.65)'],
+  base: '#F4FBFA',
   bg: 'transparent',
   grouped: 'transparent',
   card: 'rgba(255,255,255,0.42)',
@@ -34,6 +35,7 @@ const light = {
 
 const dark = {
   dark: true,
+  backdrop: ['#05060A', '#05060A', '#05060A'],
   glow: ['rgba(58,91,217,0.48)', 'rgba(46,230,166,0.30)', 'rgba(224,48,110,0.32)'],
   base: '#05060A',
   bg: 'transparent',
