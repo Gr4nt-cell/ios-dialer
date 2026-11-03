@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Linking, Platform, StyleSheet, Text, View } from 'react-native';
-import { usePaneSize, useBottomSpace } from '../device';
+import { getTabBarClipSpace, usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { scrollTick } from '../haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -194,6 +194,7 @@ export default function ContactsScreen() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarSpace = useBottomSpace();
+  const dockClipSpace = getTabBarClipSpace(tabBarSpace, insets.bottom);
   const nav = useNav();
   const { width } = usePaneSize();
   const { contacts, contactsPerm, contactsError, refreshContacts, call } = useData();
@@ -341,7 +342,7 @@ export default function ContactsScreen() {
 
   if (contactsPerm === 'denied') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
         {header}
         <EmptyState
           icon="people-outline"
@@ -355,7 +356,7 @@ export default function ContactsScreen() {
 
   if (duplicateReview) {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
         {header}
         <FlatList
           data={duplicateGroups}
@@ -368,14 +369,14 @@ export default function ContactsScreen() {
               message="No contacts share a name, phone number, or email address."
             />
           }
-          contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20, paddingTop: 8 }}
+          contentContainerStyle={{ paddingBottom: 20, paddingTop: 8 }}
         />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
       {header}
       <FlatList
         removeClippedSubviews
@@ -431,7 +432,7 @@ export default function ContactsScreen() {
             }
           />
         }
-        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
     </View>
   );

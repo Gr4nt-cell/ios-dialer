@@ -68,6 +68,7 @@ export function useTheme() {
   return useColorScheme() === 'dark' ? dark : light;
 }
 
+export const TAB_BAR_HEIGHT = 62;
 export const TAB_BAR_SPACE = 92;
 
 /**

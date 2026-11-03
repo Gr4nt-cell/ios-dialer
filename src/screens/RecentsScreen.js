@@ -4,7 +4,7 @@ import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
-import { useBottomSpace } from '../device';
+import { getTabBarClipSpace, useBottomSpace } from '../device';
 import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, timeLabel } from '../phone';
@@ -92,6 +92,7 @@ export default function RecentsScreen() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarSpace = useBottomSpace();
+  const dockClipSpace = getTabBarClipSpace(tabBarSpace, insets.bottom);
   const { recents, markRecentsSeen, deleteCalls, callLogPerm, refreshCallLog } = useData();
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState(false);
@@ -153,7 +154,7 @@ export default function RecentsScreen() {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
       <FlatList
         removeClippedSubviews
         maxToRenderPerBatch={12}
@@ -171,7 +172,7 @@ export default function RecentsScreen() {
           />
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} progressViewOffset={insets.top + 40} />}
-        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
     </View>
   );

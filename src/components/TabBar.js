@@ -3,7 +3,7 @@ import { Animated, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fs, useTheme } from '../theme';
+import { fs, TAB_BAR_HEIGHT, useTheme } from '../theme';
 import Dialer from '../dialer';
 import { FlatBackdropContext, Glass, GlassShadow } from './Glass';
 import { useT } from '../i18n';
@@ -135,7 +135,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <GlassShadow radius={32} style={{ flex: 1 }}>
-        <Glass vivid outline radius={32} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62 }}>
+        <Glass vivid outline radius={32} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: TAB_BAR_HEIGHT }}>
           {itemW > 0 ? (
             <Animated.View
               pointerEvents="none"

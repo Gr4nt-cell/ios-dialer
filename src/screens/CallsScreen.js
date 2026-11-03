@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Animated, FlatList, StyleSheet, Text, View } from 'react-native';
-import { usePaneSize, useBottomSpace } from '../device';
+import { getTabBarClipSpace, usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -136,6 +136,7 @@ export default function CallsScreen() {
   const nav = useNav();
   const insets = useSafeAreaInsets();
   const tabBarSpace = useBottomSpace();
+  const dockClipSpace = getTabBarClipSpace(tabBarSpace, insets.bottom);
   const sheet = useActionSheet();
   const { recents, resolve, markRecentsSeen, deleteCalls, callVoicemail } = useData();
   const [filter, setFilter] = useState('all');
@@ -234,7 +235,7 @@ export default function CallsScreen() {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
       {header}
       <FlatList
         removeClippedSubviews
@@ -254,7 +255,7 @@ export default function CallsScreen() {
             <EmptyState icon={current.icon} title={`${tr('No')} ${tr(current.label)}`} message={tr('Nothing like that on this day.')} />
           )
         }
-        contentContainerStyle={{ paddingBottom: tabBarSpace + insets.bottom + 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
     </View>
   );

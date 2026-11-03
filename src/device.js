@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { useWindowDimensions } from 'react-native';
-import { TAB_BAR_SPACE } from './theme';
+import { TAB_BAR_HEIGHT, TAB_BAR_SPACE } from './theme';
 
 /**
  * Phone or tablet, and how wide the thing you are drawing into actually is.
@@ -42,4 +42,13 @@ export function usePaneSize() {
  */
 export function useBottomSpace() {
   return useContext(PaneContext) ? 0 : TAB_BAR_SPACE;
+}
+
+/**
+ * Bottom edge of the scroll viewport above the floating tab dock.
+ * Keep it aligned with the dock's visible height and its safe-area padding.
+ */
+export function getTabBarClipSpace(tabBarSpace, bottomInset) {
+  if (!tabBarSpace) return 0;
+  return Math.max(tabBarSpace, TAB_BAR_HEIGHT + Math.max(bottomInset, 10));
 }
