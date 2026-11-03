@@ -247,6 +247,8 @@ function Main() {
   ) : (
     <>
       <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.dark ? t.bg : 'transparent' }}>
+        {/* Keep the light backdrop inside Android's native blur target so it remains visible. */}
+        <GlowBackdrop />
         <Boundary resetKey={shownTab}>{screen}</Boundary>
       </BlurTargetView>
       <TabBar tabs={tabs} active={shownTab} onChange={setTab} badges={{ recents: missedCount, calls: missedCount }} />
@@ -264,7 +266,7 @@ function Main() {
       <GlassTargetContext.Provider value={blurTarget}>
       <StatusBar style={t.dark ? 'light' : 'dark'} />
       <View style={{ flex: 1, backgroundColor: t.bg }}>
-        <GlowBackdrop />
+        {isTablet ? <GlowBackdrop /> : null}
         {shell}
         <ReturnToCall />
       </View>
