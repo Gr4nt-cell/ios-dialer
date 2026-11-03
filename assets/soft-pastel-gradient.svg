@@ -5,31 +5,31 @@
       <stop offset="54%" stop-color="#E6D9FF"/>
       <stop offset="100%" stop-color="#D0F7F1"/>
     </linearGradient>
-    <radialGradient id="blue" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#60BBFA" stop-opacity=".78"/>
-      <stop offset="78%" stop-color="#60BBFA" stop-opacity="0"/>
+    <radialGradient id="blue" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(34 166) scale(613 739)">
+      <stop offset="0%" stop-color="#60BBFA" stop-opacity=".62"/>
+      <stop offset="72%" stop-color="#60BBFA" stop-opacity="0"/>
       <stop offset="100%" stop-color="#60BBFA" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="pink" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FF97D2" stop-opacity=".74"/>
-      <stop offset="80%" stop-color="#FF97D2" stop-opacity="0"/>
+    <radialGradient id="pink" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(893 906) scale(553 776)">
+      <stop offset="0%" stop-color="#FF97D2" stop-opacity=".80"/>
+      <stop offset="74%" stop-color="#FF97D2" stop-opacity="0"/>
       <stop offset="100%" stop-color="#FF97D2" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="mint" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#63F5DA" stop-opacity=".79"/>
-      <stop offset="78%" stop-color="#63F5DA" stop-opacity="0"/>
+    <radialGradient id="mint" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(698 1848) scale(553 832)">
+      <stop offset="0%" stop-color="#63F5DA" stop-opacity=".84"/>
+      <stop offset="72%" stop-color="#63F5DA" stop-opacity="0"/>
       <stop offset="100%" stop-color="#63F5DA" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="violet" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#B08FFF" stop-opacity=".64"/>
-      <stop offset="80%" stop-color="#B08FFF" stop-opacity="0"/>
+    <radialGradient id="violet" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(-68 1534) scale(579 795)">
+      <stop offset="0%" stop-color="#B08FFF" stop-opacity=".76"/>
+      <stop offset="75%" stop-color="#B08FFF" stop-opacity="0"/>
       <stop offset="100%" stop-color="#B08FFF" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="851" height="1848" fill="#E5E6FA"/>
   <rect width="851" height="1848" fill="url(#base)"/>
-  <ellipse cx="-8%" cy="83%" rx="75%" ry="42%" fill="url(#violet)"/>
-  <ellipse cx="80%" cy="100%" rx="72%" ry="48%" fill="url(#mint)"/>
-  <ellipse cx="105%" cy="49%" rx="75%" ry="48%" fill="url(#pink)"/>
-  <ellipse cx="4%" cy="9%" rx="85%" ry="55%" fill="url(#blue)"/>
+  <rect width="851" height="1848" fill="url(#blue)"/>
+  <rect width="851" height="1848" fill="url(#pink)"/>
+  <rect width="851" height="1848" fill="url(#mint)"/>
+  <rect width="851" height="1848" fill="url(#violet)"/>
 </svg>
