@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
@@ -24,12 +24,19 @@ export function GlowBackdrop({ style }) {
           <LinearGradient colors={['transparent', c]} start={{ x: 0.7, y: 0.45 }} end={{ x: 0.1, y: 1 }} style={StyleSheet.absoluteFill} />
         </>
       ) : (
-        <Image
-          source={require('../../assets/soft-pastel-background.jpg')}
-          // Stretch the viewport-relative color fields instead of cropping them.
-          resizeMode="stretch"
-          style={StyleSheet.absoluteFill}
-        />
+        <>
+          {/* Soft aurora gradient: mint → cloud → peach base with lilac and sky glows. */}
+          <LinearGradient
+            colors={['#CFF7EA', '#EEF1FF', '#FFE6D6']}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient colors={['rgba(150,214,255,0.55)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 0.5 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['transparent', 'rgba(205,180,255,0.45)']} start={{ x: 0.2, y: 0.35 }} end={{ x: 1, y: 0.7 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['transparent', 'rgba(255,170,190,0.40)']} start={{ x: 0.8, y: 0.5 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+        </>
       )}
     </View>
   );
