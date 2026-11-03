@@ -7,6 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
+import * as Contacts from 'expo-contacts/legacy';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, prettyLabel } from '../phone';
 import { load, save } from '../storage';
@@ -15,12 +19,80 @@ import { EXTENDED_BLUR, Glass, PerformanceModeContext } from '../components/Glas
 import ContactCard from '../components/ContactCard';
 import { useT } from '../i18n';
 import Dialer from '../dialer';
+import { contactsToCsv, contactsToVCard, parseContactsFile } from '../contactFiles';
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
 const COLUMNS = 4;
 const SIDE = 16;
 const GAP = 12;
 const ALL_KEY_WIDTH = 48;
+const MAX_CONTACT_FILE_SIZE = 20 * 1024 * 1024;
+const CONTACT_EXPORT_FIELDS = [
+  Contacts.Fields.FirstName,
+  Contacts.Fields.MiddleName,
+  Contacts.Fields.LastName,
+  Contacts.Fields.NamePrefix,
+  Contacts.Fields.NameSuffix,
+  Contacts.Fields.Name,
+  Contacts.Fields.Nickname,
+  Contacts.Fields.Company,
+  Contacts.Fields.JobTitle,
+  Contacts.Fields.PhoneNumbers,
+  Contacts.Fields.Emails,
+  Contacts.Fields.Addresses,
+  Contacts.Fields.Birthday,
+  Contacts.Fields.UrlAddresses,
+  ...(Platform.OS === 'android' ? [Contacts.Fields.Note] : []),
+].filter(Boolean);
+
+async function requestContactsAccess() {
+  const current = await Contacts.getPermissionsAsync();
+  if (current.granted) return true;
+  const requested = await Contacts.requestPermissionsAsync();
+  return requested.granted;
+}
+
+function confirmContactImport(count, filename) {
+  return new Promise((resolve) => {
+    Alert.alert(
+      'Import contacts?',
+      `Add ${count} contact${count === 1 ? '' : 's'} from ${filename} to this device?`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Import', onPress: () => resolve(true) },
+      ],
+      { cancelable: true, onDismiss: () => resolve(false) }
+    );
+  });
+}
+
+function csvFileDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function ContactAction({ icon, label, detail, disabled, busy, onPress }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled, busy: !!busy }}
+      disabled={disabled || busy}
+      onPress={onPress}
+      style={[styles.contactActionButton, (disabled || busy) && { opacity: 0.5 }]}
+    >
+      {({ pressed }) => (
+        <Glass radius={16} pressed={pressed} style={styles.contactAction}>
+          <Ionicons name={busy ? 'hourglass-outline' : icon} size={16} color={t.blue} />
+          <Text style={{ color: t.text, fontSize: fs(10), lineHeight: fs(12), fontWeight: '600', textAlign: 'center' }} numberOfLines={2}>
+            {label}
+          </Text>
+          {detail ? <Text style={{ color: t.secondary, fontSize: fs(9), lineHeight: fs(10) }}>{detail}</Text> : null}
+        </Glass>
+      )}
+    </Pressable>
+  );
+}
 
 // First letter of the name as shown (A–Z, otherwise #).
 function letterOf(c) {
@@ -203,6 +275,7 @@ export default function ContactsScreen() {
   const [letter, setLetter] = useState('all');
   const [mode, setModeState] = useState('grid');
   const [duplicateReview, setDuplicateReview] = useState(false);
+  const [contactFileAction, setContactFileAction] = useState(null);
 
   useEffect(() => {
     load('contactsView', 'grid').then((m) => setModeState(m === 'list' ? 'list' : 'grid'));
@@ -273,6 +346,102 @@ export default function ContactsScreen() {
     );
   };
 
+  const importContacts = async () => {
+    if (contactFileAction) return;
+    setContactFileAction('import');
+    try {
+      if (!(await requestContactsAccess())) {
+        Alert.alert('Contacts access needed', 'Allow contact access to import contacts.');
+        return;
+      }
+      const selection = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        multiple: false,
+        copyToCacheDirectory: true,
+      });
+      if (selection.canceled || !selection.assets?.[0]) return;
+      const file = selection.assets[0];
+      if (file.size && file.size > MAX_CONTACT_FILE_SIZE) {
+        throw new Error('This contacts file is larger than the 20 MB import limit.');
+      }
+      const content = await FileSystem.readAsStringAsync(file.uri, { encoding: FileSystem.EncodingType.UTF8 });
+      const parsed = parseContactsFile(file.name, file.mimeType, content);
+      if (!parsed.length) {
+        Alert.alert('No contacts found', 'Choose a .vcf or .csv file containing contact names, phone numbers, or email addresses.');
+        return;
+      }
+      if (!(await confirmContactImport(parsed.length, file.name))) return;
+
+      let imported = 0;
+      let failed = 0;
+      for (const contact of parsed) {
+        try {
+          if (Platform.OS !== 'android') delete contact.note;
+          await Contacts.addContactAsync(contact);
+          imported += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      await refreshContacts(false);
+      Alert.alert(
+        failed ? 'Import finished with errors' : 'Contacts imported',
+        failed ? `Imported ${imported}; ${failed} could not be added.` : `Added ${imported} contact${imported === 1 ? '' : 's'}.`
+      );
+    } catch (error) {
+      Alert.alert('Couldn’t import contacts', error?.message || 'Choose a valid .vcf or .csv file and try again.');
+    } finally {
+      setContactFileAction(null);
+    }
+  };
+
+  const exportContacts = async (format) => {
+    if (contactFileAction) return;
+    setContactFileAction('export');
+    try {
+      if (!(await requestContactsAccess())) {
+        Alert.alert('Contacts access needed', 'Allow contact access to export your contacts.');
+        return;
+      }
+      const { data: exportableContacts } = await Contacts.getContactsAsync({
+        fields: CONTACT_EXPORT_FIELDS,
+        pageSize: 0,
+        sort: Contacts.SortTypes.FirstName,
+      });
+      if (!exportableContacts.length) {
+        Alert.alert('No contacts to export', 'This device does not have any contacts available to export.');
+        return;
+      }
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert('Sharing unavailable', 'This device cannot share exported contact files right now.');
+        return;
+      }
+      if (!FileSystem.cacheDirectory) throw new Error('Temporary file storage is unavailable on this device.');
+      const isVCard = format === 'vcf';
+      const filename = `contacts-${csvFileDate()}.${format}`;
+      const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+      const contents = isVCard ? contactsToVCard(exportableContacts) : contactsToCsv(exportableContacts);
+      await FileSystem.writeAsStringAsync(fileUri, contents, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(fileUri, {
+        mimeType: isVCard ? 'text/vcard' : 'text/csv',
+        UTI: isVCard ? 'public.vcard' : 'public.comma-separated-values-text',
+        dialogTitle: `Export contacts as ${format.toUpperCase()}`,
+      });
+    } catch (error) {
+      Alert.alert('Couldn’t export contacts', error?.message || 'Please try again.');
+    } finally {
+      setContactFileAction(null);
+    }
+  };
+
+  const chooseExportFormat = () => {
+    Alert.alert('Export contacts', 'Choose a file format.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'vCard (.vcf)', onPress: () => exportContacts('vcf') },
+      { text: 'CSV (.csv)', onPress: () => exportContacts('csv') },
+    ]);
+  };
+
   const header = (
     <LargeHeader
       compact
@@ -281,21 +450,30 @@ export default function ContactsScreen() {
       right={duplicateReview ? null : <IconButton glass name="add" size={26} onPress={() => nav.push({ name: 'newContact' })} />}
     >
       {!duplicateReview ? <SearchBar value={query} onChangeText={setQuery} /> : null}
-      {!duplicateReview && Platform.OS === 'android' && contactsPerm === 'granted' && Dialer?.mergeContacts ? (
-        <Pressable
-          onPress={() => setDuplicateReview(true)}
-          accessibilityRole="button"
-          accessibilityLabel={`Review ${duplicateGroups.length} possible duplicate groups`}
-          style={{ marginHorizontal: SIDE, marginTop: 8 }}
-        >
-          {({ pressed }) => (
-            <Glass radius={18} pressed={pressed} style={styles.duplicateAction}>
-              <Ionicons name="git-merge-outline" size={18} color={t.blue} />
-              <Text style={{ flex: 1, color: t.text, fontSize: fs(14), fontWeight: '600', marginLeft: 9 }}>Review duplicate contacts</Text>
-              <Text style={{ color: t.secondary, fontSize: fs(13), fontWeight: '600' }}>{duplicateGroups.length}</Text>
-            </Glass>
-          )}
-        </Pressable>
+      {!duplicateReview ? (
+        <View style={styles.contactActions}>
+          <ContactAction
+            icon="git-merge-outline"
+            label="Review duplicate contacts"
+            detail={String(duplicateGroups.length)}
+            disabled={!!contactFileAction || Platform.OS !== 'android' || contactsPerm !== 'granted' || !Dialer?.mergeContacts}
+            onPress={() => setDuplicateReview(true)}
+          />
+          <ContactAction
+            icon="download-outline"
+            label="Import contact"
+            busy={contactFileAction === 'import'}
+            disabled={!!contactFileAction}
+            onPress={importContacts}
+          />
+          <ContactAction
+            icon="share-outline"
+            label="Export contacts"
+            busy={contactFileAction === 'export'}
+            disabled={!!contactFileAction}
+            onPress={chooseExportFormat}
+          />
+        </View>
       ) : null}
       {!duplicateReview && !query && contacts.length ? (
         <Glass radius={22} strong blur={EXTENDED_BLUR} vivid intensity={90} style={styles.filter}>
@@ -446,7 +624,9 @@ export default function ContactsScreen() {
 
 const styles = StyleSheet.create({
   filter: { marginHorizontal: SIDE, marginTop: 8, paddingHorizontal: 8, paddingTop: 7, paddingBottom: 5 },
-  duplicateAction: { minHeight: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
+  contactActions: { flexDirection: 'row', gap: 8, marginHorizontal: SIDE, marginTop: 8, marginBottom: 4 },
+  contactActionButton: { flex: 1, minWidth: 0 },
+  contactAction: { minHeight: 58, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, paddingVertical: 5, gap: 3 },
   duplicateCard: { marginHorizontal: SIDE, marginBottom: 12, padding: 14 },
   duplicatePerson: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7 },
   letterPicker: { flexDirection: 'row', alignItems: 'center', gap: 8 },

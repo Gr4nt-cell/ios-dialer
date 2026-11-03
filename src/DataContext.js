@@ -16,12 +16,20 @@ const isMissedType = (t) => t === 'missed' || t === 'rejected' || t === 'blocked
 
 const CONTACT_FIELDS = [
   Contacts.Fields.FirstName,
+  Contacts.Fields.MiddleName,
   Contacts.Fields.LastName,
+  Contacts.Fields.NamePrefix,
+  Contacts.Fields.NameSuffix,
   Contacts.Fields.Name,
+  Contacts.Fields.Nickname,
   Contacts.Fields.Company,
   Contacts.Fields.JobTitle,
   Contacts.Fields.PhoneNumbers,
   Contacts.Fields.Emails,
+  Contacts.Fields.Addresses,
+  Contacts.Fields.Birthday,
+  Contacts.Fields.UrlAddresses,
+  ...(Platform.OS === 'android' ? [Contacts.Fields.Note] : []),
   Contacts.Fields.Image,
   Contacts.Fields.RawImage,
 ].filter(Boolean);
