@@ -121,9 +121,15 @@ jobs:
         if: steps.key.outputs.have == 'true'
         run: |
           AAB=android/app/build/outputs/bundle/release/app-release.aab
-          jarsigner -verify -verbose:summary -certs "$AAB" | grep -E "^ *X\.509|jar verified" || true
-          if jarsigner -verify -certs "$AAB" | grep -q "Android Debug"; then
-            echo "::error::the bundle is still signed with the debug key"
+          if ! jarsigner -verify -certs "$AAB" >/dev/null 2>&1; then
+            echo "::error::AAB signature verification failed."
+            exit 1
+          fi
+          ACTUAL_SHA256=$(keytool -printcert -jarfile "$AAB" | awk '/SHA256:/{print $2; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          EXPECTED_SHA256=a4a9fd127dd749626d551a7e62a3b9f11b04e751eb1d8ae2fb4a752100bf1b7f
+          echo "AAB signer SHA-256: ${ACTUAL_SHA256:-none}"
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::AAB signing certificate SHA-256 mismatch. Expected $EXPECTED_SHA256, got ${ACTUAL_SHA256:-none}."
             exit 1
           fi
 
