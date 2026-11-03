@@ -3,8 +3,8 @@ import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
-// Ambient color field from the liquid-glass source. Panels remain translucent
-// so this background shows through them.
+// Shared offline backdrop for mobile, tablet, and modal screens.
+// The pale center keeps dark labels readable through translucent glass.
 export function GlowBackdrop({ style }) {
   const t = useTheme();
   const [a, b, c] = t.glow;
@@ -25,7 +25,7 @@ export function GlowBackdrop({ style }) {
         </>
       ) : (
         <Image
-          source={require('../../assets/file-xplorer-background.jpg')}
+          source={require('../../assets/dialer-gradient-background.jpg')}
           resizeMode="stretch"
           style={StyleSheet.absoluteFill}
         />
