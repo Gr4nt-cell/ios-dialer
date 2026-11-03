@@ -6,22 +6,22 @@
       <stop offset="100%" stop-color="#D0F7F1"/>
     </linearGradient>
     <radialGradient id="blue" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(34 166) scale(613 739)">
-      <stop offset="0%" stop-color="#60BBFA" stop-opacity=".62"/>
+      <stop offset="0%" stop-color="#60BBFA" stop-opacity=".54"/>
       <stop offset="72%" stop-color="#60BBFA" stop-opacity="0"/>
       <stop offset="100%" stop-color="#60BBFA" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="pink" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(893 906) scale(553 776)">
-      <stop offset="0%" stop-color="#FF97D2" stop-opacity=".80"/>
+    <radialGradient id="pink" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(834 887) scale(536 739)">
+      <stop offset="0%" stop-color="#FF97D2" stop-opacity=".94"/>
       <stop offset="74%" stop-color="#FF97D2" stop-opacity="0"/>
       <stop offset="100%" stop-color="#FF97D2" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="mint" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(698 1848) scale(553 832)">
-      <stop offset="0%" stop-color="#63F5DA" stop-opacity=".84"/>
+    <radialGradient id="mint" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(638 1552) scale(553 739)">
+      <stop offset="0%" stop-color="#63F5DA" stop-opacity=".96"/>
       <stop offset="72%" stop-color="#63F5DA" stop-opacity="0"/>
       <stop offset="100%" stop-color="#63F5DA" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="violet" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(-68 1534) scale(579 795)">
-      <stop offset="0%" stop-color="#B08FFF" stop-opacity=".76"/>
+      <stop offset="0%" stop-color="#B08FFF" stop-opacity=".70"/>
       <stop offset="75%" stop-color="#B08FFF" stop-opacity="0"/>
       <stop offset="100%" stop-color="#B08FFF" stop-opacity="0"/>
     </radialGradient>
@@ -29,7 +29,7 @@
   <rect width="851" height="1848" fill="#E5E6FA"/>
   <rect width="851" height="1848" fill="url(#base)"/>
   <rect width="851" height="1848" fill="url(#blue)"/>
+  <rect width="851" height="1848" fill="url(#violet)"/>
   <rect width="851" height="1848" fill="url(#pink)"/>
   <rect width="851" height="1848" fill="url(#mint)"/>
-  <rect width="851" height="1848" fill="url(#violet)"/>
 </svg>
