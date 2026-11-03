@@ -12,7 +12,7 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext, PerformanceModeContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext, PerformanceModeContext, PerformanceProfileContext } from './src/components/Glass';
 import { GlowBackdrop } from './src/components/GlowBackdrop';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
@@ -315,19 +315,40 @@ function Main() {
   );
 }
 
+function PerformanceProfileProvider({ defaultOptimized, children }) {
+  const { settings, updateSettings } = useData();
+  const savedProfile = settings.performanceProfile;
+  const selectedProfile = savedProfile === 'performance' || savedProfile === 'optimized' ? savedProfile : null;
+  const profile = selectedProfile || (defaultOptimized ? 'optimized' : 'performance');
+  const performanceMode = profile === 'optimized';
+  const setProfile = useCallback((next) => {
+    if (next === 'performance' || next === 'optimized') updateSettings({ performanceProfile: next });
+  }, [updateSettings]);
+  const profileValue = useMemo(
+    () => ({ profile, automatic: selectedProfile == null, setProfile }),
+    [profile, selectedProfile, setProfile]
+  );
+
+  return (
+    <PerformanceProfileContext.Provider value={profileValue}>
+      <PerformanceModeContext.Provider value={performanceMode}>{children}</PerformanceModeContext.Provider>
+    </PerformanceProfileContext.Provider>
+  );
+}
+
 export default function App() {
-  const performanceMode = useMemo(detectLowEndDevice, []);
+  const defaultOptimized = useMemo(detectLowEndDevice, []);
   return (
     <SafeAreaProvider>
-      <PerformanceModeContext.Provider value={performanceMode}>
-        <DataProvider>
-          <CallProvider>
+      <DataProvider>
+        <CallProvider>
+          <PerformanceProfileProvider defaultOptimized={defaultOptimized}>
             <ActionSheetProvider>
               <Main />
             </ActionSheetProvider>
-          </CallProvider>
-        </DataProvider>
-      </PerformanceModeContext.Provider>
+          </PerformanceProfileProvider>
+        </CallProvider>
+      </DataProvider>
     </SafeAreaProvider>
   );
 }

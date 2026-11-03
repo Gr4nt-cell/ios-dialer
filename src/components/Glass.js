@@ -30,6 +30,7 @@ export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 
 export const GlassFillScaleContext = createContext(1);
 export const GlassRefractionContext = createContext(null);
 export const PerformanceModeContext = createContext(false);
+export const PerformanceProfileContext = createContext(null);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
@@ -215,6 +216,7 @@ export function Glass({
   const surfaceFillScale = dark ? 1 : glassFillScale;
   const plain = mode === 'plain';
   const showRefraction = liquid && !plain && !!refraction;
+  const optimizedLight = performanceMode && !dark && forceDark == null;
   // Flat backdrops still get the translucent fill; the stronger rim and shadow
   // keep those surfaces distinct from the white or black behind them.
   const lifted = flat ? lift(dark, soft, liquid && !plain, performanceMode) : null;
@@ -259,13 +261,16 @@ export function Glass({
   // A soft frosted fill gives controls body without a hard reflective edge.
   // Vivid keeps more of the existing background visible; tinted stays denser.
   // Sheets without a live blur need enough body for their labels to read.
-  const alpha = vivid
+  const baseAlpha = vivid
     ? realBlur
       ? dark ? (tinted ? 0.48 : 0.2) : tinted ? 0.4 : 0.12
       : dark ? (tinted ? 0.6 : 0.34) : tinted ? 0.5 : 0.22
     : dark
     ? realBlur ? (tinted ? 0.74 : 0.56) : tinted ? 0.94 : 0.9
     : realBlur ? (tinted ? 0.88 : 0.76) : tinted ? 0.97 : 0.94;
+  // Optimized mode skips layered highlights and shadows, so give light-mode
+  // cards a stronger translucent body and rim to keep them easy to distinguish.
+  const alpha = optimizedLight ? Math.max(baseAlpha, tinted ? 0.6 : vivid ? 0.36 : 0.92) : baseAlpha;
   // Flat surfaces keep their own faint colour field and rely on the raised rim
   // and shadow for definition, rather than becoming opaque.
   const a = alpha * fillScale * surfaceFillScale;
@@ -277,6 +282,12 @@ export function Glass({
   const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
+    : optimizedLight
+    ? liquid
+      ? 'rgba(37,85,149,0.32)'
+      : strong || outline
+        ? 'rgba(45,66,94,0.26)'
+        : 'rgba(45,66,94,0.2)'
     : liquid
     ? dark ? 'rgba(220,238,255,0.28)' : lightLiquid ? t.glassBorder : 'rgba(105,143,185,0.25)'
     : strong
@@ -444,8 +455,9 @@ export function GlassShadow({ children, style, radius = 999 }) {
 /** The keypad material, shared by light-mode cards and in-call controls. */
 export function KeypadGlass({ children, ...props }) {
   const t = useTheme();
+  const performanceMode = useContext(PerformanceModeContext);
   const surface = (
-    <Glass {...props} soft tint={props.tint ?? t.key} tintOpacity={props.tintOpacity ?? (t.dark ? 1 : 0.28)}>
+    <Glass {...props} soft tint={props.tint ?? t.key} tintOpacity={props.tintOpacity ?? (t.dark ? 1 : performanceMode ? 0.58 : 0.28)}>
       {children}
     </Glass>
   );

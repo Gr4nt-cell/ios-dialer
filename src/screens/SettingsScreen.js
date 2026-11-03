@@ -3,7 +3,7 @@ import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
-import { Glass, PerformanceModeContext } from '../components/Glass';
+import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
 import { Ionicons } from '@expo/vector-icons';
@@ -109,6 +109,7 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
 
 export default function SettingsScreen() {
   const performanceMode = useContext(PerformanceModeContext);
+  const performanceProfile = useContext(PerformanceProfileContext);
   const t = useTheme();
   const tr = useT();
   const [langOpen, setLangOpen] = useState(false);
@@ -303,11 +304,11 @@ export default function SettingsScreen() {
           ) : null}
           <Cell
             value="Performance profile"
-            right={
-              <Text style={{ color: performanceMode ? t.green : t.secondary, fontSize: fs(14), fontWeight: '600' }}>
-                {performanceMode ? 'Optimized' : 'Standard'}
-              </Text>
-            }
+            right={<Segmented
+              options={[{ label: 'Performance', value: 'performance' }, { label: 'Optimized', value: 'optimized' }]}
+              value={performanceProfile.profile}
+              onChange={performanceProfile.setProfile}
+            />}
           />
           <Cell
             value={tr('Language')}
@@ -321,8 +322,8 @@ export default function SettingsScreen() {
         </Group>
         <Footer>
           {performanceMode
-            ? 'This device was automatically optimized: decorative motion, live blur, layered glass highlights and repeated shadows are reduced. Calling and contact features remain available.'
-            : 'Older or lower-memory devices automatically use a lighter visual profile. Liquid Glass off replaces frosted panels with solid cards; Tinted makes glass more opaque.'}
+            ? 'Optimized reduces decorative motion, live blur and list rendering for smoother use. Light-mode surfaces have stronger contrast; calling and contact features remain available.'
+            : 'Performance restores the full visual effects from the previous version. Lower-end phones start in Optimized, and you can switch profiles here at any time.'}
         </Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>

@@ -17,6 +17,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
   const performanceMode = useContext(PerformanceModeContext);
   const letters = initials(name);
   const keypadMaterial = glass && !image && !t.dark;
+  const placeholderColor = keypadMaterial ? t.secondary : t.dark ? '#C7C7CC' : performanceMode ? t.secondary : '#8E8E93';
   const CardGlass = keypadMaterial ? KeypadGlass : Glass;
   const favoriteEdgeShadow = edgeShadow && !t.dark && !performanceMode ? { boxShadow: '0px 4px 14px rgba(52, 78, 121, 0.22)' } : null;
   const face = image ? (
@@ -48,9 +49,9 @@ export default function ContactCard({ width, height, name, label, image, colorKe
         style={StyleSheet.absoluteFill}
       /> : null}
       {letters ? (
-        <Text style={{ color: keypadMaterial ? t.secondary : t.dark ? '#C7C7CC' : '#8E8E93', fontSize: Math.round(width * 0.36), fontWeight: '600', letterSpacing: 0.5 }}>{letters}</Text>
+        <Text style={{ color: placeholderColor, fontSize: Math.round(width * 0.36), fontWeight: '600', letterSpacing: 0.5 }}>{letters}</Text>
       ) : (
-        <Ionicons name="person" size={Math.round(width * 0.42)} color={keypadMaterial ? t.secondary : t.dark ? '#AEAEB2' : '#A1A1A6'} />
+        <Ionicons name="person" size={Math.round(width * 0.42)} color={keypadMaterial ? t.secondary : t.dark ? '#AEAEB2' : performanceMode ? t.secondary : '#A1A1A6'} />
       )}
     </View>
   );
