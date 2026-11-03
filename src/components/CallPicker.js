@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import { formatNumber, numberKey, prettyLabel } from '../phone';
 import { getPhoneAccounts } from '../dialer';
-import { Glass, GlassModeContext } from './Glass';
+import { Glass, GlassModeContext, PerformanceModeContext } from './Glass';
 import { ChromeText } from './ui';
 
 const { BlurView } = ExpoBlur;
@@ -25,8 +25,9 @@ function Backdrop({ target, onClose }) {
   const t = useTheme();
   // no blur when Liquid Glass is switched off
   const plain = useContext(GlassModeContext) === 'plain';
+  const performanceMode = useContext(PerformanceModeContext);
   const blurProps =
-    plain || Platform.OS !== 'android' ? {} : HAS_TARGET_API ? (target ? { blurTarget: target, blurMethod: 'dimezisBlurViewSdk31Plus' } : null) : { experimentalBlurMethod: 'dimezisBlurView' };
+    plain || performanceMode || Platform.OS !== 'android' ? {} : HAS_TARGET_API ? (target ? { blurTarget: target, blurMethod: 'dimezisBlurViewSdk31Plus' } : null) : { experimentalBlurMethod: 'dimezisBlurView' };
   return (
     <Pressable feedback="none" style={StyleSheet.absoluteFill} onPress={onClose}>
       {blurProps ? (

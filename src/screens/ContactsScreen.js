@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 import { getTabBarClipSpace, usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
@@ -11,7 +11,7 @@ import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, prettyLabel } from '../phone';
 import { load, save } from '../storage';
 import { Avatar, EmptyState, IconButton, LargeHeader, SearchBar, TextButton } from '../components/ui';
-import { EXTENDED_BLUR, Glass } from '../components/Glass';
+import { EXTENDED_BLUR, Glass, PerformanceModeContext } from '../components/Glass';
 import ContactCard from '../components/ContactCard';
 import { useT } from '../i18n';
 import Dialer from '../dialer';
@@ -190,6 +190,7 @@ function ViewToggle({ mode, onChange }) {
 }
 
 export default function ContactsScreen() {
+  const performanceMode = useContext(PerformanceModeContext);
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -359,6 +360,11 @@ export default function ContactsScreen() {
       <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
         {header}
         <FlatList
+          removeClippedSubviews
+          maxToRenderPerBatch={performanceMode ? 6 : 12}
+          updateCellsBatchingPeriod={performanceMode ? 50 : 30}
+          initialNumToRender={performanceMode ? 10 : 20}
+          windowSize={performanceMode ? 5 : 7}
           data={duplicateGroups}
           keyExtractor={(group) => group.id}
           renderItem={({ item }) => <DuplicateGroupCard group={item} onMerge={() => mergeGroup(item)} />}
@@ -380,16 +386,16 @@ export default function ContactsScreen() {
       {header}
       <FlatList
         removeClippedSubviews
-        maxToRenderPerBatch={12}
-        updateCellsBatchingPeriod={30}
+        maxToRenderPerBatch={performanceMode ? 6 : 12}
+        updateCellsBatchingPeriod={performanceMode ? 50 : 30}
         data={list}
         key={mode}
         numColumns={mode === 'grid' ? COLUMNS : 1}
         keyExtractor={(c) => c.id}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        initialNumToRender={24}
-        windowSize={7}
+        initialNumToRender={performanceMode ? 12 : 24}
+        windowSize={performanceMode ? 5 : 7}
         columnWrapperStyle={mode === 'grid' ? { paddingHorizontal: SIDE, gap: GAP, marginBottom: 14 } : undefined}
         renderItem={({ item }) => {
           const name = contactName(item);

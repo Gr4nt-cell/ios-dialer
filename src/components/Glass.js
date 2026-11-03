@@ -29,6 +29,7 @@ export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
 export const GlassFillScaleContext = createContext(1);
 export const GlassRefractionContext = createContext(null);
+export const PerformanceModeContext = createContext(false);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
@@ -91,7 +92,12 @@ export function GlassRefractionProvider({ children, active = true }) {
  * panel shadow each reads as far heavier than one shadow under one panel, so
  * they get a shallower one and end up looking like the date strip.
  */
-function lift(dark, soft, liquid) {
+function lift(dark, soft, liquid, performanceMode = false) {
+  const borderColor = liquid
+    ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(104,139,180,0.25)'
+    : dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)';
+  if (performanceMode) return { borderColor };
+
   // boxShadow, not elevation: Android's elevation shadow is traced from a
   // polygonal approximation of the view's outline, which turned the round keys
   // into decagons. boxShadow follows the border radius exactly, so a circle
@@ -106,9 +112,7 @@ function lift(dark, soft, liquid) {
   const y = soft ? 2 : 5;
   const blur = soft ? 8 : 18;
   return {
-    borderColor: liquid
-      ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(104,139,180,0.25)'
-      : dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)',
+    borderColor,
     boxShadow: liquid && !dark
       ? `0px ${y}px ${blur}px rgba(56,91,137,${a})`
       : `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
@@ -203,6 +207,7 @@ export function Glass({
   const refraction = useContext(GlassRefractionContext);
   const glassFillScale = useContext(GlassFillScaleContext);
   const flat = useContext(FlatBackdropContext);
+  const performanceMode = useContext(PerformanceModeContext);
   const dark = forceDark ?? t.dark;
   // Explicitly themed surfaces (the photo/gradient call screen) keep their
   // existing material, as does every surface when the system theme is dark.
@@ -212,9 +217,9 @@ export function Glass({
   const showRefraction = liquid && !plain && !!refraction;
   // Flat backdrops still get the translucent fill; the stronger rim and shadow
   // keep those surfaces distinct from the white or black behind them.
-  const lifted = flat ? lift(dark, soft, liquid && !plain) : null;
+  const lifted = flat ? lift(dark, soft, liquid && !plain, performanceMode) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
-  const bp = blur && !plain && !flat ? blurProps(target) : null;
+  const bp = blur && !plain && !flat && !performanceMode ? blurProps(target) : null;
   const realBlur = !!bp;
   const tinted = mode === 'tinted';
 
@@ -306,7 +311,7 @@ export function Glass({
         />
       ) : null}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: lifted ? 'transparent' : fill }]} />
-      {lightLiquid && !tint ? (
+      {!performanceMode && lightLiquid && !tint ? (
         <LinearGradient
           pointerEvents="none"
           colors={['rgba(185,218,255,0.12)', 'rgba(255,255,255,0)', 'rgba(211,194,255,0.10)']}
@@ -317,29 +322,29 @@ export function Glass({
         />
       ) : null}
       {/* specular highlight */}
-      <LinearGradient
+      {!performanceMode ? <LinearGradient
         pointerEvents="none"
         colors={[highlight, 'rgba(255,255,255,0)']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.55 }}
         style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
-      />
+      /> : null}
       {showRefraction ? <RefractionSweep progress={refraction} dark={dark} /> : null}
       {/* darker lower edge for depth */}
-      <LinearGradient
+      {!performanceMode ? <LinearGradient
         pointerEvents="none"
         colors={['rgba(0,0,0,0)', edge]}
         start={{ x: 0.5, y: 0.55 }}
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
-      />
+      /> : null}
       {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around (on the outer view when lifted) */}
       {lifted ? null : (
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? 1 : StyleSheet.hairlineWidth, borderColor: rim }]} />
       )}
-      {flat && !liquid ? null : (
+      {performanceMode || (flat && !liquid) ? null : (
         <LinearGradient
           pointerEvents="none"
           colors={[rimTop, 'rgba(255,255,255,0)']}
@@ -386,7 +391,7 @@ export function Glass({
         onLayout={onLayout}
         style={[
           { borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] },
-          { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(74,99,155,${soft ? 0.08 : 0.1})` },
+          performanceMode ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(74,99,155,${soft ? 0.08 : 0.1})` },
           style,
         ]}
       >
@@ -416,10 +421,11 @@ export function Glass({
 // Soft drop shadow wrapper (kept outside the clipped glass so it isn't cut off).
 export function GlassShadow({ children, style, radius = 999 }) {
   const t = useTheme();
+  const performanceMode = useContext(PerformanceModeContext);
   return (
     <View
       style={[
-        {
+        performanceMode ? { borderRadius: radius } : {
           borderRadius: radius,
           shadowColor: '#000',
           shadowOpacity: t.dark ? 0.5 : 0.14,

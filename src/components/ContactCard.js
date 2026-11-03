@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from './Touch';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fs, useTheme } from '../theme';
 import { initials } from '../phone';
-import { Glass, KeypadGlass } from './Glass';
+import { Glass, KeypadGlass, PerformanceModeContext } from './Glass';
 
 /**
  * Tall rounded "poster" card: the contact's photo, or their own gradient with initials.
@@ -14,10 +14,11 @@ import { Glass, KeypadGlass } from './Glass';
  */
 export default function ContactCard({ width, height, name, label, image, colorKey, onPress, onLongPress, overlay, radius = 22, glass = true, edgeShadow = false }) {
   const t = useTheme();
+  const performanceMode = useContext(PerformanceModeContext);
   const letters = initials(name);
   const keypadMaterial = glass && !image && !t.dark;
   const CardGlass = keypadMaterial ? KeypadGlass : Glass;
-  const favoriteEdgeShadow = edgeShadow && !t.dark ? { boxShadow: '0px 4px 14px rgba(52, 78, 121, 0.22)' } : null;
+  const favoriteEdgeShadow = edgeShadow && !t.dark && !performanceMode ? { boxShadow: '0px 4px 14px rgba(52, 78, 121, 0.22)' } : null;
   const face = image ? (
     <Image
       source={{ uri: image }}
@@ -31,7 +32,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
         { backgroundColor: glass ? 'transparent' : t.fill, alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 },
       ]}
     >
-      {!keypadMaterial ? <LinearGradient
+      {!performanceMode && !keypadMaterial ? <LinearGradient
         colors={
           glass
             ? t.dark
@@ -56,7 +57,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
   const cardContents = (
     <>
       {face}
-      {glass && !keypadMaterial ? (
+      {!performanceMode && glass && !keypadMaterial ? (
         <LinearGradient
           colors={t.dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0)', 'rgba(10,12,18,0.12)'] : ['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.02)', 'rgba(35,50,70,0.06)']}
           locations={[0, 0.42, 1]}
@@ -64,7 +65,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
           pointerEvents="none"
         />
       ) : null}
-      {!keypadMaterial ? <LinearGradient
+      {!performanceMode && !keypadMaterial ? <LinearGradient
         colors={glass ? ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)'] : ['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']}
         style={styles.sheen}
         pointerEvents="none"
@@ -99,14 +100,14 @@ export default function ContactCard({ width, height, name, label, image, colorKe
               radius={radius}
               strong
               vivid
-              style={[keypadMaterial ? null : styles.glassCard, favoriteEdgeShadow, { width, height, transform: [{ scale: pressed ? 0.95 : 1 }] }]}
+              style={[keypadMaterial || performanceMode ? null : styles.glassCard, favoriteEdgeShadow, { width, height, transform: [{ scale: pressed ? 0.95 : 1 }] }]}
             >
               <View style={[styles.glassContent, { borderRadius: Math.max(0, radius - 1) }]}>{cardContents}</View>
             </CardGlass>
           ) : (
             <View
               style={[
-                styles.card,
+                performanceMode ? styles.cardLite : styles.card,
                 {
                   width,
                   height,
@@ -132,6 +133,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
 
 const styles = StyleSheet.create({
   card: { overflow: 'hidden', backgroundColor: '#E9E9EE', borderWidth: 1, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  cardLite: { overflow: 'hidden', backgroundColor: '#E9E9EE', borderWidth: 1 },
   glassCard: { shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 9, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   glassContent: { flex: 1, margin: 1, overflow: 'hidden', position: 'relative' },
   sheen: { position: 'absolute', left: 0, right: 0, top: 0, height: '35%' },

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Alert, FlatList, Linking, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { isMissedType, useData } from '../DataContext';
 import { useNav } from '../nav';
 import { contactName, formatNumber, timeLabel } from '../phone';
 import { Avatar, EmptyState, LargeHeader, Segmented, TextButton } from '../components/ui';
-import { Glass } from '../components/Glass';
+import { Glass, PerformanceModeContext } from '../components/Glass';
 import { useT } from '../i18n';
 
 export function RecentRow({ group, editing, onDelete, showTime }) {
@@ -88,6 +88,7 @@ export function RecentRow({ group, editing, onDelete, showTime }) {
 }
 
 export default function RecentsScreen() {
+  const performanceMode = useContext(PerformanceModeContext);
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -157,8 +158,10 @@ export default function RecentsScreen() {
     <View style={{ flex: 1, paddingBottom: dockClipSpace, overflow: 'hidden' }}>
       <FlatList
         removeClippedSubviews
-        maxToRenderPerBatch={12}
-        updateCellsBatchingPeriod={30}
+        maxToRenderPerBatch={performanceMode ? 6 : 12}
+        updateCellsBatchingPeriod={performanceMode ? 50 : 30}
+        initialNumToRender={performanceMode ? 8 : 16}
+        windowSize={performanceMode ? 5 : 7}
         data={list}
         keyExtractor={(g) => g.id}
         ListHeaderComponent={header}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,9 +10,10 @@ import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, prettyLabel, timeLabel } from '../phone';
 import { Avatar, EmptyState, LargeHeader, SearchBar } from '../components/ui';
 import { useT } from '../i18n';
-import { Glass } from '../components/Glass';
+import { Glass, PerformanceModeContext } from '../components/Glass';
 
 export default function SearchScreen() {
+  const performanceMode = useContext(PerformanceModeContext);
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -111,6 +112,11 @@ export default function SearchScreen() {
         <SearchBar value={q} onChangeText={setQ} placeholder={tr('Contacts, calls or a number')} autoFocus />
       </LargeHeader>
       <SectionList
+        removeClippedSubviews
+        maxToRenderPerBatch={performanceMode ? 6 : 12}
+        updateCellsBatchingPeriod={performanceMode ? 50 : 30}
+        initialNumToRender={performanceMode ? 8 : 16}
+        windowSize={performanceMode ? 5 : 7}
         sections={sections}
         keyExtractor={(i) => i.id}
         keyboardShouldPersistTaps="handled"

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, Easing, Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +14,7 @@ import { useData } from '../DataContext';
 import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
-import { FlatBackdropContext, Glass, CallControlGlass } from '../components/Glass';
+import { FlatBackdropContext, Glass, CallControlGlass, PerformanceModeContext } from '../components/Glass';
 import { GlowBackdrop } from '../components/GlowBackdrop';
 import { gradientFor } from '../gradients';
 import { callAppearance } from '../callAppearance';
@@ -48,18 +48,9 @@ const DTMF_KEYS = [['1', ''], ['2', 'ABC'], ['3', 'DEF'], ['4', 'GHI'], ['5', 'J
 // Helpers
 // ---------------------------------------------------------------------------
 
-function useTicker(active) {
-  const [, setN] = useState(0);
-  useEffect(() => {
-    if (!active) return undefined;
-    const t = setInterval(() => setN((n) => n + 1), 1000);
-    return () => clearInterval(t);
-  }, [active]);
-}
-
-function clock(connectTime) {
+function clock(connectTime, now = Date.now()) {
   if (!connectTime) return '';
-  const s = Math.max(0, Math.floor((Date.now() - connectTime) / 1000));
+  const s = Math.max(0, Math.floor((now - connectTime) / 1000));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = String(s % 60).padStart(2, '0');
@@ -111,16 +102,31 @@ function statusText(c, who) {
   }
 }
 
+function CallStatusText({ call, who, style }) {
+  const [now, setNow] = useState(Date.now);
+  const active = call.state === 'active';
+
+  useEffect(() => {
+    if (!active) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+
+  const value = active ? clock(call.connectTime, now) || 'connected' : statusText(call, who);
+  return <Text style={style}>{value}</Text>;
+}
+
 // ---------------------------------------------------------------------------
 // Pieces
 // ---------------------------------------------------------------------------
 
 // Screen backdrop, independent of the caller's avatar photo.
 function Poster({ palette, light, plain = false, plainColor = WHITE }) {
+  const performanceMode = useContext(PerformanceModeContext);
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (plain) return undefined;
+    if (plain || performanceMode) return undefined;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(drift, { toValue: 1, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
@@ -129,7 +135,7 @@ function Poster({ palette, light, plain = false, plainColor = WHITE }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [drift, plain]);
+  }, [drift, performanceMode, plain]);
 
   if (plain) {
     return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
@@ -153,13 +159,17 @@ function Poster({ palette, light, plain = false, plainColor = WHITE }) {
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {/* the chosen gradient itself, edge to edge */}
       <LinearGradient colors={[c1, c2, base]} locations={[0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }} style={StyleSheet.absoluteFill} />
-      {/* two soft glows drifting over it */}
-      <Animated.View style={[{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, overflow: 'hidden', opacity: 0.55 }, a]}>
-        <LinearGradient colors={[c1, c1 + '00']} style={{ flex: 1 }} start={{ x: 0.5, y: 0.2 }} end={{ x: 0.5, y: 1 }} />
-      </Animated.View>
-      <Animated.View style={[{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, overflow: 'hidden', opacity: 0.5 }, b]}>
-        <LinearGradient colors={[c2, c2 + '00']} style={{ flex: 1 }} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} />
-      </Animated.View>
+      {/* Decorative moving glows are omitted on detected low-end devices. */}
+      {!performanceMode ? (
+        <>
+          <Animated.View style={[{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, overflow: 'hidden', opacity: 0.55 }, a]}>
+            <LinearGradient colors={[c1, c1 + '00']} style={{ flex: 1 }} start={{ x: 0.5, y: 0.2 }} end={{ x: 0.5, y: 1 }} />
+          </Animated.View>
+          <Animated.View style={[{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, overflow: 'hidden', opacity: 0.5 }, b]}>
+            <LinearGradient colors={[c2, c2 + '00']} style={{ flex: 1 }} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} />
+          </Animated.View>
+        </>
+      ) : null}
       {/* Keep controls readable on dark gradients. */}
       {!light ? <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.38)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: height * 0.5 }} /> : null}
     </View>
@@ -167,17 +177,19 @@ function Poster({ palette, light, plain = false, plainColor = WHITE }) {
 }
 
 function BigAvatar({ name, image, size = 104, pulse, light = false }) {
+  const performanceMode = useContext(PerformanceModeContext);
+  const animatePulse = pulse && !performanceMode;
   const ring = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (!pulse) return undefined;
+    if (!animatePulse) return undefined;
     const loop = Animated.loop(Animated.timing(ring, { toValue: 1, duration: 1800, easing: Easing.out(Easing.quad), useNativeDriver: true }));
     loop.start();
     return () => loop.stop();
-  }, [pulse, ring]);
+  }, [animatePulse, ring]);
   const letters = initials(name);
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      {pulse ? (
+      {animatePulse ? (
         <Animated.View
           style={{
             position: 'absolute',
@@ -316,8 +328,6 @@ export default function CallScreen() {
   // on a tablet the dial pad lives in its own column, so the left side never
   // swaps itself out for it
   const padOpen = keypad && !isTablet;
-  useTicker(live.some((c) => c.state === 'active'));
-
   useEffect(() => {
     if (!primary) {
       setKeypad(false);
@@ -386,7 +396,7 @@ export default function CallScreen() {
     return wrap(
       <>
         <View style={{ alignItems: 'center', marginTop: 48 }}>
-          <Text style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(ringing, who)}</Text>
+          <CallStatusText call={ringing} who={who} style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]} />
           <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
             {who.name}
           </Text>
@@ -554,7 +564,7 @@ export default function CallScreen() {
         </View>
       ) : (
         <View style={{ alignItems: 'center', marginTop: twoCalls ? 18 : 40 }}>
-          <Text style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]}>{statusText(primary, who)}</Text>
+          <CallStatusText call={primary} who={who} style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]} />
           <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
             {who.name}
           </Text>
@@ -667,7 +677,7 @@ export default function CallScreen() {
             <CallButton
               size={KEY}
               icon="radio-button-on"
-              label={recording ? clock(recording.startedAt) : 'Record'}
+              label={recording ? 'Stop recording' : 'Record'}
               color={recording ? RED : undefined}
               onPress={toggleRecording}
               disabled={!connected && !recording}

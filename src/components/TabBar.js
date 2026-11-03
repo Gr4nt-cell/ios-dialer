@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, TAB_BAR_HEIGHT, useTheme } from '../theme';
 import Dialer from '../dialer';
-import { FlatBackdropContext, Glass, GlassShadow } from './Glass';
+import { FlatBackdropContext, Glass, GlassShadow, PerformanceModeContext } from './Glass';
 import { useT } from '../i18n';
 import { ChromeText } from './ui';
 
@@ -42,6 +42,7 @@ export const CLASSIC_TABS = [
 // along the bar like on iOS: it follows your finger, lights up the tab under it, ticks as it
 // crosses tabs, and selects the tab you let go on. A plain tap still selects straight away.
 export default function TabBar({ tabs, active, onChange, badges = {} }) {
+  const performanceMode = useContext(PerformanceModeContext);
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -163,7 +164,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 <Glass
                   radius={27}
                   selected
-                  style={{ flex: 1, boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }}
+                  style={{ flex: 1, ...(performanceMode ? null : { boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }) }}
                   tint={t.dark ? 'rgba(218,228,242,0.1)' : 'rgba(90,99,112,0.055)'}
                   tintOpacity={0.9}
                 />

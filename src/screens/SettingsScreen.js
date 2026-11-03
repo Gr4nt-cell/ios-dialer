@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
-import { Glass } from '../components/Glass';
+import { Glass, PerformanceModeContext } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
 import { Ionicons } from '@expo/vector-icons';
@@ -108,6 +108,7 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
 }
 
 export default function SettingsScreen() {
+  const performanceMode = useContext(PerformanceModeContext);
   const t = useTheme();
   const tr = useT();
   const [langOpen, setLangOpen] = useState(false);
@@ -301,6 +302,14 @@ export default function SettingsScreen() {
             <Cell value="Glass" right={<Segmented options={[{ label: tr('Clear'), value: 'clear' }, { label: tr('Tinted'), value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
           ) : null}
           <Cell
+            value="Performance profile"
+            right={
+              <Text style={{ color: performanceMode ? t.green : t.secondary, fontSize: fs(14), fontWeight: '600' }}>
+                {performanceMode ? 'Optimized' : 'Standard'}
+              </Text>
+            }
+          />
+          <Cell
             value={tr('Language')}
             onPress={() => setLangOpen(true)}
             right={
@@ -310,7 +319,11 @@ export default function SettingsScreen() {
             }
           />
         </Group>
-        <Footer>Liquid Glass off replaces the frosted panels with solid cards, which is easier to read and lighter to draw. Tinted makes glass more opaque.</Footer>
+        <Footer>
+          {performanceMode
+            ? 'This device was automatically optimized: decorative motion, live blur, layered glass highlights and repeated shadows are reduced. Calling and contact features remain available.'
+            : 'Older or lower-memory devices automatically use a lighter visual profile. Liquid Glass off replaces frosted panels with solid cards; Tinted makes glass more opaque.'}
+        </Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>

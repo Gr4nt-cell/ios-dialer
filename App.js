@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Linking, Modal, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext, PerformanceModeContext } from './src/components/Glass';
 import { GlowBackdrop } from './src/components/GlowBackdrop';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
@@ -35,6 +35,7 @@ import SearchScreen from './src/screens/SearchScreen';
 import TabletShell from './src/TabletShell';
 import { useIsTablet } from './src/device';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+import { detectLowEndDevice } from './src/devicePerformance';
 
 const ROUTES = {
   contact: ContactDetailScreen,
@@ -101,6 +102,7 @@ function ReturnToCall() {
 }
 
 function Main() {
+  const performanceMode = useContext(PerformanceModeContext);
   const t = useTheme();
   const { missedCount, settings } = useData();
   const blurTarget = useRef(null);
@@ -258,7 +260,7 @@ function Main() {
   return (
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
-      <GlassRefractionProvider active={settings.liquidGlass !== false}>
+      <GlassRefractionProvider active={settings.liquidGlass !== false && !performanceMode}>
       <GlassFillScaleContext.Provider value={t.glassFillScale}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
       {/* Keep live blur limited to the tab bar; app surfaces use translucent fills. */}
@@ -314,15 +316,18 @@ function Main() {
 }
 
 export default function App() {
+  const performanceMode = useMemo(detectLowEndDevice, []);
   return (
     <SafeAreaProvider>
-      <DataProvider>
-        <CallProvider>
-          <ActionSheetProvider>
-            <Main />
-          </ActionSheetProvider>
-        </CallProvider>
-      </DataProvider>
+      <PerformanceModeContext.Provider value={performanceMode}>
+        <DataProvider>
+          <CallProvider>
+            <ActionSheetProvider>
+              <Main />
+            </ActionSheetProvider>
+          </CallProvider>
+        </DataProvider>
+      </PerformanceModeContext.Provider>
     </SafeAreaProvider>
   );
 }
