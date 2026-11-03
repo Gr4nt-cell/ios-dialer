@@ -195,6 +195,7 @@ export function Glass({
   soft = false, // shallower shadow on a flat background, for small repeated controls
   liquid = true, // brighter bevel and cool glass tint across glass surfaces
   fillScale = 1, // thins the fill further, e.g. a button over a photo
+  sheenScale = 1, // lowers the glass sheen without dimming its contents
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
@@ -312,7 +313,7 @@ export function Glass({
           locations={[0, 0.5, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
         />
       ) : null}
       {/* specular highlight */}
@@ -321,7 +322,7 @@ export function Glass({
         colors={[highlight, 'rgba(255,255,255,0)']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.55 }}
-        style={StyleSheet.absoluteFill}
+        style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
       />
       {showRefraction ? <RefractionSweep progress={refraction} dark={dark} /> : null}
       {/* darker lower edge for depth */}

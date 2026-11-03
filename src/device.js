@@ -50,5 +50,5 @@ export function useBottomSpace() {
  */
 export function getTabBarClipSpace(tabBarSpace, bottomInset) {
   if (!tabBarSpace) return 0;
-  return Math.max(tabBarSpace, TAB_BAR_HEIGHT + Math.max(bottomInset, 10));
+  return TAB_BAR_HEIGHT + Math.max(bottomInset, 10);
 }

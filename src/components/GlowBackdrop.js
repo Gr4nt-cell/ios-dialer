@@ -9,7 +9,7 @@ export function GlowBackdrop({ style }) {
   const t = useTheme();
   const [a, b, c] = t.glow;
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.dark ? t.bg : '#D9DAFA' }]}>
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.backdropBase }]}>
       {t.dark ? (
         <>
           <LinearGradient
@@ -26,7 +26,8 @@ export function GlowBackdrop({ style }) {
       ) : (
         <Image
           source={require('../../assets/soft-pastel-background.jpg')}
-          resizeMode="cover"
+          // Stretch the viewport-relative color fields instead of cropping them.
+          resizeMode="stretch"
           style={StyleSheet.absoluteFill}
         />
       )}
