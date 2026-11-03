@@ -51,6 +51,8 @@ function groupCalls(calls) {
 export function DataProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [favorites, setFavorites] = useState([]);
+  const [dismissedAutoFavorites, setDismissedAutoFavorites] = useState([]);
+  const [favoritesReady, setFavoritesReady] = useState(false);
   const [blocked, setBlocked] = useState([]);
   const [localCalls, setLocalCalls] = useState([]);
   const [hidden, setHidden] = useState([]);
@@ -60,6 +62,7 @@ export function DataProvider({ children }) {
   const [contactsError, setContactsError] = useState(null);
   const [deviceCalls, setDeviceCalls] = useState([]);
   const [callLogPerm, setCallLogPerm] = useState(Platform.OS === 'android' && CallLog ? 'undetermined' : 'unavailable');
+  const [callHistoryReady, setCallHistoryReady] = useState(false);
   const busy = useRef(false);
 
   // ---------- loading ----------
@@ -98,6 +101,7 @@ export function DataProvider({ children }) {
   const refreshCallLog = useCallback(async (ask = false) => {
     if (Platform.OS !== 'android' || !CallLog) {
       setCallLogPerm('unavailable');
+      setCallHistoryReady(true);
       return;
     }
     try {
@@ -121,18 +125,21 @@ export function DataProvider({ children }) {
       );
     } catch {
       // ignore
+    } finally {
+      setCallHistoryReady(true);
     }
   }, []);
 
   useEffect(() => {
     (async () => {
-      const [s, f, b, l, h, seen] = await Promise.all([
+      const [s, f, b, l, h, seen, dismissedAuto] = await Promise.all([
         load('settings', DEFAULT_SETTINGS),
         load('favorites', []),
         load('blocked', []),
         load('localCalls', []),
         load('hiddenCalls', []),
         load('lastSeenRecents', Date.now()),
+        load('dismissedAutoFavorites', []),
       ]);
       const loadedSettings = { ...DEFAULT_SETTINGS, ...s };
       const removedDepthKeys = ['callDepth', 'depthScale', 'depthX', 'depthY'];
@@ -150,6 +157,8 @@ export function DataProvider({ children }) {
       }
       setSettings(loadedSettings);
       setFavorites(f);
+      setDismissedAutoFavorites(dismissedAuto);
+      setFavoritesReady(true);
       setBlocked(b);
       setLocalCalls(l);
       setHidden(h);
@@ -211,6 +220,123 @@ export function DataProvider({ children }) {
     const list = source.filter((c) => !hiddenSet.has(c.id)).sort((a, b) => b.date - a.date);
     return groupCalls(list);
   }, [callLogPerm, deviceCalls, localCalls, hidden]);
+
+  const automaticFavoriteCandidates = useMemo(() => {
+    if (contactsPerm !== 'granted') return [];
+
+    const byContact = new Map();
+    for (const group of recents) {
+      for (const entry of group.calls || []) {
+        // Only count calls where a conversation could actually have happened.
+        if (entry.type !== 'incoming' && entry.type !== 'outgoing') continue;
+        const matched = lookup.get(numberKey(entry.number));
+        const contact = matched && matched.contact;
+        if (!contact || contact.id == null) continue;
+
+        const contactKey = String(contact.id);
+        let stats = byContact.get(contactKey);
+        if (!stats) {
+          stats = { contact, count: 0, lastCall: 0, numbers: new Map() };
+          byContact.set(contactKey, stats);
+        }
+
+        const date = Number(entry.date) || 0;
+        stats.count += 1;
+        stats.lastCall = Math.max(stats.lastCall, date);
+
+        const phoneKey = numberKey(entry.number);
+        if (!phoneKey) continue;
+        let phone = stats.numbers.get(phoneKey);
+        if (!phone) {
+          phone = { number: entry.number, label: matched.label || 'phone', count: 0, lastCall: 0 };
+          stats.numbers.set(phoneKey, phone);
+        }
+        phone.count += 1;
+        if (date >= phone.lastCall) {
+          phone.number = entry.number;
+          phone.label = matched.label || 'phone';
+          phone.lastCall = date;
+        }
+      }
+    }
+
+    return [...byContact.values()]
+      .map((stats) => {
+        const phone = [...stats.numbers.values()].sort((a, b) => b.count - a.count || b.lastCall - a.lastCall)[0];
+        return phone
+          ? {
+              contactId: stats.contact.id,
+              name: contactName(stats.contact),
+              number: phone.number,
+              label: phone.label,
+              count: stats.count,
+              lastCall: stats.lastCall,
+            }
+          : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.count - a.count || b.lastCall - a.lastCall || a.name.localeCompare(b.name));
+  }, [contactsPerm, lookup, recents]);
+
+  useEffect(() => {
+    if (!favoritesReady || !callHistoryReady || contactsPerm !== 'granted') return;
+    // Without call-log access there is no complete ranking; retain previous
+    // automatic favorites until history becomes available again.
+    if (callLogPerm !== 'granted' && localCalls.length === 0) return;
+
+    const dismissed = new Set((Array.isArray(dismissedAutoFavorites) ? dismissedAutoFavorites : []).map(String));
+    const candidates = automaticFavoriteCandidates
+      .filter((candidate) => !dismissed.has(String(candidate.contactId)))
+      .slice(0, 5);
+
+    setFavorites((prev) => {
+      const manualContactIds = new Set(prev.filter((favorite) => !favorite.auto && favorite.contactId != null).map((favorite) => String(favorite.contactId)));
+      const manualNumbers = new Set(prev.filter((favorite) => !favorite.auto).map((favorite) => numberKey(favorite.number)).filter(Boolean));
+      const eligible = candidates.filter(
+        (candidate) =>
+          !manualContactIds.has(String(candidate.contactId)) &&
+          !manualNumbers.has(numberKey(candidate.number))
+      );
+      const eligibleByContact = new Map(eligible.map((candidate) => [String(candidate.contactId), candidate]));
+      const added = new Set();
+      const next = [];
+
+      // Keep the user's existing order, including any manual reordering.
+      for (const favorite of prev) {
+        if (!favorite.auto) {
+          next.push(favorite);
+          continue;
+        }
+        const key = String(favorite.contactId);
+        const candidate = eligibleByContact.get(key);
+        if (!candidate || added.has(key)) continue;
+        next.push({ ...favorite, ...candidate, id: favorite.id, auto: true });
+        added.add(key);
+      }
+
+      for (const candidate of eligible) {
+        const key = String(candidate.contactId);
+        if (added.has(key)) continue;
+        next.push({ ...candidate, id: `auto-${key}`, auto: true });
+        added.add(key);
+      }
+
+      const unchanged =
+        prev.length === next.length &&
+        prev.every((favorite, index) => {
+          const updated = next[index];
+          return (
+            favorite.id === updated.id &&
+            favorite.contactId === updated.contactId &&
+            favorite.number === updated.number &&
+            favorite.name === updated.name &&
+            favorite.label === updated.label &&
+            favorite.auto === updated.auto
+          );
+        });
+      return unchanged ? prev : persistFavorites(next);
+    });
+  }, [automaticFavoriteCandidates, callHistoryReady, callLogPerm, contactsPerm, dismissedAutoFavorites, favoritesReady, localCalls.length]);
 
   const missedCount = useMemo(
     () => recents.filter((g) => isMissedType(g.type) && g.date > lastSeenRecents).length,
@@ -302,13 +428,26 @@ export function DataProvider({ children }) {
     });
   }, []);
 
-  const removeFavorite = useCallback((id) => {
-    setFavorites((prev) => persistFavorites(prev.filter((f) => f.id !== id)));
+  const dismissAutoFavorite = useCallback((favorite) => {
+    if (!favorite || !favorite.auto || favorite.contactId == null) return;
+    const key = String(favorite.contactId);
+    setDismissedAutoFavorites((prev) => {
+      if (prev.includes(key)) return prev;
+      const next = [...prev, key];
+      save('dismissedAutoFavorites', next);
+      return next;
+    });
   }, []);
 
+  const removeFavorite = useCallback((id) => {
+    dismissAutoFavorite(favorites.find((favorite) => favorite.id === id));
+    setFavorites((prev) => persistFavorites(prev.filter((f) => f.id !== id)));
+  }, [dismissAutoFavorite, favorites]);
+
   const removeFavoriteByNumber = useCallback((number) => {
+    favorites.filter((favorite) => numberKey(favorite.number) === numberKey(number)).forEach(dismissAutoFavorite);
     setFavorites((prev) => persistFavorites(prev.filter((f) => numberKey(f.number) !== numberKey(number))));
-  }, []);
+  }, [dismissAutoFavorite, favorites]);
 
   const moveFavorite = useCallback((id, dir) => {
     setFavorites((prev) => {
