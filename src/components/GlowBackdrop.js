@@ -25,17 +25,39 @@ export function GlowBackdrop({ style }) {
         </>
       ) : (
         <>
-          {/* Soft aurora gradient: mint → cloud → peach base with lilac and sky glows. */}
+          {/* A warm, balanced dawn field keeps the glass colorful without
+              letting the cool blue wash dominate the whole screen. */}
           <LinearGradient
-            colors={['#CFF7EA', '#EEF1FF', '#FFE6D6']}
-            locations={[0, 0.5, 1]}
+            colors={['#E2F1FF', '#EEEAFE', '#FBE8EE', '#E4F5EF']}
+            locations={[0, 0.32, 0.68, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <LinearGradient colors={['rgba(150,214,255,0.55)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.8, y: 0.5 }} style={StyleSheet.absoluteFill} />
-          <LinearGradient colors={['transparent', 'rgba(205,180,255,0.45)']} start={{ x: 0.2, y: 0.35 }} end={{ x: 1, y: 0.7 }} style={StyleSheet.absoluteFill} />
-          <LinearGradient colors={['transparent', 'rgba(255,170,190,0.40)']} start={{ x: 0.8, y: 0.5 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+          <LinearGradient
+            colors={['rgba(255,225,199,0.30)', 'transparent']}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0.15, y: 0.55 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(255,151,183,0.36)']}
+            start={{ x: 0.08, y: 0.35 }}
+            end={{ x: 1, y: 0.58 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={['rgba(180,160,255,0.28)', 'transparent']}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 0.72, y: 0.42 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(105,218,190,0.34)']}
+            start={{ x: 0.22, y: 0.5 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
         </>
       )}
     </View>
