@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="851" height="1848" viewBox="0 0 851 1848">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="851" y2="1848" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b8d8ff"/>
+      <stop offset=".34" stop-color="#e9ddff"/>
+      <stop offset=".68" stop-color="#ffd9e9"/>
+      <stop offset="1" stop-color="#d8f3e8"/>
+    </linearGradient>
+    <radialGradient id="blue" cx="0" cy="0" r="1" gradientTransform="translate(102.12 258.72) scale(663.78 1071.84)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#569dff" stop-opacity=".4"/>
+      <stop offset=".65" stop-color="#569dff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#569dff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pink" cx="0" cy="0" r="1" gradientTransform="translate(765.9 887.04) scale(527.62 1182.72)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff7eb8" stop-opacity=".486"/>
+      <stop offset=".65" stop-color="#ff7eb8" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff7eb8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mint" cx="0" cy="0" r="1" gradientTransform="translate(544.64 1737.12) scale(612.72 848.08)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#74d9b5" stop-opacity=".466"/>
+      <stop offset=".65" stop-color="#74d9b5" stop-opacity="0"/>
+      <stop offset="1" stop-color="#74d9b5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="apricot" cx="0" cy="0" r="1" gradientTransform="translate(42.55 1441.44) scale(544.64 848.08)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffbd91" stop-opacity=".271"/>
+      <stop offset=".65" stop-color="#ffbd91" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ffbd91" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="851" height="1848" fill="url(#base)"/>
+  <rect width="851" height="1848" fill="url(#blue)"/>
+  <rect width="851" height="1848" fill="url(#pink)"/>
+  <rect width="851" height="1848" fill="url(#mint)"/>
+  <rect width="851" height="1848" fill="url(#apricot)"/>
+</svg>

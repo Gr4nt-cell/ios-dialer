@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
@@ -24,41 +24,11 @@ export function GlowBackdrop({ style }) {
           <LinearGradient colors={['transparent', c]} start={{ x: 0.7, y: 0.45 }} end={{ x: 0.1, y: 1 }} style={StyleSheet.absoluteFill} />
         </>
       ) : (
-        <>
-          {/* A warm, balanced dawn field keeps the glass colorful without
-              letting the cool blue wash dominate the whole screen. */}
-          <LinearGradient
-            colors={['#E2F1FF', '#EEEAFE', '#FBE8EE', '#E4F5EF']}
-            locations={[0, 0.32, 0.68, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(255,225,199,0.30)', 'transparent']}
-            start={{ x: 1, y: 0 }}
-            end={{ x: 0.15, y: 0.55 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(255,151,183,0.36)']}
-            start={{ x: 0.08, y: 0.35 }}
-            end={{ x: 1, y: 0.58 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(180,160,255,0.28)', 'transparent']}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 0.72, y: 0.42 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['transparent', 'rgba(105,218,190,0.34)']}
-            start={{ x: 0.22, y: 0.5 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </>
+        <Image
+          source={require('../../assets/file-xplorer-background.jpg')}
+          resizeMode="stretch"
+          style={StyleSheet.absoluteFill}
+        />
       )}
     </View>
   );
