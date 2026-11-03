@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
-import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Image, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -64,7 +64,27 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
   );
 }
 
-function CallPreview({ colors, light }) {
+function CallPreview({ colors, light, pastel }) {
+  if (pastel) {
+    return (
+      <View style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(107,132,161,0.18)', margin: 12, marginBottom: 4, overflow: 'hidden' }}>
+        <Image source={require('../../assets/dialer-gradient-background.jpg')} resizeMode="stretch" style={StyleSheet.absoluteFill} />
+        <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: '#53666D', fontSize: fs(12) }}>calling mobile…</Text>
+            <Text style={{ color: '#22343A', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+            {['volume-medium', 'pause', 'mic'].map((n) => (
+              <Glass key={n} liquid vivid outline soft radius={17} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name={n} size={16} color="#26383E" />
+              </Glass>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
   return (
     <LinearGradient colors={[colors[0], colors[1], colors[2]]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(107,132,161,0.18)', margin: 12, marginBottom: 4, padding: 14, justifyContent: 'space-between' }}>
       {!light ? <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} /> : null}
@@ -157,9 +177,9 @@ export default function SettingsScreen() {
   };
   const { width } = usePaneSize();
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
-  const bg = settings.callBackground || 'plain';
+  const bg = settings.callBackground || 'pastel';
   const previewColors = gradientFor('Jane Appleseed', bg);
-  const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain';
+  const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain' || bg === 'pastel';
 
   const current = settings.language || 'system';
   const activeLang = current === 'system' ? deviceLanguage() : current;
@@ -384,10 +404,10 @@ export default function SettingsScreen() {
 
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>
-          <CallPreview colors={previewColors} light={lightCallBackground} />
+          <CallPreview colors={previewColors} light={lightCallBackground} pastel={bg === 'pastel' || bg === 'auto'} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, paddingBottom: 2 }}>
             {GRADIENTS.map((g) => (
-              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'plain')} onPress={() => updateSettings({ callBackground: g.id })} />
+              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'pastel')} onPress={() => updateSettings({ callBackground: g.id })} />
             ))}
           </View>
         </Group>

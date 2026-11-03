@@ -9,7 +9,7 @@ import Dialer, { requestPhonePermissions } from './dialer';
 const DataContext = createContext(null);
 export const useData = () => useContext(DataContext);
 
-const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, callBackground: 'plain', callBackgroundVersion: 1, autoRecord: false, language: 'system' };
+const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, callBackground: 'pastel', callBackgroundVersion: 2, autoRecord: false, language: 'system' };
 
 const CALL_TYPES = { 1: 'incoming', 2: 'outgoing', 3: 'missed', 4: 'voicemail', 5: 'rejected', 6: 'blocked', 7: 'incoming' };
 const isMissedType = (t) => t === 'missed' || t === 'rejected' || t === 'blocked';
@@ -153,6 +153,16 @@ export function DataProvider({ children }) {
           loadedSettings.callBackground = 'plain';
         }
         loadedSettings.callBackgroundVersion = 1;
+        await save('settings', loadedSettings);
+      }
+      // The default is now the app's pastel backdrop. Anyone still on a default
+      // — plain white, or legacy Automatic — moves with it; anyone who picked a
+      // gradient for themselves keeps it.
+      if ((loadedSettings.callBackgroundVersion || 0) < 2) {
+        if (!loadedSettings.callBackground || loadedSettings.callBackground === 'plain' || loadedSettings.callBackground === 'auto') {
+          loadedSettings.callBackground = 'pastel';
+        }
+        loadedSettings.callBackgroundVersion = 2;
         await save('settings', loadedSettings);
       }
       setSettings(loadedSettings);

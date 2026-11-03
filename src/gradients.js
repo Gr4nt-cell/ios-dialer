@@ -1,5 +1,9 @@
 // Call-screen backgrounds. Each preset is [glow A, glow B, base].
 export const GRADIENTS = [
+  // The app's own pastel backdrop, drawn from assets/dialer-gradient-background.jpg.
+  // The three colours are only for the swatch and the preview; the call screen
+  // itself renders the image, which has detail no three-stop gradient can carry.
+  { id: 'pastel', name: 'Pastel', colors: ['#FFA6CD', '#9CFFE2', '#E9E7F2'] },
   { id: 'plain', name: 'Plain White', colors: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] },
   { id: 'fastscore', name: 'Fast Score', colors: ['#9BDEF3', '#F3E5E7', '#A5E7D2'] },
   { id: 'aurora', name: 'Aurora', colors: ['#2EE6A6', '#3A5BD9', '#06142B'] },
@@ -22,11 +26,11 @@ export function gradientById(id) {
   return GRADIENTS.find((g) => g.id === id) || null;
 }
 
-// 'auto' uses the plain white call background.
+// 'auto' and an unset choice both mean the pastel backdrop, which is the default.
 export function gradientFor(key, choice = 'auto') {
   const picked = choice && choice !== 'auto' ? gradientById(choice) : null;
   if (picked) return picked.colors;
-  if (choice === 'auto') return gradientById('plain').colors;
+  if (choice === 'auto') return gradientById('pastel').colors;
   let h = 0;
   for (const ch of key || '?') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return gradientById(ROTATION[h % ROTATION.length]).colors;

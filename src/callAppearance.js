@@ -1,7 +1,9 @@
 /** The call screen follows the app's dark palette, regardless of the saved light-mode poster. */
 export function callAppearance(theme, choice) {
-  const plain = theme.dark || !choice || choice === 'plain' || choice === 'auto';
-  const light = !theme.dark && (plain || choice === 'fastscore');
+  const pick = choice === 'auto' || !choice ? 'pastel' : choice;
+  const plain = theme.dark || pick === 'plain';
+  // the pastel backdrop is a pale image, so the controls take the dark text
+  const light = !theme.dark && (plain || pick === 'fastscore' || pick === 'pastel');
   return {
     plain,
     light,

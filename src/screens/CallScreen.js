@@ -121,7 +121,7 @@ function CallStatusText({ call, who, style }) {
 // ---------------------------------------------------------------------------
 
 // Screen backdrop, independent of the caller's avatar photo.
-function Poster({ palette, light, plain = false, plainColor = WHITE }) {
+function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = false }) {
   const performanceMode = useContext(PerformanceModeContext);
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
@@ -139,6 +139,21 @@ function Poster({ palette, light, plain = false, plainColor = WHITE }) {
 
   if (plain) {
     return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
+  }
+
+  // The app's own backdrop, the same picture the rest of the app sits on, so a
+  // call doesn't arrive on a different-looking screen. It is drawn rather than
+  // approximated: the radial washes in it don't survive a three-stop gradient.
+  if (pastel) {
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Image
+          source={require('../../assets/dialer-gradient-background.jpg')}
+          resizeMode="stretch"
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
+    );
   }
 
   const [c1, c2, base] = palette;
@@ -321,6 +336,8 @@ export default function CallScreen() {
   const avatarPhoto = settings.callPhoto !== false ? who.image : null;
   const appearance = callAppearance(t, settings.callBackground);
   const plainBackground = appearance.plain;
+  const callBackgroundChoice = settings.callBackground || 'pastel';
+  const pastelBackground = !appearance.plain && (callBackgroundChoice === 'pastel' || callBackgroundChoice === 'auto');
   const lightBackground = appearance.light;
   const plainColor = appearance.background;
   const primaryText = appearance.text;
@@ -356,7 +373,7 @@ export default function CallScreen() {
       <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
         {t.dark ? <GlowBackdrop /> : null}
-        <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} />
+        <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} pastel={pastelBackground} />
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
