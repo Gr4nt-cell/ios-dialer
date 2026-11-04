@@ -24,6 +24,7 @@ import { callAppearance } from '../callAppearance';
 import { useActionSheet } from '../components/ActionSheet';
 import { useT } from '../i18n';
 import { ChromeText } from '../components/ui';
+import { ReferenceCallTypography, ReferenceCallSurface, ReferenceCallIcon, ReferenceCallLabel } from '../components/ReferenceCallControls';
 
 // ---------------------------------------------------------------------------
 // Look & feel
@@ -253,81 +254,36 @@ function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) 
 }
 
 function CallButton({ icon, label, onPress, on, disabled, color, size = 76, iconSize, hangup, light = false }) {
-  const t = useTheme();
-  const tint = color || (light ? undefined : on ? '#FFFFFF' : t.dark ? t.key : CONTROL_TINT);
+  const ink = light ? '#20363B' : WHITE;
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityLabel={label}
-      style={{ alignItems: 'center', width: Math.max(COL, size + 26), opacity: disabled ? 0.35 : 1 }}
-    >
-      {({ pressed }) => (
-        <>
-          <CallControlGlass
-            light={light}
-            vivid
-            outline
-            soft
-            liquid
-            radius={size / 2}
-            pressed={pressed}
-            tint={tint}
-            style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Ionicons
-              name={icon}
-              size={iconSize || size * 0.34}
-              color={color ? WHITE : on && !light ? '#111' : light ? LIGHT_TEXT : WHITE}
-              style={hangup ? { transform: [{ rotate: '135deg' }] } : null}
-            />
-          </CallControlGlass>
-          <Text
-            allowFontScaling={false}
-            numberOfLines={1}
-            style={{
-              color: light ? LIGHT_TEXT : WHITE,
-              fontSize: fs(12),
-              lineHeight: fs(15),
-              fontWeight: '500',
-              textAlign: 'center',
-              marginTop: 7,
-              maxWidth: COL,
-            }}
-          >
-            {label}
-          </Text>
-        </>
-      )}
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button"
+      accessibilityLabel={label} accessibilityState={{ disabled: !!disabled, selected: !!on }}
+      style={{ alignItems: 'center', width: Math.max(COL, size + 26), opacity: disabled ? 0.35 : 1 }}>
+      {({ pressed }) => <>
+        <ReferenceCallSurface radius={size / 2} pressed={pressed} tint={color} on={on}
+          style={{ width: size, height: size }}>
+          <ReferenceCallIcon name={icon} size={iconSize || size * 0.38}
+            color={color ? WHITE : ink}
+            style={hangup ? { transform: [{ rotate: '135deg' }] } : undefined} />
+        </ReferenceCallSurface>
+        {label ? <ReferenceCallLabel color={ink} style={{ maxWidth: COL }}>{label}</ReferenceCallLabel> : null}
+      </>}
     </Pressable>
   );
 }
 
-// Wide red "End" key from the layout.
+// Reference: 102 × 72 red rounded rectangle, full telephone silhouette rotated 135°.
 function EndKey({ onPress, light = false }) {
   const tr = useT();
   return (
-    <Pressable onPress={onPress} accessibilityLabel={tr('End')} style={{ width: COL, alignItems: 'center' }}>
-      {({ pressed }) => (
-        <>
-          <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="call" size={30} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
-          </CallControlGlass>
-          <Text
-            allowFontScaling={false}
-            style={{
-              color: light ? LIGHT_TEXT : WHITE,
-              fontSize: fs(12),
-              lineHeight: fs(15),
-              fontWeight: '500',
-              textAlign: 'center',
-              marginTop: 7,
-            }}
-          >
-            {tr('End')}
-          </Text>
-        </>
-      )}
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={tr('End')}
+      style={{ width: COL, alignItems: 'center' }}>
+      {({ pressed }) => <>
+        <ReferenceCallSurface radius={26} pressed={pressed} tint={RED} style={{ width: COL - 6, height: KEY }}>
+          <ReferenceCallIcon name="call" size={32} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
+        </ReferenceCallSurface>
+        <ReferenceCallLabel color={light ? '#20363B' : WHITE}>{tr('End')}</ReferenceCallLabel>
+      </>}
     </Pressable>
   );
 }
@@ -426,6 +382,7 @@ export default function CallScreen() {
   const tap = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
   const wrap = (children, extra) => (
+    <ReferenceCallTypography>
     <FlatBackdropContext.Provider value={plainBackground && !t.dark}>
       <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
@@ -434,6 +391,7 @@ export default function CallScreen() {
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
+    </ReferenceCallTypography>
   );
 
   // ---------- call ended ----------
@@ -593,9 +551,9 @@ export default function CallScreen() {
       <View style={styles.topRow}>
         <Pressable onPress={() => setMinimized(true)} hitSlop={12}>
           {({ pressed }) => (
-            <CallControlGlass light={lightBackground} liquid vivid outline soft fillScale={0.7} radius={19} pressed={pressed} style={styles.topBtn}>
-              <Ionicons name="chevron-down" size={20} color={primaryText} />
-            </CallControlGlass>
+            <ReferenceCallSurface radius={19} pressed={pressed} style={styles.topBtn}>
+              <ReferenceCallIcon name="chevron-down" size={20} color={WHITE} />
+            </ReferenceCallSurface>
           )}
         </Pressable>
         {primary.isConference ? (
