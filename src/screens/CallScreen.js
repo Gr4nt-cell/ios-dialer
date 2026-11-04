@@ -195,9 +195,10 @@ function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = fa
 function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) {
   const performanceMode = useContext(PerformanceModeContext);
   // The cut-out of the caller, which stands in front of their name rather than
-  // sitting inside the circle. Off when the setting is off, when the photo has
-  // no clear subject, or on a device already struggling.
-  const wantsDepth = !!image && settings?.depth !== false && !performanceMode;
+  // sitting inside the circle. It is made once per photo and cached on disk, so
+  // it runs on the optimized profile too — only the photos the segmenter finds
+  // no subject in stay as plain circles.
+  const wantsDepth = !!image && settings?.depth !== false;
   const depth = useDepth(wantsDepth ? image : null, wantsDepth);
   const animatePulse = pulse && !performanceMode;
   const ring = useRef(new Animated.Value(0)).current;
@@ -208,7 +209,7 @@ function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) 
     return () => loop.stop();
   }, [animatePulse, ring]);
   const letters = initials(name);
-  const cut = depth && depth.box ? depthLayout(depth.box, size * DEPTH_FRAME, settings) : null;
+  const cut = depth.status === 'ready' ? depthLayout(depth.box, size * DEPTH_FRAME, settings) : null;
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       {animatePulse ? (

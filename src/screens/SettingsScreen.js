@@ -3,7 +3,7 @@ import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Image, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import DepthPreview from '../components/DepthPreview';
-import { DEPTH_DEFAULTS, DEPTH_LIMITS, depthAvailable } from '../depth';
+import { DEPTH_DEFAULTS, DEPTH_LIMITS, depthAvailable, useDepth } from '../depth';
 import { Pressable } from '../components/Touch';
 import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -196,6 +196,16 @@ export default function SettingsScreen() {
     }
     return { image, name: 'Ama Mensah' };
   }, [contacts]);
+
+  const depthOn = settings.depth !== false && settings.callPhoto !== false;
+  const sampleDepth = useDepth(depthOn ? sample.image : null, depthOn);
+  const depthStatus =
+    !sample.image ? 'No photo to work from — add one to a contact.'
+    : sampleDepth.status === 'ready' ? 'Cut-out ready. Drag the preview, or use the controls below.'
+    : sampleDepth.status === 'wait' ? 'Preparing the cut-out… if this stays, Play services is still fetching the subject-detection model.'
+    : sampleDepth.status === 'none' ? 'No clear subject in this photo, so it keeps the plain circle. Try a contact photo with a person in the foreground.'
+    : depthAvailable() ? `Couldn’t make a cut-out${sampleDepth.detail ? ` (${sampleDepth.detail})` : ''}.`
+    : 'Cut-outs need the installed app build; the controls still apply on a call.';
 
   const current = settings.language || 'system';
   const activeLang = current === 'system' ? deviceLanguage() : current;
@@ -430,7 +440,7 @@ export default function SettingsScreen() {
         </Group>
         <Footer>Depth Effect lifts the caller out of their picture so they rise above the circle and across their name.</Footer>
 
-        {settings.depth !== false && settings.callPhoto !== false ? (
+        {depthOn ? (
           <>
             <SectionTitle>{tr('Depth Adjustment')}</SectionTitle>
             <View style={{ alignItems: 'center', marginBottom: 12 }}>
@@ -498,11 +508,7 @@ export default function SettingsScreen() {
               />
               <Cell value={tr('Reset')} color={t.blue} onPress={() => updateSettings({ ...DEPTH_DEFAULTS })} />
             </Group>
-            <Footer>
-              {depthAvailable()
-                ? 'The cut-out is made on the phone by Android\u2019s own subject detection. A photo with no clear subject keeps the plain circle.'
-                : 'Cut-outs need the installed app build; the controls still apply on a call.'}
-            </Footer>
+            <Footer>{depthStatus}</Footer>
           </>
         ) : null}
 

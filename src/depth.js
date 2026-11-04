@@ -17,32 +17,51 @@ const depthCache = new Map();
 // no reason to segment a 2560px bitmap for it.
 export const DEPTH_SIDE = 1200;
 
+/**
+ * The cut-out, plus why there isn't one. The status is what Settings shows, so
+ * a photo that won't segment says so instead of quietly staying a circle.
+ *
+ *   off   — switched off, or no photo
+ *   wait  — being prepared, or the segmentation model is still downloading
+ *   ready — there is a cut-out
+ *   none  — the segmenter found no clear subject in this photo
+ *   error — something else went wrong; `detail` says what
+ */
 export function useDepth(image, enabled = true) {
   const key = `${image}@${DEPTH_SIDE}`;
-  const [depth, setDepth] = useState(() => (image && depthCache.get(key)) || null);
+  const [state, setState] = useState(() => (image && depthCache.get(key)) || { status: enabled && image ? 'wait' : 'off' });
   useEffect(() => {
     let alive = true;
     if (!image || !enabled || !Dialer || !Dialer.prepareDepth) {
-      setDepth(null);
+      setState({ status: !Dialer || !Dialer.prepareDepth ? 'error' : 'off' });
       return undefined;
     }
-    if (depthCache.has(key)) {
-      setDepth(depthCache.get(key));
+    const cached = depthCache.get(key);
+    if (cached) {
+      setState(cached);
       return undefined;
     }
-    setDepth(null);
+    setState({ status: 'wait' });
     Dialer.prepareDepth(image, DEPTH_SIDE)
       .then((r) => {
-        const ok = r && r.foreground && r.box;
-        if (ok) depthCache.set(key, r);
-        if (alive) setDepth(ok ? r : null);
+        const next = r && r.foreground && r.box
+          ? { status: 'ready', foreground: r.foreground, base: r.base, box: r.box }
+          : {
+              status: r && r.reason === 'no-subject' ? 'none' : r && r.reason === 'model' ? 'wait' : 'error',
+              detail: (r && r.detail) || (r && r.reason) || null,
+            };
+        // a cut-out is kept for ever; a "still downloading" is retried next time
+        if (next.status === 'ready' || next.status === 'none') depthCache.set(key, next);
+        if (alive) setState(next);
       })
-      .catch(() => {});
+      .catch((e) => {
+        if (alive) setState({ status: 'error', detail: e && e.message ? e.message : null });
+      });
     return () => {
       alive = false;
     };
   }, [image, enabled, key]);
-  return depth;
+  return state;
 }
 
 export const depthAvailable = () => !!(Dialer && Dialer.prepareDepth);

@@ -471,7 +471,7 @@ class DialerModule : Module() {
         try {
           val bytes = ContactTools.readBytes(context, uri)
           if (bytes == null) {
-            done(null)
+            done(mapOf("reason" to "unreadable"))
             return@Thread
           }
           // Cached per photo and per size, and per version of this code: a
@@ -506,12 +506,12 @@ class DialerModule : Module() {
             return@Thread
           }
           if (none.exists()) {
-            done(null)
+            done(mapOf("reason" to "no-subject"))
             return@Thread
           }
           val bmp = ContactTools.decode(bytes, side)
           if (bmp == null) {
-            done(null)
+            done(mapOf("reason" to "unreadable"))
             return@Thread
           }
           ContactTools.writeJpeg(bmp, base)
@@ -523,14 +523,14 @@ class DialerModule : Module() {
               val cut = r.foregroundBitmap
               if (cut == null) {
                 try { none.createNewFile() } catch (_: Exception) {}
-                done(null)
+                done(mapOf("reason" to "no-subject"))
               } else {
                 Thread {
                   try {
                     val b = ContactTools.subjectBox(cut)
                     if (b == null) {
                       try { none.createNewFile() } catch (_: Exception) {}
-                      done(null)
+                      done(mapOf("reason" to "no-subject"))
                     } else {
                       // The body is cut off wherever the photo ended, so it is
                       // faded out at the bottom instead of stopping square.
@@ -539,20 +539,20 @@ class DialerModule : Module() {
                       box.writeText("${b[0]},${b[1]},${b[2]},${b[3]},${cut.width},${cut.height}")
                       done(result())
                     }
-                  } catch (_: Throwable) {
-                    done(null)
+                  } catch (e: Throwable) {
+                    done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName)))
                   }
                 }.start()
               }
               segmenter.close()
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
               // usually the on-device model is still downloading; try again next call
-              done(null)
+              done(mapOf("reason" to "model", "detail" to (e.message ?: e.javaClass.simpleName)))
               segmenter.close()
             }
-        } catch (_: Throwable) {
-          done(null)
+        } catch (e: Throwable) {
+          done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName)))
         }
       }.start()
     }

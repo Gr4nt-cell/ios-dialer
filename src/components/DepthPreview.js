@@ -21,7 +21,7 @@ export default function DepthPreview({ image, name, settings, enabled = true, on
   const tr = useT();
   const depth = useDepth(enabled ? image : null, enabled);
   const factor = AVATAR / REFERENCE;
-  const cut = depth && depth.box ? depthLayout(depth.box, AVATAR * DEPTH_FRAME, settings, factor) : null;
+  const cut = depth.status === 'ready' ? depthLayout(depth.box, AVATAR * DEPTH_FRAME, settings, factor) : null;
 
   // refs keep the gesture handlers stable while the values they read stay live
   const start = useRef({ x: 0, y: 0 });
@@ -69,7 +69,7 @@ export default function DepthPreview({ image, name, settings, enabled = true, on
               style={{ position: 'absolute', width: cut.width, height: cut.height, left: AVATAR / 2 + cut.dx, top: AVATAR / 2 + cut.dy }}
             />
           ) : image ? (
-            <Image source={{ uri: image }} style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 }} />
+            <Image source={{ uri: image }} style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2, opacity: depth.status === 'wait' ? 0.55 : 1 }} />
           ) : (
             <View style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2, backgroundColor: 'rgba(255,255,255,0.5)', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#22343A', fontSize: fs(20), fontWeight: '600' }}>{letters}</Text>
