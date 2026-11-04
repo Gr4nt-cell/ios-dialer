@@ -22,6 +22,9 @@ import android.telephony.TelephonyManager
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.security.MessageDigest
 import java.util.Locale
 
 object ContactTools {
@@ -77,6 +80,87 @@ object ContactTools {
     val out = ByteArrayOutputStream()
     bmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
     return out.toByteArray()
+  }
+
+  fun md5(bytes: ByteArray): String =
+    MessageDigest.getInstance("MD5").digest(bytes).joinToString("") { "%02x".format(it) }
+
+  fun cacheFile(ctx: Context, name: String): File {
+    val dir = File(ctx.cacheDir, "call-depth")
+    if (!dir.exists()) dir.mkdirs()
+    return File(dir, name)
+  }
+
+  fun writePng(bmp: Bitmap, file: File) {
+    FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+  }
+
+  fun writeJpeg(bmp: Bitmap, file: File) {
+    FileOutputStream(file).use { bmp.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+  }
+
+  /**
+   * The box the cut-out person occupies, as fractions of the image: x, y,
+   * width, height. Scanning a 1200px bitmap costs a few milliseconds and saves
+   * the app from guessing where in the frame they are.
+   */
+  fun subjectBox(cut: Bitmap): FloatArray? {
+    val w = cut.width
+    val h = cut.height
+    if (w <= 0 || h <= 0) return null
+    val row = IntArray(w)
+    var top = -1
+    var bottom = -1
+    var left = w
+    var right = -1
+    for (y in 0 until h) {
+      cut.getPixels(row, 0, w, 0, y, w, 1)
+      var any = false
+      for (x in 0 until w) {
+        if ((row[x] ushr 24) > 24) {
+          any = true
+          if (x < left) left = x
+          if (x > right) right = x
+        }
+      }
+      if (any) {
+        if (top < 0) top = y
+        bottom = y
+      }
+    }
+    if (top < 0 || right < 0) return null
+    val bw = (right - left + 1).toFloat() / w
+    val bh = (bottom - top + 1).toFloat() / h
+    // A "subject" covering the whole frame means the segmenter kept everything,
+    // which is not a cut-out worth drawing.
+    if (bw > 0.985f && bh > 0.985f) return null
+    return floatArrayOf(left.toFloat() / w, top.toFloat() / h, bw, bh)
+  }
+
+  /**
+   * Fades the alpha away over the last part of the subject, so a body the photo
+   * simply ran out of dissolves instead of ending in a straight edge.
+   */
+  fun fadeBottom(cut: Bitmap, box: FloatArray, fraction: Float = 0.22f) {
+    val h = cut.height
+    val w = cut.width
+    val subjectTop = (box[1] * h).toInt()
+    val subjectBottom = ((box[1] + box[3]) * h).toInt().coerceAtMost(h)
+    val fadeHeight = ((subjectBottom - subjectTop) * fraction).toInt()
+    if (fadeHeight <= 1) return
+    val start = subjectBottom - fadeHeight
+    val row = IntArray(w)
+    for (y in start until subjectBottom) {
+      val k = 1f - (y - start).toFloat() / fadeHeight
+      cut.getPixels(row, 0, w, 0, y, w, 1)
+      for (x in 0 until w) {
+        val a = row[x] ushr 24
+        if (a == 0) continue
+        val na = (a * k).toInt().coerceIn(0, 255)
+        row[x] = (na shl 24) or (row[x] and 0x00FFFFFF)
+      }
+      cut.setPixels(row, 0, w, 0, y, w, 1)
+    }
   }
 
   // ---------- contact photo ----------

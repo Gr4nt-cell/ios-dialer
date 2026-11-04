@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Dialer, { ROUTE, isRinging, isUssdCode } from '../dialer';
 import { runUssdThroughOperator } from '../ussd';
 import { useIsTablet } from '../device';
+import { DEPTH_FRAME, depthLayout, useDepth } from '../depth';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
 import { fs, useTheme } from '../theme';
@@ -191,8 +192,13 @@ function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = fa
   );
 }
 
-function BigAvatar({ name, image, size = 104, pulse, light = false }) {
+function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) {
   const performanceMode = useContext(PerformanceModeContext);
+  // The cut-out of the caller, which stands in front of their name rather than
+  // sitting inside the circle. Off when the setting is off, when the photo has
+  // no clear subject, or on a device already struggling.
+  const wantsDepth = !!image && settings?.depth !== false && !performanceMode;
+  const depth = useDepth(wantsDepth ? image : null, wantsDepth);
   const animatePulse = pulse && !performanceMode;
   const ring = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -202,6 +208,7 @@ function BigAvatar({ name, image, size = 104, pulse, light = false }) {
     return () => loop.stop();
   }, [animatePulse, ring]);
   const letters = initials(name);
+  const cut = depth && depth.box ? depthLayout(depth.box, size * DEPTH_FRAME, settings) : null;
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       {animatePulse ? (
@@ -218,7 +225,15 @@ function BigAvatar({ name, image, size = 104, pulse, light = false }) {
           }}
         />
       ) : null}
-      {image ? (
+      {image && cut ? (
+        // no frame: the person stands on the background and fades out below,
+        // so nothing boxes them in. Drawn after the name, so they overlap it.
+        <Image
+          source={{ uri: depth.foreground }}
+          resizeMode="contain"
+          style={{ position: 'absolute', width: cut.width, height: cut.height, left: size / 2 + cut.dx, top: size / 2 + cut.dy }}
+        />
+      ) : image ? (
         <Image source={{ uri: image }} style={{ width: size, height: size, borderRadius: size / 2 }} />
       ) : (
         <Glass dark={!light} radius={size / 2} tint={light ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)'} tintOpacity={1} style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -383,7 +398,7 @@ export default function CallScreen() {
   if (!live.length && ended) {
     return wrap(
       <View style={{ alignItems: 'center', marginTop: 70 }}>
-        <BigAvatar name={who.name} image={avatarPhoto} light={lightBackground} />
+        <BigAvatar name={who.name} image={avatarPhoto} light={lightBackground} settings={settings} />
         <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
           {who.name}
         </Text>
@@ -418,7 +433,7 @@ export default function CallScreen() {
             {who.name}
           </Text>
           <View style={{ marginTop: 28 }}>
-            <BigAvatar name={who.name} image={avatarPhoto} size={120} pulse light={lightBackground} />
+            <BigAvatar name={who.name} image={avatarPhoto} size={120} pulse light={lightBackground} settings={settings} />
           </View>
         </View>
         <View style={{ flex: 1 }} />
@@ -587,7 +602,7 @@ export default function CallScreen() {
           </Text>
           {!ringing && !twoCalls ? (
             <View style={{ marginTop: 26 }}>
-              <BigAvatar name={who.name} image={avatarPhoto} size={110} pulse={!connected} light={lightBackground} />
+              <BigAvatar name={who.name} image={avatarPhoto} size={110} pulse={!connected} light={lightBackground} settings={settings} />
             </View>
           ) : null}
         </View>

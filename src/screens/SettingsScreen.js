@@ -1,7 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Image, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import DepthPreview from '../components/DepthPreview';
+import { DEPTH_DEFAULTS, DEPTH_LIMITS, depthAvailable } from '../depth';
 import { Pressable } from '../components/Touch';
 import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -180,6 +182,20 @@ export default function SettingsScreen() {
   const bg = settings.callBackground || 'pastel';
   const previewColors = gradientFor('Jane Appleseed', bg);
   const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain' || bg === 'pastel';
+
+  // Someone to line the controls up against: a contact with a photo if there
+  // is one, otherwise the face bundled for exactly this.
+  const sample = useMemo(() => {
+    const withPhoto = (contacts || []).find((c) => contactPhoto(c, true));
+    if (withPhoto) return { image: contactPhoto(withPhoto, true), name: contactName(withPhoto) };
+    let image = null;
+    try {
+      image = Dialer && Dialer.previewPhotoUri ? Dialer.previewPhotoUri() : null;
+    } catch {
+      image = null;
+    }
+    return { image, name: 'Ama Mensah' };
+  }, [contacts]);
 
   const current = settings.language || 'system';
   const activeLang = current === 'system' ? deviceLanguage() : current;
@@ -399,8 +415,96 @@ export default function SettingsScreen() {
         <SectionTitle>{tr('Call Screen')}</SectionTitle>
         <Group>
           <Cell value="Contact Photos" right={toggle('callPhoto')} />
+          <Cell
+            value="Depth Effect"
+            right={
+              <Switch
+                value={settings.depth !== false && settings.callPhoto !== false}
+                disabled={settings.callPhoto === false}
+                onValueChange={(v) => updateSettings({ depth: v })}
+                trackColor={{ true: t.green }}
+                thumbColor="#fff"
+              />
+            }
+          />
         </Group>
-        <Footer>Show the contact’s photo in the call screen when available.</Footer>
+        <Footer>Depth Effect lifts the caller out of their picture so they rise above the circle and across their name.</Footer>
+
+        {settings.depth !== false && settings.callPhoto !== false ? (
+          <>
+            <SectionTitle>{tr('Depth Adjustment')}</SectionTitle>
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <DepthPreview
+                image={sample.image}
+                name={sample.name}
+                settings={settings}
+                enabled
+                onAdjust={updateSettings}
+              />
+              <Text style={{ color: t.tertiary, fontSize: fs(12), marginTop: 8 }}>{tr('Drag the preview to move the person')}</Text>
+            </View>
+            <Group>
+              <Cell
+                value={tr('Sprout')}
+                right={
+                  <Stepper
+                    value={settings.depthSprout ?? DEPTH_DEFAULTS.depthSprout}
+                    min={DEPTH_LIMITS.sprout.min}
+                    max={DEPTH_LIMITS.sprout.max}
+                    step={DEPTH_LIMITS.sprout.step}
+                    onChange={(v) => updateSettings({ depthSprout: v })}
+                    format={(v) => `${v}%`}
+                  />
+                }
+              />
+              <Cell
+                value={tr('Size')}
+                right={
+                  <Stepper
+                    value={settings.depthScale ?? DEPTH_DEFAULTS.depthScale}
+                    min={DEPTH_LIMITS.scale.min}
+                    max={DEPTH_LIMITS.scale.max}
+                    step={DEPTH_LIMITS.scale.step}
+                    onChange={(v) => updateSettings({ depthScale: v })}
+                    format={(v) => `${v}%`}
+                  />
+                }
+              />
+              <Cell
+                value={tr('Move Up / Down')}
+                right={
+                  <Stepper
+                    value={settings.depthY ?? DEPTH_DEFAULTS.depthY}
+                    min={DEPTH_LIMITS.offset.min}
+                    max={DEPTH_LIMITS.offset.max}
+                    step={DEPTH_LIMITS.offset.step}
+                    onChange={(v) => updateSettings({ depthY: v })}
+                    format={(v) => (v > 0 ? `↓ ${v}` : v < 0 ? `↑ ${-v}` : '0')}
+                  />
+                }
+              />
+              <Cell
+                value={tr('Move Left / Right')}
+                right={
+                  <Stepper
+                    value={settings.depthX ?? DEPTH_DEFAULTS.depthX}
+                    min={DEPTH_LIMITS.offset.min}
+                    max={DEPTH_LIMITS.offset.max}
+                    step={DEPTH_LIMITS.offset.step}
+                    onChange={(v) => updateSettings({ depthX: v })}
+                    format={(v) => (v > 0 ? `→ ${v}` : v < 0 ? `← ${-v}` : '0')}
+                  />
+                }
+              />
+              <Cell value={tr('Reset')} color={t.blue} onPress={() => updateSettings({ ...DEPTH_DEFAULTS })} />
+            </Group>
+            <Footer>
+              {depthAvailable()
+                ? 'The cut-out is made on the phone by Android\u2019s own subject detection. A photo with no clear subject keeps the plain circle.'
+                : 'Cut-outs need the installed app build; the controls still apply on a call.'}
+            </Footer>
+          </>
+        ) : null}
 
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>

@@ -95,6 +95,10 @@ export const STRINGS = {
   'Video Call': { es: 'Videollamada', zh: '视频通话', th: 'วิดีโอคอล', pl: 'Rozmowa wideo', ja: 'ビデオ通話', it: 'Videochiamata' },
 
   // ---------- photos ----------
+  'Depth Adjustment': { es: 'Ajuste de profundidad', zh: '景深调整', th: 'ปรับความลึก', pl: 'Regulacja głębi', ja: '奥行きの調整', it: 'Regolazione profondità' },
+  'Sprout': { es: 'Salida', zh: '探出', th: 'ยื่นออก', pl: 'Wysunięcie', ja: 'せり出し', it: 'Sporgenza' },
+  'Drag the preview to move the person': { es: 'Arrastra la vista previa para mover a la persona', zh: '拖动预览以移动人物', th: 'ลากตัวอย่างเพื่อย้ายบุคคล', pl: 'Przeciągnij podgląd, aby przesunąć osobę', ja: 'プレビューをドラッグして人物を動かします', it: 'Trascina l’anteprima per spostare la persona' },
+  'calling mobile…': { es: 'llamando al móvil…', zh: '正在拨打手机…', th: 'กำลังโทรมือถือ…', pl: 'dzwonię na komórkę…', ja: '携帯に発信中…', it: 'chiamata al cellulare…' },
   'Contact Photo': { es: 'Foto del contacto', zh: '联系人照片', th: 'รูปรายชื่อ', pl: 'Zdjęcie kontaktu', ja: '連絡先の写真', it: 'Foto del contatto' },
   'Choose Photo': { es: 'Elegir foto', zh: '选择照片', th: 'เลือกรูป', pl: 'Wybierz zdjęcie', ja: '写真を選択', it: 'Scegli foto' },
   'Take Photo': { es: 'Hacer foto', zh: '拍照', th: 'ถ่ายรูป', pl: 'Zrób zdjęcie', ja: '写真を撮る', it: 'Scatta foto' },

@@ -9,7 +9,7 @@ import Dialer, { requestPhonePermissions } from './dialer';
 const DataContext = createContext(null);
 export const useData = () => useContext(DataContext);
 
-const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, callBackground: 'pastel', callBackgroundVersion: 2, autoRecord: false, language: 'system' };
+const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0, callBackground: 'pastel', callBackgroundVersion: 2, autoRecord: false, language: 'system' };
 
 const CALL_TYPES = { 1: 'incoming', 2: 'outgoing', 3: 'missed', 4: 'voicemail', 5: 'rejected', 6: 'blocked', 7: 'incoming' };
 const isMissedType = (t) => t === 'missed' || t === 'rejected' || t === 'blocked';
@@ -142,13 +142,16 @@ export function DataProvider({ children }) {
         load('dismissedAutoFavorites', []),
       ]);
       const loadedSettings = { ...DEFAULT_SETTINGS, ...s };
-      const removedDepthKeys = ['callDepth', 'depthScale', 'depthX', 'depthY'];
-      const hadDepthSettings = removedDepthKeys.some((key) => Object.prototype.hasOwnProperty.call(s || {}, key));
-      removedDepthKeys.forEach((key) => delete loadedSettings[key]);
+      // The depth effect is back, so its keys are kept rather than stripped.
+      // `callDepth` was the old switch; it carries over to the new one.
+      if (Object.prototype.hasOwnProperty.call(s || {}, 'callDepth') && !Object.prototype.hasOwnProperty.call(s || {}, 'depth')) {
+        loadedSettings.depth = s.callDepth !== false;
+      }
+      delete loadedSettings.callDepth;
       // The previous default was Fast Score. Move that default (and legacy
       // Automatic) to the user's requested plain white background while
       // leaving any other explicitly chosen gradient untouched.
-      if ((s.callBackgroundVersion || 0) < 1 || hadDepthSettings) {
+      if ((s.callBackgroundVersion || 0) < 1) {
         if (loadedSettings.callBackground === 'fastscore' || loadedSettings.callBackground === 'auto') {
           loadedSettings.callBackground = 'plain';
         }

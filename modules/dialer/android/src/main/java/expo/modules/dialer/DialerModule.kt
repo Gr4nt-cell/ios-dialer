@@ -16,6 +16,9 @@ import android.telecom.TelecomManager
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import expo.modules.kotlin.Promise
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -340,6 +343,18 @@ class DialerModule : Module() {
       true
     }
 
+    // A face to line the depth controls up against, for anyone whose contacts
+    // have no photo yet. Copied out of the APK's assets on first use.
+    Function("previewPhotoUri") { ->
+      try {
+        val out = java.io.File(ctx.cacheDir, "preview_woman.jpg")
+        if (!out.exists() || out.length() == 0L) {
+          ctx.assets.open("preview_woman.jpg").use { input -> out.outputStream().use { input.copyTo(it) } }
+        }
+        android.net.Uri.fromFile(out).toString()
+      } catch (_: Exception) { null }
+    }
+
     // ---------- privacy ----------
 
     Function("getPrivacy") { -> PrivacyPrefs.all(ctx) }
@@ -437,6 +452,110 @@ class DialerModule : Module() {
 
     // The best photo per contact, for screens that show one large.
     Function("getDisplayPhotos") { -> ContactTools.displayPhotos(ctx) }
+
+    // ---------- call screen depth: cut the person out of their photo ----------
+    //
+    // Returns the photo at a workable size plus a PNG of just the person, the
+    // box that person occupies, and nothing else. The call screen draws the
+    // cut-out in front of the caller's name so they rise out of the avatar.
+
+    AsyncFunction("prepareDepth") { uri: String, maxSide: Int?, promise: Promise ->
+      val context = ctx
+      Thread {
+        var settled = false
+        fun done(value: Any?) {
+          if (settled) return
+          settled = true
+          promise.resolve(value)
+        }
+        try {
+          val bytes = ContactTools.readBytes(context, uri)
+          if (bytes == null) {
+            done(null)
+            return@Thread
+          }
+          // Cached per photo and per size, and per version of this code: a
+          // cut-out written by an older build would otherwise be served for ever.
+          val side = (maxSide ?: 1200).coerceIn(480, 2048)
+          val key = "${ContactTools.md5(bytes)}-$side-v2"
+          val base = ContactTools.cacheFile(context, "$key-base.jpg")
+          val fg = ContactTools.cacheFile(context, "$key-fg.png")
+          val box = ContactTools.cacheFile(context, "$key-box.txt")
+          val none = ContactTools.cacheFile(context, "$key-none")
+          val result = {
+            // x, y, width, height of the subject, then the size of the picture
+            // it was measured in — the app needs the aspect to place it.
+            val b = try {
+              box.readText().split(",").map { it.trim().toFloat() }
+            } catch (_: Exception) { listOf(0f, 0f, 1f, 1f, 1f, 1f) }
+            mapOf(
+              "base" to Uri.fromFile(base).toString(),
+              "foreground" to Uri.fromFile(fg).toString(),
+              "box" to mapOf(
+                "x" to b[0],
+                "y" to b[1],
+                "width" to b[2],
+                "height" to b[3],
+                "imageWidth" to b.getOrElse(4) { 1f },
+                "imageHeight" to b.getOrElse(5) { 1f },
+              ),
+            )
+          }
+          if (base.exists() && fg.exists() && box.exists()) {
+            done(result())
+            return@Thread
+          }
+          if (none.exists()) {
+            done(null)
+            return@Thread
+          }
+          val bmp = ContactTools.decode(bytes, side)
+          if (bmp == null) {
+            done(null)
+            return@Thread
+          }
+          ContactTools.writeJpeg(bmp, base)
+          val segmenter = SubjectSegmentation.getClient(
+            SubjectSegmenterOptions.Builder().enableForegroundBitmap().build(),
+          )
+          segmenter.process(InputImage.fromBitmap(bmp, 0))
+            .addOnSuccessListener { r ->
+              val cut = r.foregroundBitmap
+              if (cut == null) {
+                try { none.createNewFile() } catch (_: Exception) {}
+                done(null)
+              } else {
+                Thread {
+                  try {
+                    val b = ContactTools.subjectBox(cut)
+                    if (b == null) {
+                      try { none.createNewFile() } catch (_: Exception) {}
+                      done(null)
+                    } else {
+                      // The body is cut off wherever the photo ended, so it is
+                      // faded out at the bottom instead of stopping square.
+                      ContactTools.fadeBottom(cut, b)
+                      ContactTools.writePng(cut, fg)
+                      box.writeText("${b[0]},${b[1]},${b[2]},${b[3]},${cut.width},${cut.height}")
+                      done(result())
+                    }
+                  } catch (_: Throwable) {
+                    done(null)
+                  }
+                }.start()
+              }
+              segmenter.close()
+            }
+            .addOnFailureListener {
+              // usually the on-device model is still downloading; try again next call
+              done(null)
+              segmenter.close()
+            }
+        } catch (_: Throwable) {
+          done(null)
+        }
+      }.start()
+    }
 
     // ---------- call recording ----------
 
