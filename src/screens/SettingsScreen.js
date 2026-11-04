@@ -183,19 +183,17 @@ export default function SettingsScreen() {
   const previewColors = gradientFor('Jane Appleseed', bg);
   const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain' || bg === 'pastel';
 
-  // Someone to line the controls up against: a contact with a photo if there
-  // is one, otherwise the face bundled for exactly this.
+  // Use the supplied portrait for a consistent, private preview instead of
+  // pulling a photo from the user's contacts.
   const sample = useMemo(() => {
-    const withPhoto = (contacts || []).find((c) => contactPhoto(c, true));
-    if (withPhoto) return { image: contactPhoto(withPhoto, true), name: contactName(withPhoto) };
     let image = null;
     try {
       image = Dialer && Dialer.previewPhotoUri ? Dialer.previewPhotoUri() : null;
     } catch {
       image = null;
     }
-    return { image, name: 'Ama Mensah' };
-  }, [contacts]);
+    return { image, name: 'Ella Mensah' };
+  }, []);
 
   const depthOn = settings.depth !== false && settings.callPhoto !== false;
   const sampleDepth = useDepth(depthOn ? sample.image : null, depthOn);

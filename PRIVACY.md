@@ -34,7 +34,9 @@ listed here, and only on your device.
 - **Contacts and call history** stay in Android's own contacts and call-log databases. The app
   reads them and changes them only when you ask (for example adding a contact or deleting calls).
 - **Contact photos** are read from the phone's contacts and displayed on the call screen when
-  enabled. They aren't uploaded.
+  enabled. When Depth Effect is on, Google Play services provides an on-device subject-segmentation
+  model; the photo is processed on your phone and is not uploaded. Google Play services may download
+  that model when needed.
 
 The app is **excluded from Android cloud backups**, so recordings and settings aren't copied to
 Google Drive or any other backup service.
