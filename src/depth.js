@@ -13,9 +13,8 @@ import Dialer from './dialer';
  */
 const depthCache = new Map();
 
-// The cut-out is drawn at about an avatar's width, not full screen, so there is
-// no reason to segment a 2560px bitmap for it.
-export const DEPTH_SIDE = 1200;
+// Subject detection uses a small mask; portrait RGB is decoded separately at original quality.
+export const DEPTH_SIDE = 8192;
 
 /**
  * The cut-out, plus why there isn't one. The status is what Settings shows, so
@@ -27,41 +26,44 @@ export const DEPTH_SIDE = 1200;
  *   none  — the segmenter found no clear subject in this photo
  *   error — something else went wrong; `detail` says what
  */
-export function useDepth(image, enabled = true) {
-  const key = `${image}@${DEPTH_SIDE}`;
-  const [state, setState] = useState(() => (image && depthCache.get(key)) || { status: enabled && image ? 'wait' : 'off' });
+const pendingDepth = new Map();
+export function useDepth(image, enabled = true, fade = 24) {
+  const feather = Number.isFinite(fade) ? Math.max(0, Math.min(55, Math.round(fade))) : 24;
+  const key = `${image}@original-v4@${feather}`;
+  const [state, setState] = useState({ status: 'off' });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let alive = true;
-    if (!image || !enabled || !Dialer || !Dialer.prepareDepth) {
-      setState({ status: !Dialer || !Dialer.prepareDepth ? 'error' : 'off' });
+    let retryTimer;
+    if (!image || !enabled || !Dialer?.prepareDepth) {
+      setState({ key, image, status: !image || !enabled ? 'off' : 'error' });
       return undefined;
     }
-    const cached = depthCache.get(key);
-    if (cached) {
-      setState(cached);
-      return undefined;
-    }
-    setState({ status: 'wait' });
-    Dialer.prepareDepth(image, DEPTH_SIDE)
-      .then((r) => {
-        const next = r && r.foreground && r.box
-          ? { status: 'ready', foreground: r.foreground, base: r.base, box: r.box }
-          : {
-              status: r && r.reason === 'no-subject' ? 'none' : r && r.reason === 'model' ? 'wait' : 'error',
-              detail: (r && r.detail) || (r && r.reason) || null,
-            };
-        // a cut-out is kept for ever; a "still downloading" is retried next time
-        if (next.status === 'ready' || next.status === 'none') depthCache.set(key, next);
-        if (alive) setState(next);
+    if (depthCache.has(key)) { setState(depthCache.get(key)); return undefined; }
+    setState((old) => ({ ...(old.image === image ? old : {}), key, image, status: 'wait' }));
+    const timer = setTimeout(() => {
+      if (!pendingDepth.has(key)) pendingDepth.set(key, Dialer.prepareDepth(image, 8192, feather / 100).then((r) => {
+        const next = r?.foreground && r?.box
+          ? { key, image, status: 'ready', ...r }
+          : { key, image, status: r?.reason === 'no-subject' ? 'none' : r?.reason === 'model' ? 'wait' : 'error', detail: r?.detail || r?.reason };
+        if (next.status === 'ready' || next.status === 'none') {
+          depthCache.set(key, next);
+          if (depthCache.size > 12) depthCache.delete(depthCache.keys().next().value);
+        }
+        return next;
+      }).finally(() => pendingDepth.delete(key)));
+      pendingDepth.get(key).then((next) => {
+        if (!alive) return;
+        if (next.status === 'wait' && attempt < 12) {
+          setState(next);
+          retryTimer = setTimeout(() => { if (alive) setAttempt((n) => n + 1); }, 5000);
+        } else setState(next.status === 'wait' ? { ...next, status: 'error', detail: next.detail || 'Subject model unavailable. Try again later.' } : next);
       })
-      .catch((e) => {
-        if (alive) setState({ status: 'error', detail: e && e.message ? e.message : null });
-      });
-    return () => {
-      alive = false;
-    };
-  }, [image, enabled, key]);
-  return state;
+        .catch((e) => { if (alive) setState({ key, image, status: 'error', detail: e?.message }); });
+    }, 180);
+    return () => { alive = false; clearTimeout(timer); clearTimeout(retryTimer); };
+  }, [image, enabled, key, feather, attempt]);
+  return state.key === key ? state : state.image === image && enabled && state.foreground ? { ...state, status: 'wait' } : { status: image && enabled ? 'wait' : 'off' };
 }
 
 export const depthAvailable = () => !!(Dialer && Dialer.prepareDepth);
@@ -72,12 +74,12 @@ export const depthAvailable = () => !!(Dialer && Dialer.prepareDepth);
  *   scale  — their size in the frame
  *   x, y   — a nudge, for a photo whose subject sits off to one side
  */
-export const DEPTH_DEFAULTS = { depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0 };
+export const DEPTH_DEFAULTS = { depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0, depthFade: 24, depthNameSize: 42, depthNameY: 10 };
 
 export const DEPTH_LIMITS = {
   sprout: { min: 0, max: 70, step: 2 },
-  scale: { min: 80, max: 140, step: 5 },
-  offset: { min: -40, max: 40, step: 2 },
+  scale: { min: 50, max: 185, step: 5 },
+  offset: { min: -200, max: 200, step: 2 },
 };
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));

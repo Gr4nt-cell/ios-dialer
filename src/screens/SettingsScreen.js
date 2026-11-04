@@ -3,6 +3,8 @@ import { Alert, AppState } from 'react-native';
 import { usePaneSize } from '../device';
 import { Image, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import DepthPreview from '../components/DepthPreview';
+import DepthEditor from '../components/DepthEditor';
+import { posterSettings, posterPatch } from '../depthSettings';
 import { DEPTH_DEFAULTS, DEPTH_LIMITS, depthAvailable, useDepth } from '../depth';
 import { Pressable } from '../components/Touch';
 import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
@@ -134,6 +136,7 @@ export default function SettingsScreen() {
   const performanceProfile = useContext(PerformanceProfileContext);
   const t = useTheme();
   const tr = useT();
+  const [depthEditor, setDepthEditor] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -304,6 +307,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      <DepthEditor visible={depthEditor} onClose={() => setDepthEditor(false)} settings={posterSettings(settings)} updateSettings={(p) => updateSettings(posterPatch(p))} contacts={sample.image ? [{ name: sample.name, largeImage: { uri: sample.image } }] : []} />
       <SheetHeader title={tr('Settings')} right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 10 }}>
         <SectionTitle>{tr('Default Phone App')}</SectionTitle>
@@ -423,6 +427,7 @@ export default function SettingsScreen() {
         <SectionTitle>{tr('Call Screen')}</SectionTitle>
         <Group>
           <Cell value="Contact Photos" right={toggle('callPhoto')} />
+          <Cell value="Adjust Depth & Live Preview" color={t.blue} onPress={() => setDepthEditor(true)} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
           <Cell
             value="Depth Effect"
             right={
@@ -436,7 +441,7 @@ export default function SettingsScreen() {
             }
           />
         </Group>
-        <Footer>Depth Effect lifts the caller out of their picture so they rise above the circle and across their name.</Footer>
+        <Footer>Depth Effect places a full-resolution cutout over the caller’s name, with softly fading shoulders. Adjust size, position, fade and typography in the live preview.</Footer>
 
         {depthOn ? (
           <>

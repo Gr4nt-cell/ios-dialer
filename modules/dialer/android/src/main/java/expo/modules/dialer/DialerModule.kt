@@ -31,6 +31,7 @@ private const val EXTRA_HANDLED = "expo.modules.dialer.DIAL_HANDLED"
 
 class DialerModule : Module() {
   private var rolePromise: Promise? = null
+  private val depthRenderLock = Any()
   private var ringtonePromise: Promise? = null
 
   private val ctx: Context
@@ -459,101 +460,85 @@ class DialerModule : Module() {
     // box that person occupies, and nothing else. The call screen draws the
     // cut-out in front of the caller's name so they rise out of the avatar.
 
-    AsyncFunction("prepareDepth") { uri: String, maxSide: Int?, promise: Promise ->
+    AsyncFunction("prepareDepth") { uri: String, maxSide: Int?, fade: Double?, promise: Promise ->
       val context = ctx
       Thread {
         var settled = false
-        fun done(value: Any?) {
-          if (settled) return
-          settled = true
-          promise.resolve(value)
-        }
+        fun done(value: Any?) { if (!settled) { settled = true; promise.resolve(value) } }
         try {
           val bytes = ContactTools.readBytes(context, uri)
-          if (bytes == null) {
-            done(mapOf("reason" to "unreadable"))
-            return@Thread
-          }
-          // Cached per photo and per size, and per version of this code: a
-          // cut-out written by an older build would otherwise be served for ever.
-          val side = (maxSide ?: 1200).coerceIn(480, 2048)
-          val key = "${ContactTools.md5(bytes)}-$side-v2"
-          val base = ContactTools.cacheFile(context, "$key-base.jpg")
+          if (bytes == null) { done(mapOf("reason" to "unreadable")); return@Thread }
+          val side = ContactTools.posterSide(bytes, maxSide ?: 8192)
+          val feather = (fade?.takeIf { it.isFinite() } ?: 0.24).coerceIn(0.0, 0.55)
+          val hash = ContactTools.md5(bytes)
+          val key = "$hash-$side-${kotlin.math.round(feather * 100).toInt()}-original-v4"
           val fg = ContactTools.cacheFile(context, "$key-fg.png")
-          val box = ContactTools.cacheFile(context, "$key-box.txt")
-          val none = ContactTools.cacheFile(context, "$key-none")
+          val maskFile = ContactTools.cacheFile(context, "$hash-mask1200-v4.png")
           val result = {
-            // x, y, width, height of the subject, then the size of the picture
-            // it was measured in — the app needs the aspect to place it.
-            val b = try {
-              box.readText().split(",").map { it.trim().toFloat() }
-            } catch (_: Exception) { listOf(0f, 0f, 1f, 1f, 1f, 1f) }
-            mapOf(
-              "base" to Uri.fromFile(base).toString(),
-              "foreground" to Uri.fromFile(fg).toString(),
-              "box" to mapOf(
-                "x" to b[0],
-                "y" to b[1],
-                "width" to b[2],
-                "height" to b[3],
-                "imageWidth" to b.getOrElse(4) { 1f },
-                "imageHeight" to b.getOrElse(5) { 1f },
-              ),
-            )
+            val dims = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeFile(fg.absolutePath, dims)
+            mapOf("base" to uri, "foreground" to Uri.fromFile(fg).toString(),
+              "box" to mapOf("x" to 0f, "y" to 0f, "width" to 1f, "height" to 1f,
+                "imageWidth" to dims.outWidth, "imageHeight" to dims.outHeight),
+              "renderSide" to side)
           }
-          if (base.exists() && fg.exists() && box.exists()) {
-            done(result())
-            return@Thread
-          }
-          if (none.exists()) {
-            done(mapOf("reason" to "no-subject"))
-            return@Thread
-          }
-          val bmp = ContactTools.decode(bytes, side)
-          if (bmp == null) {
-            done(mapOf("reason" to "unreadable"))
-            return@Thread
-          }
-          ContactTools.writeJpeg(bmp, base)
-          val segmenter = SubjectSegmentation.getClient(
-            SubjectSegmenterOptions.Builder().enableForegroundBitmap().build(),
-          )
-          segmenter.process(InputImage.fromBitmap(bmp, 0))
-            .addOnSuccessListener { r ->
-              val cut = r.foregroundBitmap
-              if (cut == null) {
-                try { none.createNewFile() } catch (_: Exception) {}
-                done(mapOf("reason" to "no-subject"))
-              } else {
-                Thread {
-                  try {
-                    val b = ContactTools.subjectBox(cut)
-                    if (b == null) {
-                      try { none.createNewFile() } catch (_: Exception) {}
-                      done(mapOf("reason" to "no-subject"))
-                    } else {
-                      // The body is cut off wherever the photo ended, so it is
-                      // faded out at the bottom instead of stopping square.
-                      ContactTools.fadeBottom(cut, b)
-                      ContactTools.writePng(cut, fg)
-                      box.writeText("${b[0]},${b[1]},${b[2]},${b[3]},${cut.width},${cut.height}")
-                      done(result())
-                    }
-                  } catch (e: Throwable) {
-                    done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName)))
-                  }
-                }.start()
+          if (fg.exists()) { done(result()); return@Thread }
+          fun finish(mask: android.graphics.Bitmap) {
+            synchronized(depthRenderLock) {
+            try {
+              val original = ContactTools.decode(bytes, side)
+              if (original == null) { done(mapOf("reason" to "unreadable")); return }
+              val output = android.graphics.Bitmap.createBitmap(original.width, original.height, android.graphics.Bitmap.Config.ARGB_8888)
+              val canvas = android.graphics.Canvas(output)
+              canvas.drawBitmap(original, 0f, 0f, null)
+              val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG).apply {
+                xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN)
               }
-              segmenter.close()
+              canvas.drawBitmap(mask, null, android.graphics.Rect(0, 0, output.width, output.height), paint)
+              original.recycle()
+              val box = ContactTools.subjectBox(output)
+              if (box == null) { output.recycle(); done(mapOf("reason" to "no-subject")); return }
+              ContactTools.fadeBottom(output, box, feather.toFloat())
+              val left = (box[0] * output.width).toInt().coerceIn(0, output.width - 1)
+              val top = (box[1] * output.height).toInt().coerceIn(0, output.height - 1)
+              val width = kotlin.math.ceil(box[2] * output.width).toInt().coerceIn(1, output.width - left)
+              val height = kotlin.math.ceil(box[3] * output.height).toInt().coerceIn(1, output.height - top)
+              val trimmed = android.graphics.Bitmap.createBitmap(output, left, top, width, height)
+              val temp = java.io.File(fg.parentFile, "${fg.name}.${java.util.UUID.randomUUID()}.tmp")
+              ContactTools.writePng(trimmed, temp)
+              if (!temp.renameTo(fg)) { temp.copyTo(fg, overwrite = true); temp.delete() }
+              if (trimmed !== output) trimmed.recycle()
+              output.recycle()
+              done(result())
+            } catch (e: Throwable) { done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName))) }
+          }
+            }
+          if (maskFile.exists()) {
+            val cached = android.graphics.BitmapFactory.decodeFile(maskFile.absolutePath)
+            if (cached != null) { finish(cached); cached.recycle(); return@Thread }
+          }
+          val detection = ContactTools.decode(bytes, minOf(side, 1200))
+          if (detection == null) { done(mapOf("reason" to "unreadable")); return@Thread }
+          val segmenter = SubjectSegmentation.getClient(SubjectSegmenterOptions.Builder().enableForegroundBitmap().build())
+          segmenter.process(InputImage.fromBitmap(detection, 0))
+            .addOnSuccessListener { r ->
+              val mask = r.foregroundBitmap
+              if (mask == null) { detection.recycle(); segmenter.close(); done(mapOf("reason" to "no-subject")) }
+              else Thread {
+                try {
+                  val temp = java.io.File(maskFile.parentFile, "${maskFile.name}.${java.util.UUID.randomUUID()}.tmp")
+                  ContactTools.writePng(mask, temp)
+                  if (!temp.renameTo(maskFile)) { temp.copyTo(maskFile, overwrite = true); temp.delete() }
+                  finish(mask)
+                } catch (e: Throwable) { done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName))) }
+                finally { if (mask !== detection) mask.recycle(); detection.recycle(); segmenter.close() }
+              }.start()
             }
             .addOnFailureListener { e ->
-              // usually the on-device model is still downloading; try again next call
+              detection.recycle(); segmenter.close()
               done(mapOf("reason" to "model", "detail" to (e.message ?: e.javaClass.simpleName)))
-              segmenter.close()
             }
-        } catch (e: Throwable) {
-          done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName)))
-        }
+        } catch (e: Throwable) { done(mapOf("reason" to "failed", "detail" to (e.message ?: e.javaClass.simpleName))) }
       }.start()
     }
 

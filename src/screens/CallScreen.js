@@ -10,6 +10,8 @@ import Dialer, { ROUTE, isRinging, isUssdCode } from '../dialer';
 import { runUssdThroughOperator } from '../ussd';
 import { useIsTablet } from '../device';
 import { DEPTH_FRAME, depthLayout, useDepth } from '../depth';
+import DepthPoster from '../components/DepthPoster';
+import { posterSettings } from '../depthSettings';
 import { useCalls } from '../CallContext';
 import { useData } from '../DataContext';
 import { fs, useTheme } from '../theme';
@@ -198,7 +200,7 @@ function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) 
   // sitting inside the circle. It is made once per photo and cached on disk, so
   // it runs on the optimized profile too — only the photos the segmenter finds
   // no subject in stay as plain circles.
-  const wantsDepth = !!image && settings?.depth !== false;
+  const wantsDepth = false; // Poster mode is rendered by the shared DepthPoster.
   const depth = useDepth(wantsDepth ? image : null, wantsDepth);
   const animatePulse = pulse && !performanceMode;
   const ring = useRef(new Animated.Value(0)).current;
@@ -231,11 +233,12 @@ function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) 
         // so nothing boxes them in. Drawn after the name, so they overlap it.
         <Image
           source={{ uri: depth.foreground }}
+          resizeMethod="none" fadeDuration={0}
           resizeMode="contain"
           style={{ position: 'absolute', width: cut.width, height: cut.height, left: size / 2 + cut.dx, top: size / 2 + cut.dy }}
         />
       ) : image ? (
-        <Image source={{ uri: image }} style={{ width: size, height: size, borderRadius: size / 2 }} />
+        <Image source={{ uri: image }} resizeMethod="none" fadeDuration={0} style={{ width: size, height: size, borderRadius: size / 2 }} />
       ) : (
         <Glass dark={!light} radius={size / 2} tint={light ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)'} tintOpacity={1} style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
           {letters ? (
@@ -260,24 +263,41 @@ function CallButton({ icon, label, onPress, on, disabled, color, size = 76, icon
       style={{ alignItems: 'center', width: Math.max(COL, size + 26), opacity: disabled ? 0.35 : 1 }}
     >
       {({ pressed }) => (
-        <CallControlGlass
-          light={light}
-          vivid
-          outline
-          soft
-          liquid
-          radius={size / 2}
-          pressed={pressed}
-          tint={tint}
-          style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Ionicons
-            name={icon}
-            size={iconSize || size * 0.38}
-            color={color ? WHITE : on && !light ? '#111' : light ? LIGHT_TEXT : WHITE}
-            style={hangup ? { transform: [{ rotate: '135deg' }] } : null}
-          />
-        </CallControlGlass>
+        <>
+          <CallControlGlass
+            light={light}
+            vivid
+            outline
+            soft
+            liquid
+            radius={size / 2}
+            pressed={pressed}
+            tint={tint}
+            style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Ionicons
+              name={icon}
+              size={iconSize || size * 0.34}
+              color={color ? WHITE : on && !light ? '#111' : light ? LIGHT_TEXT : WHITE}
+              style={hangup ? { transform: [{ rotate: '135deg' }] } : null}
+            />
+          </CallControlGlass>
+          <Text
+            allowFontScaling={false}
+            numberOfLines={1}
+            style={{
+              color: light ? LIGHT_TEXT : WHITE,
+              fontSize: fs(12),
+              lineHeight: fs(15),
+              fontWeight: '500',
+              textAlign: 'center',
+              marginTop: 7,
+              maxWidth: COL,
+            }}
+          >
+            {label}
+          </Text>
+        </>
       )}
     </Pressable>
   );
@@ -289,9 +309,24 @@ function EndKey({ onPress, light = false }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={tr('End')} style={{ width: COL, alignItems: 'center' }}>
       {({ pressed }) => (
-        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name="call" size={32} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
-        </CallControlGlass>
+        <>
+          <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={RED} style={{ width: COL - 6, height: KEY, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="call" size={30} color={WHITE} style={{ transform: [{ rotate: '135deg' }] }} />
+          </CallControlGlass>
+          <Text
+            allowFontScaling={false}
+            style={{
+              color: light ? LIGHT_TEXT : WHITE,
+              fontSize: fs(12),
+              lineHeight: fs(15),
+              fontWeight: '500',
+              textAlign: 'center',
+              marginTop: 7,
+            }}
+          >
+            {tr('End')}
+          </Text>
+        </>
       )}
     </Pressable>
   );
@@ -361,6 +396,12 @@ export default function CallScreen() {
   // on a tablet the dial pad lives in its own column, so the left side never
   // swaps itself out for it
   const padOpen = keypad && !isTablet;
+  const posterMode = settings.depth !== false;
+  const portrait = posterMode && !padOpen && focus ? (
+    <DepthPoster settings={posterSettings(settings)} image={avatarPhoto} name={who.name}
+      status={!live.length && ended ? ended.disconnectLabel || tr('Call Ended') : <CallStatusText call={focus} who={who} />}
+      colors={palette} background={false} textColor={primaryText} statusColor={secondaryText} />
+  ) : null;
   useEffect(() => {
     if (!primary) {
       setKeypad(false);
@@ -398,13 +439,16 @@ export default function CallScreen() {
   // ---------- call ended ----------
   if (!live.length && ended) {
     return wrap(
-      <View style={{ alignItems: 'center', marginTop: 70 }}>
+      <>
+      {portrait}
+      <View style={{ alignItems: 'center', marginTop: 70, display: posterMode ? 'none' : 'flex' }}>
         <BigAvatar name={who.name} image={avatarPhoto} light={lightBackground} settings={settings} />
         <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
           {who.name}
         </Text>
         <Text style={[styles.status, (lightBackground || t.dark) && { color: secondaryText }]}>{ended.disconnectLabel || 'Call Ended'}</Text>
       </View>
+      </>
     );
   }
 
@@ -428,7 +472,8 @@ export default function CallScreen() {
       });
     return wrap(
       <>
-        <View style={{ alignItems: 'center', marginTop: 48 }}>
+        {portrait}
+        <View style={{ alignItems: 'center', marginTop: 48, display: posterMode ? 'none' : 'flex' }}>
           <CallStatusText call={ringing} who={who} style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]} />
           <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
             {who.name}
@@ -521,7 +566,7 @@ export default function CallScreen() {
     else minimizeTo('keypad');
   };
 
-  const audioIcon = route === ROUTE.BLUETOOTH ? 'bluetooth' : route === ROUTE.WIRED ? 'headset' : route === ROUTE.SPEAKER ? 'volume-high' : 'volume-medium';
+  const audioIcon = route === ROUTE.BLUETOOTH ? 'bluetooth-outline' : route === ROUTE.WIRED ? 'headset-outline' : route === ROUTE.SPEAKER ? 'volume-high' : 'volume-medium';
   const audioLabel = route === ROUTE.BLUETOOTH ? 'Bluetooth' : route === ROUTE.WIRED ? 'Headphones' : hasBluetooth ? 'Audio' : 'Speaker';
 
   const pressDtmf = (d) => {
@@ -543,6 +588,7 @@ export default function CallScreen() {
 
   const body = (
     <>
+      {portrait}
       {/* top bar */}
       <View style={styles.topRow}>
         <Pressable onPress={() => setMinimized(true)} hitSlop={12}>
@@ -596,7 +642,7 @@ export default function CallScreen() {
           ) : null}
         </View>
       ) : (
-        <View style={{ alignItems: 'center', marginTop: twoCalls ? 18 : 40 }}>
+        <View style={{ alignItems: 'center', marginTop: twoCalls ? 18 : 40, display: posterMode ? 'none' : 'flex' }}>
           <CallStatusText call={primary} who={who} style={[styles.statusTop, (lightBackground || t.dark) && { color: secondaryText, textShadowColor: 'transparent' }]} />
           <Text style={[styles.name, (lightBackground || t.dark) && { color: primaryText, textShadowColor: 'transparent', textShadowRadius: 0 }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.6}>
             {who.name}
@@ -705,8 +751,8 @@ export default function CallScreen() {
       ) : (
         <View style={styles.grid}>
           <View style={styles.gridRow}>
-            <CallButton size={KEY} icon="person" label={tr('Contact')} onPress={openContact} disabled={!primary.number || primary.isConference} light={lightBackground} />
-            <CallButton size={KEY} icon="chatbubble" label={tr('Message')} onPress={() => sendMessage(primary.number)} disabled={!primary.number} light={lightBackground} />
+            <CallButton size={KEY} icon="person-outline" label={tr('Contact')} onPress={openContact} disabled={!primary.number || primary.isConference} light={lightBackground} />
+            <CallButton size={KEY} icon="document-text-outline" label={tr('Message')} onPress={() => sendMessage(primary.number)} disabled={!primary.number} light={lightBackground} />
             <CallButton
               size={KEY}
               icon="radio-button-on"
@@ -730,7 +776,7 @@ export default function CallScreen() {
             />
             <CallButton
               size={KEY}
-              icon={muted ? 'mic-off' : 'mic'}
+              icon={muted ? 'mic-off-outline' : 'mic-outline'}
               label={tr('Mute')}
               on={muted}
               onPress={() => {
@@ -749,7 +795,7 @@ export default function CallScreen() {
         {padOpen || primary.state === 'select_account' ? (
           <View style={{ width: COL }} />
         ) : (
-          <CallButton size={KEY} icon={canMerge ? 'git-merge' : 'add'} label={canMerge ? 'Merge' : 'Add Call'} onPress={addOrMerge} light={lightBackground} />
+          <CallButton size={KEY} icon={canMerge ? 'git-merge-outline' : 'add'} label={canMerge ? 'Merge' : 'Add Call'} onPress={addOrMerge} light={lightBackground} />
         )}
         {primary.state === 'select_account' ? (
           <View style={{ width: COL }} />
@@ -771,7 +817,7 @@ export default function CallScreen() {
         ) : primary.state === 'select_account' || isTablet ? (
           <View style={{ width: COL }} />
         ) : (
-          <CallButton size={KEY} icon="keypad" label={tr('Keypad')} onPress={() => setKeypad(true)} disabled={!connected} light={lightBackground} />
+          <CallButton size={KEY} icon="keypad-outline" label={tr('Keypad')} onPress={() => setKeypad(true)} disabled={!connected} light={lightBackground} />
         )}
       </View>
       )}

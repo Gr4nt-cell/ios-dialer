@@ -76,6 +76,22 @@ object ContactTools {
     } catch (_: Throwable) { null }
   }
 
+  /** Original detail, bounded only by texture size and the currently available heap. */
+  fun posterSide(bytes: ByteArray, requested: Int): Int {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return 1200
+    val runtime = Runtime.getRuntime()
+    val available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory())
+    // Allow for decoded RGB, compositing output and the cropped output simultaneously.
+    val pixels = ((available - 32L * 1024 * 1024).coerceAtLeast(16L * 1024 * 1024) / 16)
+      .coerceAtMost(24L * 1024 * 1024)
+    val aspect = minOf(bounds.outWidth, bounds.outHeight).toDouble() / maxOf(bounds.outWidth, bounds.outHeight)
+    val budgetSide = kotlin.math.sqrt(pixels / aspect).toInt()
+    return minOf(maxOf(bounds.outWidth, bounds.outHeight), requested.coerceIn(480, 8192), budgetSide)
+      .coerceAtLeast(1)
+  }
+
   private fun jpeg(bmp: Bitmap, quality: Int): ByteArray {
     val out = ByteArrayOutputStream()
     bmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
@@ -151,7 +167,8 @@ object ContactTools {
     val start = subjectBottom - fadeHeight
     val row = IntArray(w)
     for (y in start until subjectBottom) {
-      val k = 1f - (y - start).toFloat() / fadeHeight
+      val t = ((subjectBottom - 1 - y).toFloat() / (fadeHeight - 1)).coerceIn(0f, 1f)
+      val k = t * t * (3f - 2f * t)
       cut.getPixels(row, 0, w, 0, y, w, 1)
       for (x in 0 until w) {
         val a = row[x] ushr 24
@@ -225,11 +242,9 @@ object ContactTools {
       )?.use { c ->
         while (c.moveToNext()) {
           val id = c.getLong(0)
-          val best = if (!c.isNull(1)) {
-            Uri.withAppendedPath(
-              ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id),
-              ContactsContract.Contacts.Photo.DISPLAY_PHOTO,
-            ).toString()
+          val best = if (!c.isNull(1) && c.getLong(1) > 0) {
+            // Full-size file URI also changes when the photo changes, preventing stale cutouts.
+            ContentUris.withAppendedId(ContactsContract.DisplayPhoto.CONTENT_URI, c.getLong(1)).toString()
           } else {
             c.getString(2)
           }
