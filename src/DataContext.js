@@ -9,7 +9,7 @@ import Dialer, { requestPhonePermissions } from './dialer';
 const DataContext = createContext(null);
 export const useData = () => useContext(DataContext);
 
-const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0, callBackground: 'pastel', callBackgroundVersion: 2, autoRecord: false, language: 'system' };
+const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0, callBackground: 'pastel', callBackgroundVersion: 2, appBackground: 'mint', appBackgroundUri: '', autoRecord: false, language: 'system' };
 
 const CALL_TYPES = { 1: 'incoming', 2: 'outgoing', 3: 'missed', 4: 'voicemail', 5: 'rejected', 6: 'blocked', 7: 'incoming' };
 const isMissedType = (t) => t === 'missed' || t === 'rejected' || t === 'blocked';

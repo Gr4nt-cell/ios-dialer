@@ -3,12 +3,16 @@ import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 import { PerformanceModeContext } from './Glass';
+import { useData } from '../DataContext';
+import { getWallpaperSource } from '../wallpapers';
 
 // Shared offline backdrop for mobile, tablet, and modal screens.
 // The pale center keeps dark labels readable through translucent glass.
 export function GlowBackdrop({ style }) {
   const t = useTheme();
   const performanceMode = useContext(PerformanceModeContext);
+  const { settings } = useData();
+  const wallpaper = getWallpaperSource(settings);
   const [a, b, c] = t.glow;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.backdropBase }]}>
@@ -33,7 +37,7 @@ export function GlowBackdrop({ style }) {
         </>
       ) : (
         <Image
-          source={require('../../assets/dialer-gradient-background.jpg')}
+          source={wallpaper}
           resizeMode="stretch"
           style={StyleSheet.absoluteFill}
         />

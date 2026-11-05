@@ -25,6 +25,7 @@ import { useActionSheet } from '../components/ActionSheet';
 import { useT } from '../i18n';
 import { ChromeText } from '../components/ui';
 import { ReferenceCallTypography, ReferenceCallSurface, ReferenceCallIcon, ReferenceCallLabel } from '../components/ReferenceCallControls';
+import { getWallpaperSource } from '../wallpapers';
 
 // ---------------------------------------------------------------------------
 // Look & feel
@@ -125,7 +126,7 @@ function CallStatusText({ call, who, style }) {
 // ---------------------------------------------------------------------------
 
 // Screen backdrop, independent of the caller's avatar photo.
-function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = false }) {
+function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = false, wallpaperSource }) {
   const performanceMode = useContext(PerformanceModeContext);
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
@@ -152,7 +153,7 @@ function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = fa
     return (
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Image
-          source={require('../../assets/dialer-gradient-background.jpg')}
+          source={wallpaperSource || require('../../assets/dialer-gradient-background.jpg')}
           resizeMode="stretch"
           style={StyleSheet.absoluteFill}
         />
@@ -387,7 +388,7 @@ export default function CallScreen() {
       <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
         {t.dark ? <GlowBackdrop /> : null}
-        <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} pastel={pastelBackground} />
+        <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} pastel={pastelBackground} wallpaperSource={getWallpaperSource(settings)} />
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
