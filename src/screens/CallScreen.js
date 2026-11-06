@@ -17,7 +17,7 @@ import { useData } from '../DataContext';
 import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
-import { FlatBackdropContext, Glass, CallControlGlass, PerformanceModeContext } from '../components/Glass';
+import { FlatBackdropContext, Glass, CallControlGlass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
 import { gradientFor } from '../gradients';
 import { callAppearance } from '../callAppearance';
 import { useActionSheet } from '../components/ActionSheet';
@@ -137,17 +137,18 @@ function Poster({ plain = false, plainColor = WHITE, wallpaperSource, custom = f
 
 function BigAvatar({ name, image, size = 104, pulse, light = false, settings }) {
   const performanceMode = useContext(PerformanceModeContext);
+  const visualProfile = useContext(PerformanceProfileContext);
   // The cut-out of the caller, which stands in front of their name rather than
   // sitting inside the circle. It is made once per photo and cached on disk, so
   // it runs on the optimized profile too — only the photos the segmenter finds
   // no subject in stay as plain circles.
   const wantsDepth = false; // Poster mode is rendered by the shared DepthPoster.
   const depth = useDepth(wantsDepth ? image : null, wantsDepth);
-  const animatePulse = pulse && !performanceMode;
+  const animatePulse = pulse && !performanceMode && !visualProfile?.lowEnd;
   const ring = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!animatePulse) return undefined;
-    const loop = Animated.loop(Animated.timing(ring, { toValue: 1, duration: 1800, easing: Easing.out(Easing.quad), useNativeDriver: true }));
+    const loop = Animated.loop(Animated.timing(ring, { toValue: 1, duration: 1800, isInteraction: false, easing: Easing.out(Easing.quad), useNativeDriver: true }));
     loop.start();
     return () => loop.stop();
   }, [animatePulse, ring]);

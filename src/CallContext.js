@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState } from 'react-native';
-import { requestRecordingPermissionsAsync } from 'expo-audio';
+import { ensureRecordingPermission } from './recordingPermissions';
 import { useData } from './DataContext';
 import Dialer, { isLive, isRinging, parseCallState } from './dialer';
 
@@ -119,11 +119,8 @@ export function CallProvider({ children }) {
     if (!Dialer || !Dialer.startRecording || recordingRequest.current) return false;
     recordingRequest.current = true;
     try {
-      const perm = await requestRecordingPermissionsAsync();
-      if (!perm.granted) {
-        if (!quiet) Alert.alert('Microphone Access Needed', 'Allow microphone access to record calls.');
-        return false;
-      }
+      const granted = await ensureRecordingPermission({ request: !quiet, notify: !quiet });
+      if (!granted) return false;
       // This acknowledges a queued request; the native phase/error reports the result.
       const ok = Dialer.startRecording(number || '');
       setState(parseCallState(Dialer.getState()));

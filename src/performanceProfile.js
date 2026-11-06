@@ -1,5 +1,5 @@
-const LOW_MEMORY_LIMIT = 3 * 1024 * 1024 * 1024;
-const LOW_DEVICE_YEAR_LIMIT = 2019;
+const LOW_MEMORY_LIMIT = 4 * 1024 * 1024 * 1024;
+const LOW_DEVICE_YEAR_LIMIT = 2020;
 
 export function shouldUseLowEndProfile({
   totalMemory,
@@ -19,4 +19,13 @@ export function shouldUseLowEndProfile({
     architecture.includes('arm64-v8a') || architecture.includes('arm64')
   );
   return has32BitArm && !has64BitArm;
+}
+
+/** Keep the selected profile while bounding GPU work on modest hardware. */
+export function glassBudget({ profile = 'performance', lowEnd = false } = {}) {
+  const optimized = profile === 'optimized';
+  return {
+    compact: optimized || lowEnd,
+    shadows: !optimized && !lowEnd,
+  };
 }

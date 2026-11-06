@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,17 @@ export default function SearchScreen() {
   const nav = useNav();
   const { contacts, recents, resolve, call, searchHistory, rememberSearch, clearSearchHistory } = useData();
   const [q, setQ] = useState('');
+  const deferredQuery = useDeferredValue(q);
+  const hasQuery = !!q.trim();
+  const searchableContacts = useMemo(() => contacts.map((contact) => ({
+    contact,
+    name: `${contactName(contact)} ${contact.company || ''}`.toLowerCase(),
+    numbers: (contact.phoneNumbers || []).map((phone) => (phone.number || '').replace(/\D/g, '')),
+  })), [contacts]);
+  const searchableCalls = useMemo(() => recents.map((group) => {
+    const match = resolve(group.number);
+    return { group, name: (match ? contactName(match.contact) : group.name || '').toLowerCase(), digits: (group.number || '').replace(/\D/g, '') };
+  }), [recents, resolve]);
   const queryRef = useRef('');
   const lastCommitted = useRef('');
   const commitSearch = () => {
@@ -45,35 +56,35 @@ export default function SearchScreen() {
   useEffect(() => () => {
     if (queryRef.current.trim()) rememberSearch(queryRef.current);
   }, [rememberSearch]);
-  const callFromSearch = (number) => { commitSearch(); call(number); };
+  const selectSearch = (label) => {
+    const name = label.trim().replace(/\s+/g, ' ');
+    rememberSearch(name, queryRef.current);
+    queryRef.current = name;
+    lastCommitted.current = name;
+    setQ(name);
+  };
+  const callFromSearch = (number, label) => { selectSearch(label || number); call(number); };
 
   const sections = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    if (!query) return [];
+    const query = deferredQuery.trim().toLowerCase();
+    if (!hasQuery || !query) return [];
     const digits = query.replace(/\D/g, '');
-    const people = contacts
-      .filter((c) => {
-        const name = `${contactName(c)} ${c.company || ''}`.toLowerCase();
-        return name.includes(query) || (digits.length >= 3 && (c.phoneNumbers || []).some((p) => (p.number || '').replace(/\D/g, '').includes(digits)));
-      })
+    const people = searchableContacts
+      .filter((entry) => entry.name.includes(query) || (digits.length >= 3 && entry.numbers.some((number) => number.includes(digits))))
       .slice(0, 30)
-      .map((c) => ({ kind: 'contact', id: 'c' + c.id, contact: c }));
-    const calls = recents
-      .filter((g) => {
-        const m = resolve(g.number);
-        const name = (m ? contactName(m.contact) : g.name || '').toLowerCase();
-        return name.includes(query) || (digits.length >= 3 && (g.number || '').replace(/\D/g, '').includes(digits));
-      })
+      .map(({ contact }) => ({ kind: 'contact', id: 'c' + contact.id, contact }));
+    const calls = searchableCalls
+      .filter((entry) => entry.name.includes(query) || (digits.length >= 3 && entry.digits.includes(digits)))
       .slice(0, 20)
-      .map((g) => ({ kind: 'call', id: 'r' + g.id, group: g }));
+      .map(({ group }) => ({ kind: 'call', id: 'r' + group.id, group }));
     const out = [];
     if (digits.length >= 3 && digits.length === query.replace(/[\s+()-]/g, '').length) {
-      out.push({ title: '', data: [{ kind: 'dial', id: 'dial', number: cleanNumber(q) }] });
+      out.push({ title: '', data: [{ kind: 'dial', id: 'dial', number: cleanNumber(deferredQuery) }] });
     }
     if (people.length) out.push({ title: tr('Contacts'), data: people });
     if (calls.length) out.push({ title: tr('Recent Calls'), data: calls });
     return out;
-  }, [q, contacts, recents, resolve]);
+  }, [deferredQuery, hasQuery, searchableContacts, searchableCalls, tr]);
 
   const renderItem = ({ item }) => {
     if (item.kind === 'dial') {
@@ -94,7 +105,7 @@ export default function SearchScreen() {
       const c = item.contact;
       const phone = (c.phoneNumbers || [])[0];
       return (
-        <Pressable onPress={() => { commitSearch(); nav.push({ name: 'contact', contactId: c.id }); }}>
+        <Pressable onPress={() => { selectSearch(contactName(c)); nav.push({ name: 'contact', contactId: c.id }); }}>
           {({ pressed }) => (
             <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
               <Avatar name={contactName(c)} image={c.image && c.image.uri} size={40} />
@@ -103,7 +114,7 @@ export default function SearchScreen() {
                 {phone ? <Text style={{ color: t.secondary, fontSize: fs(14) }}>{prettyLabel(phone.label)} · {formatNumber(phone.number)}</Text> : null}
               </View>
               {phone ? (
-                <Pressable onPress={() => callFromSearch(phone.number)} hitSlop={10}>
+                <Pressable onPress={() => callFromSearch(phone.number, contactName(c))} hitSlop={10}>
                   <Ionicons name="call-outline" size={22} color={t.blue} />
                 </Pressable>
               ) : null}
@@ -115,7 +126,7 @@ export default function SearchScreen() {
     const g = item.group;
     const m = resolve(g.number);
     return (
-      <Pressable onPress={() => callFromSearch(g.number)}>
+      <Pressable onPress={() => callFromSearch(g.number, m ? contactName(m.contact) : g.name || formatNumber(g.number))}>
         {({ pressed }) => (
           <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
             <View style={[styles.iconCircle, { backgroundColor: t.fill }]}>
@@ -164,7 +175,7 @@ export default function SearchScreen() {
                       {({ pressed }) => (
                         <Glass radius={22} liquid strong vivid soft pressed={pressed} style={styles.historyChip}>
                           <Ionicons name="time-outline" size={16} color={t.secondary} />
-                          <Text numberOfLines={2} style={{ color: t.text, fontSize: fs(14), flexShrink: 1, textAlign: 'center' }}>{query}</Text>
+                          <Text style={{ color: t.text, fontSize: fs(14), lineHeight: fs(19), textAlign: 'center', width: '100%' }}>{query}</Text>
                         </Glass>
                       )}
                     </Pressable>
@@ -187,9 +198,9 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   history: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 10 },
   historyHeading: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, paddingBottom: 10 },
-  historyRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  historyRow: { flexDirection: 'row', alignItems: 'stretch', gap: 8, marginBottom: 8 },
   historyCell: { flex: 1, minWidth: 0 },
-  historyChip: { minHeight: 62, paddingHorizontal: 8, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', gap: 5 },
+  historyChip: { flexGrow: 1, flexShrink: 0, minHeight: 72, paddingHorizontal: 8, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', gap: 5 },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 12, marginVertical: 4 },
   iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

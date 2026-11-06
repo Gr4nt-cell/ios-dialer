@@ -542,6 +542,13 @@ class DialerModule : Module() {
       }.start()
     }
 
+    // ---------- optional local incoming-call announcer ----------
+    Function("getCallAnnouncer") { -> CallerAnnouncer.all(ctx) }
+    Function("setCallAnnouncer") { enabled: Boolean, speakNumbers: Boolean -> CallerAnnouncer.set(ctx, enabled, speakNumbers); true }
+    AsyncFunction("testCallAnnouncer") { promise: Promise ->
+      CallerAnnouncer.preview(ctx) { ok, error -> promise.resolve(mapOf("ok" to ok, "error" to error)) }
+    }
+
     // ---------- call recording ----------
 
     Function("startRecording") { number: String -> RecordingService.start(ctx, number) }

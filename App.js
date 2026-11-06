@@ -12,7 +12,7 @@ import { fs, useTheme } from './src/theme';
 import { load, save } from './src/storage';
 import { contactName, parseTelUrl } from './src/phone';
 import TabBar, { UNIFIED_TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassRefractionProvider, GlassTargetContext, PerformanceModeContext, PerformanceProfileContext } from './src/components/Glass';
+import { BlurTargetView, FlatBackdropContext, GlassFillScaleContext, GlassModeContext, GlassTargetContext, PerformanceModeContext, PerformanceProfileContext } from './src/components/Glass';
 import { GlowBackdrop } from './src/components/GlowBackdrop';
 import Boundary from './src/components/Boundary';
 import { setHapticsEnabled } from './src/haptics';
@@ -260,7 +260,6 @@ function Main() {
   return (
     <I18nProvider language={settings.language}>
     <NavContext.Provider value={nav}>
-      <GlassRefractionProvider active={settings.liquidGlass !== false && !performanceMode}>
       <GlassFillScaleContext.Provider value={t.glassFillScale}>
       <GlassModeContext.Provider value={settings.liquidGlass === false ? 'plain' : settings.glass === 'tinted' ? 'tinted' : 'clear'}>
       {/* Keep live blur limited to the tab bar; app surfaces use translucent fills. */}
@@ -309,7 +308,6 @@ function Main() {
       </FlatBackdropContext.Provider>
       </GlassModeContext.Provider>
       </GlassFillScaleContext.Provider>
-      </GlassRefractionProvider>
     </NavContext.Provider>
     </I18nProvider>
   );
@@ -325,8 +323,8 @@ function PerformanceProfileProvider({ defaultOptimized, children }) {
     if (next === 'performance' || next === 'optimized') updateSettings({ performanceProfile: next });
   }, [updateSettings]);
   const profileValue = useMemo(
-    () => ({ profile, automatic: selectedProfile == null, setProfile }),
-    [profile, selectedProfile, setProfile]
+    () => ({ profile, lowEnd: defaultOptimized, automatic: selectedProfile == null, setProfile }),
+    [profile, defaultOptimized, selectedProfile, setProfile]
   );
 
   return (

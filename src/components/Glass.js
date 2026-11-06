@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Platform, StyleSheet, View } from 'react-native';
+import React, { createContext, useContext } from 'react';
+import { Image, Platform, StyleSheet, View } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
+import { glassBudget } from '../performanceProfile';
 
 // Soft-glass material: a milky translucent fill, a delicate neutral rim and
 // diffuse depth. Real background blur stays limited to supported surfaces.
@@ -28,7 +29,6 @@ export const EXTENDED_BLUR = false;
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
 export const GlassFillScaleContext = createContext(1);
-export const GlassRefractionContext = createContext(null);
 export const PerformanceModeContext = createContext(false);
 export const PerformanceProfileContext = createContext(null);
 // True when the app background is Plain. Glass relies on the colour field
@@ -46,44 +46,6 @@ function colorWithOpacity(color, opacity) {
   const rgb = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i.exec(color || '');
   if (rgb) return `rgba(${rgb[1]},${rgb[2]},${rgb[3]},${Number(rgb[4] ?? 1) * opacity})`;
   return color;
-}
-
-export function GlassRefractionProvider({ children, active = true }) {
-  const progress = useRef(new Animated.Value(0)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (mounted) setReduceMotion(!!enabled);
-      })
-      .catch(() => {});
-    const listener = AccessibilityInfo.addEventListener('reduceMotionChanged', (enabled) => setReduceMotion(!!enabled));
-    return () => {
-      mounted = false;
-      listener.remove();
-    };
-  }, []);
-
-  const enabled = active && !reduceMotion;
-  useEffect(() => {
-    progress.stopAnimation();
-    progress.setValue(0);
-    if (!enabled) return undefined;
-    const loop = Animated.loop(
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 12000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [enabled, progress]);
-
-  return <GlassRefractionContext.Provider value={enabled ? progress : null}>{children}</GlassRefractionContext.Provider>;
 }
 
 /**
@@ -126,61 +88,6 @@ function blurProps(target) {
   return { experimentalBlurMethod: 'dimezisBlurView' };
 }
 
-function RefractionSweep({ progress, dark }) {
-  const [surfaceWidth, setSurfaceWidth] = useState(0);
-  const bandWidth = Math.max(28, Math.min(surfaceWidth * 0.44, 156));
-  const translateX = useMemo(
-    () =>
-      surfaceWidth
-        ? progress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-bandWidth, surfaceWidth + bandWidth],
-          })
-        : null,
-    [bandWidth, progress, surfaceWidth]
-  );
-
-  return (
-    <View
-      pointerEvents="none"
-      onLayout={(event) => {
-        const nextWidth = event.nativeEvent.layout.width;
-        if (Math.abs(nextWidth - surfaceWidth) > 1) setSurfaceWidth(nextWidth);
-      }}
-      style={StyleSheet.absoluteFill}
-    >
-      {translateX ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            {
-              position: 'absolute',
-              left: 0,
-              top: '-30%',
-              bottom: '-30%',
-              width: bandWidth,
-              opacity: dark ? 0.44 : 0.36,
-            },
-            { transform: [{ translateX }, { rotate: '16deg' }] },
-          ]}
-        >
-          <LinearGradient
-            colors={
-              dark
-                ? ['rgba(255,255,255,0)', 'rgba(188,225,255,0.08)', 'rgba(255,255,255,0.4)', 'rgba(188,225,255,0.1)', 'rgba(255,255,255,0)']
-                : ['rgba(255,255,255,0)', 'rgba(115,190,242,0.06)', 'rgba(255,255,255,0.58)', 'rgba(125,204,246,0.14)', 'rgba(255,255,255,0)']
-            }
-            locations={[0, 0.22, 0.5, 0.76, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-      ) : null}
-    </View>
-  );
-}
-
 export function Glass({
   children,
   style,
@@ -205,23 +112,23 @@ export function Glass({
   const t = useTheme();
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
-  const refraction = useContext(GlassRefractionContext);
   const glassFillScale = useContext(GlassFillScaleContext);
   const flat = useContext(FlatBackdropContext);
   const performanceMode = useContext(PerformanceModeContext);
+  const profile = useContext(PerformanceProfileContext);
+  const budget = glassBudget(profile || { profile: performanceMode ? 'optimized' : 'performance' });
   const dark = forceDark ?? t.dark;
   // Explicitly themed surfaces (the photo/gradient call screen) keep their
   // existing material, as does every surface when the system theme is dark.
   const lightLiquid = liquid && !t.dark && !dark && forceDark == null;
   const surfaceFillScale = dark ? 1 : glassFillScale;
   const plain = mode === 'plain';
-  const showRefraction = liquid && !plain && !!refraction;
   const optimizedLight = performanceMode && !dark && forceDark == null;
   // Flat backdrops still get the translucent fill; the stronger rim and shadow
   // keep those surfaces distinct from the white or black behind them.
-  const lifted = flat ? lift(dark, soft, liquid && !plain, performanceMode) : null;
+  const lifted = flat ? lift(dark, soft, liquid && !plain, budget.compact) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
-  const bp = blur && !plain && !flat && !performanceMode ? blurProps(target) : null;
+  const bp = blur && !plain && !flat && !budget.compact ? blurProps(target) : null;
   const realBlur = !!bp;
   const tinted = mode === 'tinted';
 
@@ -322,7 +229,7 @@ export function Glass({
         />
       ) : null}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: lifted ? 'transparent' : fill }]} />
-      {!performanceMode && lightLiquid && !tint ? (
+      {!budget.compact && lightLiquid && !tint ? (
         <LinearGradient
           pointerEvents="none"
           colors={['rgba(214,238,230,0.10)', 'rgba(255,255,255,0)', 'rgba(220,230,246,0.07)']}
@@ -333,16 +240,16 @@ export function Glass({
         />
       ) : null}
       {/* specular highlight */}
-      {!performanceMode ? <LinearGradient
+      {!budget.compact ? <LinearGradient
         pointerEvents="none"
         colors={[highlight, 'rgba(255,255,255,0)']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.55 }}
         style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
       /> : null}
-      {showRefraction ? <RefractionSweep progress={refraction} dark={dark} /> : null}
+      {!performanceMode && budget.compact ? <Image source={require('../../assets/glass/static-sheen.png')} fadeDuration={0} resizeMode="stretch" pointerEvents="none" style={StyleSheet.absoluteFill} /> : null}
       {/* darker lower edge for depth */}
-      {!performanceMode ? <LinearGradient
+      {!budget.compact ? <LinearGradient
         pointerEvents="none"
         colors={['rgba(0,0,0,0)', edge]}
         start={{ x: 0.5, y: 0.55 }}
@@ -355,7 +262,7 @@ export function Glass({
       {lifted ? null : (
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? (lightLiquid ? 1.15 : 1) : StyleSheet.hairlineWidth, borderColor: rim }]} />
       )}
-      {performanceMode || (flat && !liquid) ? null : (
+      {budget.compact || (flat && !liquid) ? null : (
         <LinearGradient
           pointerEvents="none"
           colors={[rimTop, 'rgba(255,255,255,0)']}
@@ -402,7 +309,7 @@ export function Glass({
         onLayout={onLayout}
         style={[
           { borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] },
-          performanceMode ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(57,83,70,${soft ? 0.055 : 0.075})` },
+          !budget.shadows ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(57,83,70,${soft ? 0.055 : 0.075})` },
           style,
         ]}
       >
@@ -433,10 +340,12 @@ export function Glass({
 export function GlassShadow({ children, style, radius = 999 }) {
   const t = useTheme();
   const performanceMode = useContext(PerformanceModeContext);
+  const profile = useContext(PerformanceProfileContext);
+  const budget = glassBudget(profile || { profile: performanceMode ? 'optimized' : 'performance' });
   return (
     <View
       style={[
-        performanceMode ? { borderRadius: radius } : {
+        !budget.shadows ? { borderRadius: radius } : {
           borderRadius: radius,
           shadowColor: t.dark ? '#000' : '#395346',
           shadowOpacity: t.dark ? 0.32 : 0.07,

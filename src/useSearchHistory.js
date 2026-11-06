@@ -35,7 +35,7 @@ export default function useSearchHistory() {
     setHistory(current.items);
     if (current.ready) persist(current.items);
   }, [persist]);
-  const rememberSearch = useCallback((query) => update((items) => addRecentSearch(items, query)), [update]);
+  const rememberSearch = useCallback((query, replaceQuery) => update((items) => addRecentSearch(items, query, replaceQuery)), [update]);
   const clearSearchHistory = useCallback(() => update(() => []), [update]);
   return { searchHistory: history, rememberSearch, clearSearchHistory };
 }

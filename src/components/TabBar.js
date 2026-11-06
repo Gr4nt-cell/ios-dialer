@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, TAB_BAR_HEIGHT, useTheme } from '../theme';
 import Dialer from '../dialer';
-import { FlatBackdropContext, Glass, GlassShadow, PerformanceModeContext } from './Glass';
+import { FlatBackdropContext, Glass, GlassShadow, PerformanceModeContext, PerformanceProfileContext } from './Glass';
 import { useT } from '../i18n';
 import { ChromeText } from './ui';
 
@@ -43,6 +43,7 @@ export const CLASSIC_TABS = [
 // crosses tabs, and selects the tab you let go on. A plain tap still selects straight away.
 export default function TabBar({ tabs, active, onChange, badges = {} }) {
   const performanceMode = useContext(PerformanceModeContext);
+  const visualProfile = useContext(PerformanceProfileContext);
   const tr = useT();
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -164,7 +165,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 <Glass
                   radius={27}
                   selected
-                  style={{ flex: 1, ...(performanceMode ? null : { boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }) }}
+                  style={{ flex: 1, ...(performanceMode || visualProfile?.lowEnd ? null : { boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }) }}
                   liquid
                   outline
                   fillScale={t.dark ? 1 : 0.7}

@@ -43,6 +43,7 @@ object Ringer {
   private var focus: Any? = null
   private var ringCtx: Context? = null
   private var ringUri: Uri? = null
+  private var announcementDucked = false
 
   private val attrs: AudioAttributes = AudioAttributes.Builder()
     .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
@@ -79,7 +80,7 @@ object Ringer {
 
   private val toneLoop = object : Runnable {
     override fun run() {
-      try { tone?.startTone(ToneGenerator.TONE_SUP_RINGTONE, 1600) } catch (_: Exception) {}
+      try { if (!announcementDucked) tone?.startTone(ToneGenerator.TONE_SUP_RINGTONE, 1600) } catch (_: Exception) {}
       if (tone != null) main.postDelayed(this, 3200)
     }
   }
@@ -137,6 +138,7 @@ object Ringer {
     if (mode == AudioManager.RINGER_MODE_VIBRATE || vibrateWhenRinging) vibrate(ctx)
     if (mode == AudioManager.RINGER_MODE_NORMAL && audio.getStreamVolume(AudioManager.STREAM_RING) > 0) {
       play(ctx, ringtoneFor(ctx, call))
+      CallerAnnouncer.announce(ctx, call, id)
     }
   }
 
@@ -337,7 +339,16 @@ object Ringer {
     } catch (_: Exception) {}
   }
 
+  fun duckForAnnouncement(duck: Boolean) {
+    announcementDucked = duck
+    val volume = if (duck) 0.18f else 1f
+    try { if (Build.VERSION.SDK_INT >= 28) ringtone?.setVolume(volume) } catch (_: Exception) {}
+    try { player?.setVolume(volume, volume) } catch (_: Exception) {}
+    if (duck) try { tone?.stopTone() } catch (_: Exception) {}
+  }
+
   fun stop() {
+    CallerAnnouncer.stop()
     main.removeCallbacks(watchdog)
     main.removeCallbacks(toneLoop)
     ringtone?.let { try { it.stop() } catch (_: Exception) {} }

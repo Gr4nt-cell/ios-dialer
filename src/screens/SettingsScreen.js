@@ -26,6 +26,7 @@ import { useActionSheet } from '../components/ActionSheet';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getCallWallpaperSource, WALLPAPERS } from '../wallpapers';
+import { ensureRecordingPermission, hasRecordingPermission } from '../recordingPermissions';
 
 function SectionTitle({ children }) {
   const t = useTheme();
@@ -130,6 +131,46 @@ export default function SettingsScreen() {
   const [depthEditor, setDepthEditor] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [wallpaperBusy, setWallpaperBusy] = useState(false);
+  const [microphoneAllowed, setMicrophoneAllowed] = useState(null);
+  const [microphoneBusy, setMicrophoneBusy] = useState(false);
+  const [announcer, setAnnouncer] = useState(() => {
+    try { return Dialer?.getCallAnnouncer?.() || { enabled: false, speakNumbers: false }; } catch { return { enabled: false, speakNumbers: false }; }
+  });
+  const [testingAnnouncer, setTestingAnnouncer] = useState(false);
+  const updateAnnouncer = (patch) => {
+    const next = { ...announcer, ...patch };
+    try {
+      if (!Dialer?.setCallAnnouncer) throw new Error('Install the updated Android build to use the call announcer.');
+      Dialer.setCallAnnouncer(next.enabled, next.speakNumbers);
+      setAnnouncer(next);
+    } catch (error) { Alert.alert(tr('Call Announcer'), error.message); }
+  };
+  const testAnnouncer = async () => {
+    if (testingAnnouncer) return;
+    setTestingAnnouncer(true);
+    try {
+      if (!Dialer?.testCallAnnouncer) throw new Error('Install the updated Android build to test the call announcer.');
+      const result = await Dialer.testCallAnnouncer();
+      if (!result.ok) Alert.alert(tr('Call Announcer'), result.error || 'No offline voice is available.');
+    } catch (error) { Alert.alert(tr('Call Announcer'), error.message); }
+    finally { setTestingAnnouncer(false); }
+  };
+  useEffect(() => {
+    let mounted = true;
+    const refresh = () => hasRecordingPermission().then((allowed) => { if (mounted) setMicrophoneAllowed(allowed); }).catch(() => { if (mounted) setMicrophoneAllowed(false); });
+    refresh();
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active') refresh(); });
+    return () => { mounted = false; sub.remove(); };
+  }, []);
+  const allowMicrophone = async () => {
+    if (microphoneBusy) return false;
+    setMicrophoneBusy(true);
+    try {
+      const allowed = await ensureRecordingPermission();
+      setMicrophoneAllowed(allowed);
+      return allowed;
+    } finally { setMicrophoneBusy(false); }
+  };
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const { settings, updateSettings, blocked, block, unblock, resolve, callLogPerm, refreshCallLog, contactsPerm, refreshContacts, contacts } = useData();
@@ -394,7 +435,7 @@ export default function SettingsScreen() {
         <Footer>
           {performanceMode
             ? 'Optimized reduces decorative motion, live blur and list rendering for smoother use. Light-mode surfaces have stronger contrast; calling and contact features remain available.'
-            : 'Performance restores the full visual effects from the previous version. Lower-end phones start in Optimized, and you can switch profiles here at any time.'}
+            : 'Performance keeps the glass design and adapts effects to your device. Low-end phones use a static glass sheen and lighter shadows; Optimized reduces effects further.'}
         </Footer>
 
         <SectionTitle>Background</SectionTitle>
@@ -597,13 +638,25 @@ export default function SettingsScreen() {
         </Group>
         <Footer>Call backgrounds share the app’s soft pastel finish, with matching dark versions. Pastel follows your app wallpaper; other presets keep their own colour family.</Footer>
 
+        <SectionTitle>{tr('Call Announcer')}</SectionTitle>
+        <Group>
+          <Cell value={tr('Announce Incoming Calls')} right={<Switch value={!!announcer.enabled} onValueChange={(enabled) => updateAnnouncer({ enabled })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
+          <Cell value={tr('Speak Unsaved Numbers')} right={<Switch value={!!announcer.speakNumbers} disabled={!announcer.enabled} onValueChange={(speakNumbers) => updateAnnouncer({ speakNumbers })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
+          <Cell value={tr(testingAnnouncer ? 'Testing…' : 'Test Announcer')} color={t.blue} onPress={testAnnouncer} />
+        </Group>
+        <Footer>{tr('Speaks a saved contact’s name once for an incoming call using an offline voice in your phone language. Unsaved callers are announced as “Incoming call” unless Speak Unsaved Numbers is enabled. Respects silent mode, vibrate, Do Not Disturb and hidden caller details on the lock screen. No microphone permission is needed.')}</Footer>
+
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>
-          <Cell value="Record Calls Automatically" right={toggle('autoRecord')} />
+          <Cell value={tr('Microphone Access')} onPress={allowMicrophone} right={<Text style={{ color: microphoneAllowed ? t.green : t.blue, fontSize: fs(15) }}>{tr(microphoneBusy ? 'Checking…' : microphoneAllowed ? 'Allowed' : 'Allow')}</Text>} />
+          <Cell value="Record Calls Automatically" right={<Switch value={!!settings.autoRecord} disabled={microphoneBusy} onValueChange={async (enabled) => {
+            if (!enabled) { updateSettings({ autoRecord: false }); return; }
+            if (await allowMicrophone()) updateSettings({ autoRecord: true });
+          }} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell value={tr('Recordings')} color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
         </Group>
         {recordingSupport ? <Footer>{recordingSupport.family} · {recordingSupport.model}{'\n'}{recordingSupport.mode}{'\n'}{recordingSupport.notice}</Footer> : null}
-        <Footer>Recording switches the call to speakerphone and says “This call is being recorded” using an offline English voice before capture begins. Keep media volume audible and confirm the other person heard the announcement; Android cannot inject it directly into a cellular call. Headsets are not supported while recording. Some phones block all call capture, and both voices cannot be guaranteed. Test playback on your device.</Footer>
+        <Footer>Allow Microphone Access here before a call. If permission is blocked, use Open Settings and allow Microphone while using the app. Recording switches the call to speakerphone and says “This call is being recorded” using an offline English voice before capture begins. Keep media volume audible and confirm the other person heard the announcement; Android cannot inject it directly into a cellular call. Headsets are not supported while recording. Some phones block all call capture, and both voices cannot be guaranteed. Test playback on your device.</Footer>
 
         <SectionTitle>{tr('Privacy')}</SectionTitle>
         <Group>

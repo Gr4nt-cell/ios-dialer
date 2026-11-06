@@ -1,5 +1,14 @@
 // Turkish translations for the shared application string catalog.
 export default {
+  'Microphone Access': 'Mikrofon erişimi',
+  'Allowed': 'İzin verildi',
+  'Checking…': 'Kontrol ediliyor…',
+  'Call Announcer': 'Arama duyurucusu',
+  'Announce Incoming Calls': 'Gelen aramaları seslendir',
+  'Speak Unsaved Numbers': 'Kayıtlı olmayan numaraları oku',
+  'Test Announcer': 'Duyurucuyu test et',
+  'Testing…': 'Test ediliyor…',
+  'Speaks a saved contact’s name once for an incoming call using an offline voice in your phone language. Unsaved callers are announced as “Incoming call” unless Speak Unsaved Numbers is enabled. Respects silent mode, vibrate, Do Not Disturb and hidden caller details on the lock screen. No microphone permission is needed.': 'Gelen aramada kayıtlı kişinin adını telefon dilindeki çevrimdışı sesle bir kez okur. Numara okuma etkin değilse kayıtlı olmayan kişiler için yalnızca gelen arama duyurulur. Sessiz, titreşim ve Rahatsız Etmeyin modları ile kilit ekranındaki gizlilik ayarına uyar. Mikrofon izni gerekmez.',
   'Cancel': 'İptal',
   'Done': 'Bitti',
   'Edit': 'Düzenle',

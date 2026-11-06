@@ -15,7 +15,12 @@ export function cleanSearchHistory(value) {
   }).slice(0, SEARCH_HISTORY_LIMIT);
 }
 
-export function addRecentSearch(history, query) {
+export function addRecentSearch(history, query, replaceQuery = '') {
   const text = normalizeSearch(query);
-  return text ? cleanSearchHistory([text, ...cleanSearchHistory(history)]) : cleanSearchHistory(history);
+  const previous = normalizeSearch(replaceQuery).toLowerCase();
+  const items = cleanSearchHistory(history);
+  if (!text) return items;
+  // A result selection replaces its typed prefix; unrelated searches stay intact.
+  const kept = previous ? items.filter((item) => item.toLowerCase() !== previous) : items;
+  return cleanSearchHistory([text, ...kept]);
 }
