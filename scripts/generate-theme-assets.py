@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild bundled pastel wallpapers and monochrome dock icons (Pillow + NumPy).
+"""Rebuild monochrome dock icons (Pillow + NumPy).
 Assets are deterministic gradients/geometric glyphs, with no online runtime dependency.
 """
 from pathlib import Path
@@ -8,49 +8,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'assets'
-(ASSETS / 'wallpapers').mkdir(exist_ok=True)
 (ASSETS / 'dock').mkdir(exist_ok=True)
 
-# Wide, soft colour fields keep both phone and tablet content readable.
-PALETTES = {
- 'mint': ((242,249,245), (181,218,208), (205,219,246), (218,237,199)),
- 'rose-glass': ((252,245,247), (239,202,215), (235,218,239), (250,226,212)),
- 'lavender-mist': ((247,247,252), (219,206,239), (210,224,245), (234,229,245)),
- 'peach-bloom': ((253,248,241), (245,215,193), (248,232,220), (238,230,204)),
- 'ocean-mint': ((241,249,249), (184,220,222), (205,226,244), (211,237,225)),
- 'cotton-candy': ((252,247,252), (239,213,233), (209,226,246), (243,225,237)),
- 'soft-sage': ((245,249,241), (204,223,199), (221,233,219), (231,234,208)),
- 'sunrise-glow': ((253,248,241), (246,218,193), (244,228,227), (244,235,200)),
- 'bluebell': ((245,248,253), (204,219,242), (223,218,243), (219,235,240)),
- 'mint-pearl': ((248,252,249), (213,234,224), (229,238,245), (233,240,222)),
-}
-
-def wallpaper(palette, dark=False):
- h,w=1920,1280
- yy,xx=np.mgrid[0:h,0:w].astype(np.float32)
- xx=xx/w*390; yy=yy/h*844
- base,left,right,bottom=palette
- if dark:
-  # A quiet charcoal base with the same hue family; no saturated neon blobs.
-  base=(13,23,22)
-  left=tuple(int(c*.18) for c in left)
-  right=tuple(int(c*.19) for c in right)
-  bottom=tuple(int(c*.15) for c in bottom)
- out=np.empty((h,w,3),dtype=np.float32);out[:]=base
- for cx,cy,col,spread,opacity in [(10,70,left,250,.55),(370,220,right,220,.35),(100,650,bottom,310,.55)]:
-  t=(np.exp(-((xx-cx)**2+(yy-cy)**2)/(2*spread*spread))*opacity)[...,None]
-  out=out*(1-t)+np.array(col)*t
- # Subpixel dithering keeps large, pale gradients smooth at low file sizes.
- out+=np.random.default_rng(20261106).uniform(-.45,.45,(h,w,1))
- return Image.fromarray(np.clip(np.rint(out),0,255).astype(np.uint8))
-
-for name,palette in PALETTES.items():
- light_path=ASSETS/'dialer-gradient-background.jpg' if name=='mint' else ASSETS/'wallpapers'/f'{name}.png'
- image=wallpaper(palette)
- if light_path.suffix=='.jpg':image.save(light_path,quality=96,subsampling=0,optimize=True)
- else:image.save(light_path,optimize=True)
- wallpaper(palette,True).save(ASSETS/'wallpapers'/f'{name}-dark.jpg',quality=94,subsampling=0,optimize=True)
-
+# Wallpapers are generated assets in assets/wallpapers-glass; their prompts are saved
+# alongside the collection. This helper now regenerates only the dock masks.
 # Supersampled monochrome masks: tintColor supplies theme/selection colour at runtime.
 N=512
 for name in ['calls','contacts','keypad','search']:
@@ -77,4 +38,4 @@ for name in ['calls','contacts','keypad','search']:
   d.line([point(21.1,21.1),point(29,29)],fill='white',width=stroke)
   d.ellipse(box(28.15,28.15,29.85,29.85),fill='white')
  icon.resize((192,192),Image.Resampling.LANCZOS).save(ASSETS/'dock'/f'{name}.png')
-print('Generated 20 wallpapers and four dock masks.')
+print('Regenerated four dock masks. Wallpaper artwork is unchanged.')

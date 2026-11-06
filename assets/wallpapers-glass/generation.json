@@ -1,0 +1,74 @@
+[
+  {
+    "id": "mint",
+    "name": "Mint Lagoon",
+    "file": "01-mint-lagoon.png",
+    "prompt": "Mint Lagoon: soft blurred mint, aqua, blue, lemon and peach, no UI or text; style reference 11303.jpg."
+  },
+  {
+    "id": "rose",
+    "name": "Rosewater",
+    "file": "02-rosewater.png",
+    "prompt": "Generate ONE abstract portrait wallpaper 1024x1536, no UI, no text, no icons, no people, no objects, no frame. Variant 2: Rosewater. Colour palette and arrangement: blush rose pink, soft pastel turquoise, creamy pale apricot and small lilac patches; rose upper left and lower right, aqua central flowing band, warm peach top right. Match the soft multicolour blurred wallpaper visible behind the app in the supplied style reference, but output only a clean full-bleed wallpaper. Large organic flowing blurred areas of richly visible yet gentle pastel colours, smooth velvety luminous transitions, subtle diffuse texture, carefully balanced soft light. Colourful and premium, not nearly white. Designed as a readable liquid-glass app backdrop behind translucent white cards. No panels, no glass bubbles, no hard lines, no sharp shapes, no high-frequency detail. Different attractive composition for this colourway, airy consistent family."
+  },
+  {
+    "id": "lavender",
+    "name": "Lilac Breeze",
+    "file": "03-lilac-breeze.png",
+    "prompt": "Generate ONE abstract portrait wallpaper 1024x1536, no UI, no text, no icons, no people, no objects, no frame. Variant 3: Lilac Breeze. Colour palette and arrangement: soft periwinkle and lilac lavender with pastel sky blue, light mint and a little pale peach; lilac upper right, blue lower left, mint glowing centre. Match the soft multicolour blurred wallpaper visible behind the app in the supplied style reference, but output only a clean full-bleed wallpaper. Large organic flowing blurred areas of richly visible yet gentle pastel colours, smooth velvety luminous transitions, subtle diffuse texture, carefully balanced soft light. Colourful and premium, not nearly white. Designed as a readable liquid-glass app backdrop behind translucent white cards. No panels, no glass bubbles, no hard lines, no sharp shapes, no high-frequency detail. Different attractive composition for this colourway, airy consistent family."
+  },
+  {
+    "id": "peach",
+    "name": "Peach Sorbet",
+    "file": "04-peach-sorbet.png",
+    "prompt": "Generate ONE abstract portrait wallpaper 1024x1536, no UI, no text, no icons, no people, no objects, no frame. Variant 4: Peach Sorbet. Colour palette and arrangement: warm pale peach and apricot with pastel coral rose, mint green and pale blue; broad peach diagonal across centre, mint top left and sky blue right edge. Match the soft multicolour blurred wallpaper visible behind the app in the supplied style reference, but output only a clean full-bleed wallpaper. Large organic flowing blurred areas of richly visible yet gentle pastel colours, smooth velvety luminous transitions, subtle diffuse texture, carefully balanced soft light. Colourful and premium, not nearly white. Designed as a readable liquid-glass app backdrop behind translucent white cards. No panels, no glass bubbles, no hard lines, no sharp shapes, no high-frequency detail. Different attractive composition for this colourway, airy consistent family."
+  },
+  {
+    "id": "ocean",
+    "name": "Ocean Pearl",
+    "file": "05-ocean-pearl.png",
+    "prompt": "Generate ONE abstract portrait wallpaper 1024x1536, no UI, no text, no icons, no people, no objects, no frame. Variant 5: Ocean Pearl. Colour palette and arrangement: pastel cyan, pearl sky blue and seafoam mint with pale creamy lemon and very faint pink; blue upper left, seafoam central flowing band, warm pale glow at lower right. Match the soft multicolour blurred wallpaper visible behind the app in the supplied style reference, but output only a clean full-bleed wallpaper. Large organic flowing blurred areas of richly visible yet gentle pastel colours, smooth velvety luminous transitions, subtle diffuse texture, carefully balanced soft light. Colourful and premium, not nearly white. Designed as a readable liquid-glass app backdrop behind translucent white cards. No panels, no glass bubbles, no hard lines, no sharp shapes, no high-frequency detail. Different attractive composition for this colourway, airy consistent family."
+  },
+  {
+    "id": "pistachio",
+    "name": "Pistachio Glow",
+    "file": "06-pistachio-glow.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper with no interface, cards, words, icons, people, frames or identifiable objects. Wallpaper 6: Pistachio Glow. Strict palette: DOMINANT pale pistachio and apple green, butter yellow and pearly ivory with a hint of warm apricot; green upper and lower halves, lemon glow through the centre. No cyan, no blue, no purple. Match the reference screenshot only in STYLE: smoothly blurred luminous multicolour atmosphere behind liquid-glass app panels. Use this specified distinct colour palette instead of the reference's turquoise. Large organic flowing soft-focus colour washes, richly visible yet soft pale pastel hues, delicate diffuse texture, velvety transitions, pleasantly balanced composition, no hard shapes, no glass bubbles, no lines. Full bleed beautiful premium wallpaper, readable behind translucent white UI, light mode."
+  },
+  {
+    "id": "coral",
+    "name": "Coral Dawn",
+    "file": "07-coral-dawn.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper with no interface, cards, words, icons, people, frames or identifiable objects. Wallpaper 7: Coral Dawn. Strict palette: DOMINANT warm coral pink and peach, apricot orange, buttercream and a hint of dusty rose; broad coral across centre, apricot top left, cream lower right. No blue, no mint, no green. Match the reference screenshot only in STYLE: smoothly blurred luminous multicolour atmosphere behind liquid-glass app panels. Use this specified distinct colour palette instead of the reference's turquoise. Large organic flowing soft-focus colour washes, richly visible yet soft pale pastel hues, delicate diffuse texture, velvety transitions, pleasantly balanced composition, no hard shapes, no glass bubbles, no lines. Full bleed beautiful premium wallpaper, readable behind translucent white UI, light mode."
+  },
+  {
+    "id": "cotton",
+    "name": "Pink Opal",
+    "file": "08-pink-opal.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper with no interface, cards, words, icons, people, frames or identifiable objects. Wallpaper 8: Pink Opal. Strict palette: DOMINANT pink rose and soft magenta, raspberry pastel with pearly lilac lavender and a small creamy peach glow. No aqua, no green. Pink upper left and lower right with lavender flowing diagonally. Match the reference screenshot only in STYLE: smoothly blurred luminous multicolour atmosphere behind liquid-glass app panels. Use this specified distinct colour palette instead of the reference's turquoise. Large organic flowing soft-focus colour washes, richly visible yet soft pale pastel hues, delicate diffuse texture, velvety transitions, pleasantly balanced composition, no hard shapes, no glass bubbles, no lines. Full bleed beautiful premium wallpaper, readable behind translucent white UI, light mode."
+  },
+  {
+    "id": "sage",
+    "name": "Sage Silk",
+    "file": "09-sage-silk.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper with no interface, cards, words, icons, people, frames or identifiable objects. Wallpaper 9: Sage Silk. Strict palette: DOMINANT muted sage and olive pastel, creamy beige, warm champagne and pearly pale mint; warm neutral gold light at centre, sage green across edges. No cyan, no saturated blue, no pink. Match the reference screenshot only in STYLE: smoothly blurred luminous multicolour atmosphere behind liquid-glass app panels. Use this specified distinct colour palette instead of the reference's turquoise. Large organic flowing soft-focus colour washes, richly visible yet soft pale pastel hues, delicate diffuse texture, velvety transitions, pleasantly balanced composition, no hard shapes, no glass bubbles, no lines. Full bleed beautiful premium wallpaper, readable behind translucent white UI, light mode."
+  },
+  {
+    "id": "sunrise",
+    "name": "Golden Hour",
+    "file": "10-golden-hour.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper: no UI, no text, no panels, no icons, no people, no frame, no objects. Wallpaper 10: Golden Hour. Strict colour palette and arrangement: DOMINANT pastel honey gold, butter yellow and warm champagne, with pale apricot and soft cream; glowing amber at upper left and bottom right, broad creamy golden light through centre. No blue, no mint, no purple. Use the reference only as a STYLE reference for blurred pastel backgrounds, with this new specified palette. Large organic flowing colour washes with silky soft-focus transitions, softly luminous rich pastel colours, subtle diffuse texture. Clean premium liquid-glass app backdrop, readable behind translucent white cards. Full bleed, gentle light-mode colours, no defined shapes, no glass bubbles, no high-frequency detail, no dark patches."
+  },
+  {
+    "id": "bluebell",
+    "name": "Aqua Frost",
+    "file": "11-aqua-frost.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper: no UI, no text, no panels, no icons, no people, no frame, no objects. Wallpaper 11: Aqua Frost. Strict colour palette and arrangement: DOMINANT ice blue, pastel azure and turquoise teal, with pale periwinkle and pearly cyan; broad pale blue upper half, turquoise lower edges and icy bright centre. No pink, no yellow, no peach. Use the reference only as a STYLE reference for blurred pastel backgrounds, with this new specified palette. Large organic flowing colour washes with silky soft-focus transitions, softly luminous rich pastel colours, subtle diffuse texture. Clean premium liquid-glass app backdrop, readable behind translucent white cards. Full bleed, gentle light-mode colours, no defined shapes, no glass bubbles, no high-frequency detail, no dark patches."
+  },
+  {
+    "id": "pearl",
+    "name": "Prism Dream",
+    "file": "12-prism-dream.png",
+    "prompt": "Generate ONE 1024x1536 portrait abstract wallpaper, ONLY the wallpaper: no UI, no text, no panels, no icons, no people, no frame, no objects. Wallpaper 12: Prism Dream. Strict colour palette and arrangement: a rainbow of pastel lilac, rose pink, sky blue, mint and pale apricot in broad flowing atmospheric colour regions; lilac top left, peach top right, rose pink lower left, mint lower right and pearl blue central light. Visibly balanced multicolour composition. Use the reference only as a STYLE reference for blurred pastel backgrounds, with this new specified palette. Large organic flowing colour washes with silky soft-focus transitions, softly luminous rich pastel colours, subtle diffuse texture. Clean premium liquid-glass app backdrop, readable behind translucent white cards. Full bleed, gentle light-mode colours, no defined shapes, no glass bubbles, no high-frequency detail, no dark patches."
+  }
+]

@@ -102,7 +102,6 @@ function ReturnToCall() {
 }
 
 function Main() {
-  const performanceMode = useContext(PerformanceModeContext);
   const t = useTheme();
   const { missedCount, settings } = useData();
   const blurTarget = useRef(null);

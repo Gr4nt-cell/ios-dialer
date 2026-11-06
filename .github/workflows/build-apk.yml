@@ -52,6 +52,9 @@ jobs:
       - name: Check that every source file parses
         run: node scripts/check-syntax.cjs
 
+      - name: Test recording permission regression
+        run: node --test scripts/check-recording-permissions.test.cjs
+
       - name: Set the build number (versionCode)
         run: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> "$GITHUB_ENV"
 
@@ -59,6 +62,9 @@ jobs:
         run: npx expo prebuild --platform android --no-install
         env:
           CI: 1
+
+      - name: Verify generated microphone permissions
+        run: node scripts/check-recording-permissions.cjs android/app/src/main/AndroidManifest.xml
 
       - name: Point release builds at the upload key
         run: node scripts/use-upload-key.js
@@ -77,6 +83,16 @@ jobs:
           set -o pipefail
           sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
           ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a 2>&1 | tee "$RUNNER_TEMP/gradle.log"
+
+      - name: Verify packaged APK microphone permission
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt" dump permissions "$APK" > "$RUNNER_TEMP/apk-permissions.txt"
+          if ! grep -q "name='android.permission.RECORD_AUDIO'" "$RUNNER_TEMP/apk-permissions.txt"; then
+            echo "::error::Built APK is missing RECORD_AUDIO. Do not install or publish it."
+            exit 1
+          fi
 
       - name: Verify APK signature
         run: |

@@ -27,6 +27,12 @@ internal object RecordingSupport {
     }
   }
 
+  @Suppress("DEPRECATION")
+  fun microphoneDeclared(ctx: Context): Boolean = try {
+    ctx.packageManager.getPackageInfo(ctx.packageName, PackageManager.GET_PERMISSIONS)
+      .requestedPermissions?.contains(Manifest.permission.RECORD_AUDIO) == true
+  } catch (_: Exception) { false }
+
   fun directAudioGranted(ctx: Context): Boolean = ContextCompat.checkSelfPermission(
     ctx, "android.permission.CAPTURE_AUDIO_OUTPUT"
   ) == PackageManager.PERMISSION_GRANTED
@@ -38,6 +44,7 @@ internal object RecordingSupport {
       "model" to Build.MODEL,
       "androidVersion" to Build.VERSION.SDK_INT,
       "directAudioGranted" to direct,
+      "microphoneDeclared" to microphoneDeclared(ctx),
       "microphoneGranted" to (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED),
       "mode" to if (direct) "System call audio, with microphone fallback" else "Speakerphone microphone (device dependent)",
       "vendorRecorderIntegrated" to false,

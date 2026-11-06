@@ -1,5 +1,6 @@
 import { Alert, Linking, PermissionsAndroid, Platform } from 'react-native';
 import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from 'expo-audio';
+import Dialer from './dialer';
 
 let pendingRequest = null;
 
@@ -21,6 +22,13 @@ function showPermissionHelp(blocked) {
 // capture on a denial, and never raise a permission dialog for background auto-record.
 export async function ensureRecordingPermission({ request = true, notify = true } = {}) {
   try {
+    if (Platform.OS === 'android') {
+      const installed = Dialer?.getRecordingPermissionStatus?.();
+      if (installed?.declared === false) {
+        if (notify) Alert.alert('App Update Required', 'This installed build does not declare microphone permission. Install the rebuilt Phone app, then tap Microphone Access again. Android Settings cannot add a permission missing from the APK.');
+        return false;
+      }
+    }
     if (await hasRecordingPermission()) return true;
     if (!request) return false;
     if (!pendingRequest) {

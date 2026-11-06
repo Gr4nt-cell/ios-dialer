@@ -2,7 +2,7 @@
   "expo": {
     "name": "Phone",
     "slug": "ios-style-dialer",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -32,7 +32,7 @@
       "blockedPermissions": [
         "android.permission.INTERNET"
       ],
-      "versionCode": 4,
+      "versionCode": 6,
       "edgeToEdgeEnabled": true
     },
     "plugins": [
@@ -47,13 +47,14 @@
         {
           "photosPermission": "Allow Phone to use your photos for contact pictures.",
           "cameraPermission": "Allow Phone to take contact pictures.",
-          "microphonePermission": false
+          "microphonePermission": "Allow Phone to record calls after the spoken announcement."
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Phone to record calls when you tap Record."
+          "microphonePermission": "Allow Phone to record calls after the spoken announcement.",
+          "recordAudioAndroid": true
         }
       ],
       "./plugins/withDefaultDialer",
@@ -73,7 +74,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "./plugins/withRecordingPermissions"
     ],
     "extra": {
       "eas": {

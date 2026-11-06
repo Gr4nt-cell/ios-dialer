@@ -553,6 +553,10 @@ class DialerModule : Module() {
 
     Function("startRecording") { number: String -> RecordingService.start(ctx, number) }
     Function("stopRecording") { -> RecordingService.stop(ctx); true }
+    Function("getRecordingPermissionStatus") { -> mapOf(
+      "declared" to RecordingSupport.microphoneDeclared(ctx),
+      "granted" to (androidx.core.content.ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED),
+    ) }
     Function("getRecordingSupport") { -> RecordingSupport.info(ctx) }
     Function("recordingError") { -> RecordingService.lastError }
     Function("listRecordings") { -> RecordingService.list(ctx) }

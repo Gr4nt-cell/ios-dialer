@@ -116,7 +116,7 @@ export function Glass({
   const flat = useContext(FlatBackdropContext);
   const performanceMode = useContext(PerformanceModeContext);
   const profile = useContext(PerformanceProfileContext);
-  const budget = glassBudget(profile || { profile: performanceMode ? 'optimized' : 'performance' });
+  const budget = glassBudget(profile || { lowEnd: performanceMode });
   const dark = forceDark ?? t.dark;
   // Explicitly themed surfaces (the photo/gradient call screen) keep their
   // existing material, as does every surface when the system theme is dark.
@@ -247,7 +247,7 @@ export function Glass({
         end={{ x: 0.5, y: 0.55 }}
         style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
       /> : null}
-      {!performanceMode && budget.compact ? <Image source={require('../../assets/glass/static-sheen.png')} fadeDuration={0} resizeMode="stretch" pointerEvents="none" style={StyleSheet.absoluteFill} /> : null}
+      {budget.compact ? <Image source={require('../../assets/glass/static-sheen.png')} fadeDuration={0} resizeMode="stretch" pointerEvents="none" style={StyleSheet.absoluteFill} /> : null}
       {/* darker lower edge for depth */}
       {!budget.compact ? <LinearGradient
         pointerEvents="none"
@@ -341,7 +341,7 @@ export function GlassShadow({ children, style, radius = 999 }) {
   const t = useTheme();
   const performanceMode = useContext(PerformanceModeContext);
   const profile = useContext(PerformanceProfileContext);
-  const budget = glassBudget(profile || { profile: performanceMode ? 'optimized' : 'performance' });
+  const budget = glassBudget(profile || { lowEnd: performanceMode });
   return (
     <View
       style={[

@@ -1,6 +1,6 @@
 // Soft call-background swatch palettes. Full-size light/dark images live in wallpapers.js.
 export const GRADIENTS = [
-  // The app's own pastel backdrop, drawn from assets/dialer-gradient-background.jpg.
+  // The app's selected artwork comes from assets/wallpapers-glass.
   // The three colours are only for the swatch and the preview; the call screen
   // itself renders the selected offline wallpaper.
   { id: 'pastel', name: 'Pastel', colors: ['#D9EAE5', '#E5EEF0', '#E9F2DE'] },

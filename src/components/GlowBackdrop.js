@@ -13,7 +13,7 @@ export function GlowBackdrop({ style }) {
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.backdropBase }]}>
       <Image source={getWallpaperSource(settings, t.dark)} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
-      {t.dark && custom ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+      {t.dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
     </View>
   );
 }

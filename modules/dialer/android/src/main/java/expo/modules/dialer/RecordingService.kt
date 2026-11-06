@@ -62,6 +62,10 @@ class RecordingService : Service() {
     fun start(ctx: Context, number: String): Boolean {
       if (requested || instance != null) return true
       lastError = null
+      if (!RecordingSupport.microphoneDeclared(ctx)) {
+        lastError = "This installed build is missing microphone permission. Install the rebuilt Phone app; Android Settings cannot add a permission absent from the APK."
+        return false
+      }
       if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
         lastError = "Microphone permission is required."
         return false

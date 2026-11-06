@@ -129,8 +129,8 @@ function Poster({ plain = false, plainColor = WHITE, wallpaperSource, custom = f
   if (plain) return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Image source={wallpaperSource || require('../../assets/dialer-gradient-background.jpg')} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
-      {dark && custom ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+      <Image source={wallpaperSource || require('../../assets/wallpapers-glass/01-mint-lagoon.png')} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
+      {dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
     </View>
   );
 }

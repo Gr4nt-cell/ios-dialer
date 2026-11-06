@@ -8,8 +8,9 @@ import { posterSettings, posterPatch } from '../depthSettings';
 import { DEPTH_DEFAULTS, DEPTH_LIMITS, depthAvailable, useDepth } from '../depth';
 import { Pressable } from '../components/Touch';
 import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
+import WallpaperGrid from '../components/WallpaperGrid';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GRADIENTS, gradientFor } from '../gradients';
+import { gradientFor } from '../gradients';
 import { callAppearance } from '../callAppearance';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,7 +26,7 @@ import Dialer from '../dialer';
 import { useActionSheet } from '../components/ActionSheet';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { getCallWallpaperSource, WALLPAPERS } from '../wallpapers';
+import { callBackgroundId, getCallWallpaperSource, getWallpaperSource, WALLPAPERS } from '../wallpapers';
 import { ensureRecordingPermission, hasRecordingPermission } from '../recordingPermissions';
 
 function SectionTitle({ children }) {
@@ -38,48 +39,13 @@ function Footer({ children }) {
   return <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 32, marginTop: 6, marginBottom: 24, lineHeight: fs(18) }}>{children}</Text>;
 }
 
-function Swatch({ colors, name, selected, onPress, width, auto, wallpaper }) {
-  const t = useTheme();
-  return (
-    <Pressable onPress={onPress} style={{ width, alignItems: 'center', marginBottom: 12 }}>
-      {({ pressed }) => (
-        <>
-          <View
-            style={{
-              width,
-              height: width * 1.5,
-              borderRadius: 16,
-              padding: 2,
-              borderWidth: 2.5,
-              borderColor: selected ? t.blue : colors.every((c) => c.toUpperCase() === '#FFFFFF') ? t.glassBorder : 'transparent',
-              transform: [{ scale: pressed ? 0.95 : 1 }],
-            }}
-          >
-            {wallpaper ? <Image source={wallpaper} resizeMode="cover" style={{ position: 'absolute', left: 2, right: 2, top: 2, bottom: 2, borderRadius: 12 }} /> : null}
-            <LinearGradient colors={wallpaper ? ['transparent', 'transparent', 'transparent'] : colors} locations={auto ? undefined : [0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }} style={{ flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
-              {auto ? <Ionicons name="sparkles" size={22} color="#fff" /> : null}
-              {selected ? (
-                <View style={{ position: 'absolute', right: 5, top: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: t.blue, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="checkmark" size={14} color="#fff" />
-                </View>
-              ) : null}
-            </LinearGradient>
-          </View>
-          <ChromeText style={{ color: selected ? t.blue : t.secondary, fontSize: fs(12), marginTop: 4, fontWeight: selected ? '600' : '400' }}>
-            {name}
-          </ChromeText>
-        </>
-      )}
-    </Pressable>
-  );
-}
 
 function CallPreview({ colors, light, wallpaper, custom }) {
   const tr = useT();
   return (
     <View style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.65)', margin: 12, marginBottom: 4, overflow: 'hidden', backgroundColor: colors[2] }}>
       {wallpaper ? <Image source={wallpaper} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} /> : null}
-      {!light && custom ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+      {!light && wallpaper ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
       <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: light ? '#53685F' : '#A9BBB3', fontSize: fs(12) }}>{tr('calling mobile…')}</Text>
@@ -214,8 +180,7 @@ export default function SettingsScreen() {
     if (Dialer && Dialer.setOverlayPrefs) Dialer.setOverlayPrefs(next.island !== false, !!next.rear);
   };
   const { width } = usePaneSize();
-  const tileW = Math.floor((width - 32 - 24 - 30) / 4);
-  const bg = settings.callBackground || 'pastel';
+  const bg = callBackgroundId(settings.callBackground);
   const previewColors = gradientFor('Jane Appleseed', bg);
   const callLook = callAppearance(t, bg);
   const lightCallBackground = callLook.light;
@@ -440,35 +405,7 @@ export default function SettingsScreen() {
 
         <SectionTitle>Background</SectionTitle>
         <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 20, backgroundColor: t.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: t.glassBorder }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-            {WALLPAPERS.map((wallpaper) => {
-              const selected = selectedWallpaper === wallpaper.id;
-              return (
-                <Pressable
-                  key={wallpaper.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${wallpaper.title} background`}
-                  accessibilityState={{ selected }}
-                  onPress={() => updateSettings({ appBackground: wallpaper.id })}
-                  style={{ width: tileW, alignItems: 'center', marginBottom: 10 }}
-                >
-                  {({ pressed }) => (
-                    <>
-                      <View style={{ width: tileW, height: tileW * 1.35, borderRadius: 14, padding: 2, borderWidth: 2, borderColor: selected ? t.blue : 'transparent', transform: [{ scale: pressed ? 0.96 : 1 }] }}>
-                        <Image source={t.dark ? wallpaper.darkSource : wallpaper.source} resizeMode="cover" style={{ flex: 1, width: '100%', borderRadius: 10 }} />
-                        {selected ? (
-                          <View style={{ position: 'absolute', right: 6, top: 6, width: 20, height: 20, borderRadius: 10, backgroundColor: t.blue, alignItems: 'center', justifyContent: 'center' }}>
-                            <Ionicons name="checkmark" size={14} color="#fff" />
-                          </View>
-                        ) : null}
-                      </View>
-                      <Text numberOfLines={1} style={{ color: selected ? t.blue : t.secondary, fontSize: fs(11), marginTop: 4, fontWeight: selected ? '600' : '400', maxWidth: tileW }}>{wallpaper.title}</Text>
-                    </>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
+          <WallpaperGrid items={WALLPAPERS} selectedId={selectedWallpaper} dark={t.dark} onSelect={(id) => updateSettings({ appBackground: id })} />
           {settings.appBackground === 'custom' && settings.appBackgroundUri ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 10, gap: 10 }}>
               <Image source={{ uri: settings.appBackgroundUri }} resizeMode="cover" style={{ width: 42, height: 56, borderRadius: 10, borderWidth: 2, borderColor: t.blue }} />
@@ -484,7 +421,7 @@ export default function SettingsScreen() {
             )}
           </Pressable>
         </View>
-        <Footer>Pick one of ten soft pastel wallpapers or use any photo from your gallery. Each colour has a matching dark version. The Pastel call background follows your selected app wallpaper.</Footer>
+        <Footer>Pick one of twelve colourful soft-blur wallpapers or use any photo from your gallery. Dark mode applies a dim layer to the selected wallpaper. The Pastel call background follows your selected app wallpaper.</Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>
@@ -630,10 +567,12 @@ export default function SettingsScreen() {
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>
           <CallPreview colors={callLook.plain ? [callLook.background, callLook.background, callLook.background] : previewColors} light={lightCallBackground} wallpaper={wallpaperSource} custom={(bg === 'pastel' || bg === 'auto') && settings.appBackground === 'custom'} />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, paddingBottom: 2 }}>
-            {GRADIENTS.map((g) => (
-              <Swatch key={g.id} wallpaper={getCallWallpaperSource({ ...settings, callBackground: g.id }, t.dark)} width={tileW} name={g.name} colors={g.id === 'plain' && t.dark ? [t.backdropBase, t.backdropBase, t.backdropBase] : g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'pastel')} onPress={() => updateSettings({ callBackground: g.id })} />
-            ))}
+          <View style={{ padding: 12 }}>
+            <WallpaperGrid dark={t.dark} selectedId={bg} onSelect={(id) => updateSettings({ callBackground: id })} items={[
+              { id: 'pastel', title: 'Follow App', source: getWallpaperSource(settings, t.dark) },
+              { id: 'plain', title: 'Plain', color: t.dark ? t.backdropBase : '#FFFFFF' },
+              ...WALLPAPERS.map((item) => ({ ...item, id: `wallpaper:${item.id}` })),
+            ]} />
           </View>
         </Group>
         <Footer>Call backgrounds share the app’s soft pastel finish, with matching dark versions. Pastel follows your app wallpaper; other presets keep their own colour family.</Footer>

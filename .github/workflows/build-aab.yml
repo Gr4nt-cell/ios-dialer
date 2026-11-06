@@ -70,6 +70,9 @@ jobs:
       - name: Check that every source file parses
         run: node scripts/check-syntax.cjs
 
+      - name: Test recording permission regression
+        run: node --test scripts/check-recording-permissions.test.cjs
+
       - name: Set the build number (versionCode)
         run: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> "$GITHUB_ENV"
 
@@ -77,6 +80,9 @@ jobs:
         run: npx expo prebuild --platform android --no-install
         env:
           CI: 1
+
+      - name: Verify generated microphone permissions
+        run: node scripts/check-recording-permissions.cjs android/app/src/main/AndroidManifest.xml
 
       - name: Show release shrinking settings
         run: grep -nE "minifyEnabled|shrinkResources|enableProguard|enableShrink" android/app/build.gradle android/gradle.properties || true
