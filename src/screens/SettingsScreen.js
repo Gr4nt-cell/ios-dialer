@@ -10,6 +10,7 @@ import { Pressable } from '../components/Touch';
 import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS, gradientFor } from '../gradients';
+import { callAppearance } from '../callAppearance';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
@@ -24,7 +25,7 @@ import Dialer from '../dialer';
 import { useActionSheet } from '../components/ActionSheet';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { getWallpaperSource, WALLPAPERS } from '../wallpapers';
+import { getCallWallpaperSource, WALLPAPERS } from '../wallpapers';
 
 function SectionTitle({ children }) {
   const t = useTheme();
@@ -36,7 +37,7 @@ function Footer({ children }) {
   return <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 32, marginTop: 6, marginBottom: 24, lineHeight: fs(18) }}>{children}</Text>;
 }
 
-function Swatch({ colors, name, selected, onPress, width, auto }) {
+function Swatch({ colors, name, selected, onPress, width, auto, wallpaper }) {
   const t = useTheme();
   return (
     <Pressable onPress={onPress} style={{ width, alignItems: 'center', marginBottom: 12 }}>
@@ -49,11 +50,12 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
               borderRadius: 16,
               padding: 2,
               borderWidth: 2.5,
-              borderColor: selected ? t.blue : colors.every((color) => color.toUpperCase() === '#FFFFFF') ? t.glassBorder : 'transparent',
+              borderColor: selected ? t.blue : colors.every((c) => c.toUpperCase() === '#FFFFFF') ? t.glassBorder : 'transparent',
               transform: [{ scale: pressed ? 0.95 : 1 }],
             }}
           >
-            <LinearGradient colors={colors} locations={auto ? undefined : [0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }} style={{ flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
+            {wallpaper ? <Image source={wallpaper} resizeMode="cover" style={{ position: 'absolute', left: 2, right: 2, top: 2, bottom: 2, borderRadius: 12 }} /> : null}
+            <LinearGradient colors={wallpaper ? ['transparent', 'transparent', 'transparent'] : colors} locations={auto ? undefined : [0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }} style={{ flex: 1, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
               {auto ? <Ionicons name="sparkles" size={22} color="#fff" /> : null}
               {selected ? (
                 <View style={{ position: 'absolute', right: 5, top: 5, width: 20, height: 20, borderRadius: 10, backgroundColor: t.blue, alignItems: 'center', justifyContent: 'center' }}>
@@ -71,49 +73,32 @@ function Swatch({ colors, name, selected, onPress, width, auto }) {
   );
 }
 
-function CallPreview({ colors, light, pastel, wallpaper }) {
-  if (pastel) {
-    return (
-      <View style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(107,132,161,0.18)', margin: 12, marginBottom: 4, overflow: 'hidden' }}>
-        <Image source={wallpaper || require('../../assets/dialer-gradient-background.jpg')} resizeMode="stretch" style={StyleSheet.absoluteFill} />
-        <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: '#53666D', fontSize: fs(12) }}>calling mobile…</Text>
-            <Text style={{ color: '#22343A', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
-            {['volume-medium', 'pause', 'mic'].map((n) => (
-              <Glass key={n} liquid vivid outline soft radius={17} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={n} size={16} color="#26383E" />
-              </Glass>
-            ))}
-          </View>
+function CallPreview({ colors, light, wallpaper, custom }) {
+  const tr = useT();
+  return (
+    <View style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.65)', margin: 12, marginBottom: 4, overflow: 'hidden', backgroundColor: colors[2] }}>
+      {wallpaper ? <Image source={wallpaper} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} /> : null}
+      {!light && custom ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+      <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ color: light ? '#53685F' : '#A9BBB3', fontSize: fs(12) }}>{tr('calling mobile…')}</Text>
+          <Text style={{ color: light ? '#1D2428' : '#fff', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+          {['volume-medium', 'pause', 'mic'].map((n) => (
+            <Glass key={n} dark={!light} liquid vivid outline soft radius={17} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name={n} size={16} color={light ? '#1D2428' : '#fff'} />
+            </Glass>
+          ))}
+          <Glass dark={!light} liquid vivid outline soft radius={17} tint="#FF3B30" tintOpacity={0.95} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="call" size={16} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
+          </Glass>
         </View>
       </View>
-    );
-  }
-  return (
-    <LinearGradient colors={[colors[0], colors[1], colors[2]]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(107,132,161,0.18)', margin: 12, marginBottom: 4, padding: 14, justifyContent: 'space-between' }}>
-      {!light ? <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 80, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 }} /> : null}
-      <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: light ? '#53666D' : 'rgba(255,255,255,0.75)', fontSize: fs(12) }}>calling mobile…</Text>
-        <Text style={{ color: light ? '#22343A' : '#fff', fontSize: fs(24), fontWeight: '700' }}>Jane Appleseed</Text>
-      </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
-        {['volume-medium', 'pause', 'mic'].map((n) => (
-          <Glass key={n} dark={!light} liquid vivid outline soft radius={17} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name={n} size={16} color={light ? '#26383E' : '#fff'} />
-          </Glass>
-        ))}
-        <Glass dark={!light} liquid vivid outline soft radius={17} tint="#FF3B30" tintOpacity={0.95} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name="call" size={16} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
-        </Glass>
-      </View>
-    </LinearGradient>
+    </View>
   );
 }
 
-// − value + control for the island size settings
 function Stepper({ value, onChange, min, max, step = 1, format }) {
   const t = useTheme();
   const btn = (icon, next, disabled) => (
@@ -139,6 +124,9 @@ export default function SettingsScreen() {
   const performanceProfile = useContext(PerformanceProfileContext);
   const t = useTheme();
   const tr = useT();
+  const recordingSupport = useMemo(() => {
+    try { return Dialer?.getRecordingSupport?.() || null; } catch { return null; }
+  }, []);
   const [depthEditor, setDepthEditor] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [wallpaperBusy, setWallpaperBusy] = useState(false);
@@ -188,9 +176,10 @@ export default function SettingsScreen() {
   const tileW = Math.floor((width - 32 - 24 - 30) / 4);
   const bg = settings.callBackground || 'pastel';
   const previewColors = gradientFor('Jane Appleseed', bg);
-  const lightCallBackground = bg === 'auto' || bg === 'fastscore' || bg === 'plain' || bg === 'pastel';
+  const callLook = callAppearance(t, bg);
+  const lightCallBackground = callLook.light;
   const selectedWallpaper = settings.appBackground || 'mint';
-  const wallpaperSource = getWallpaperSource(settings);
+  const wallpaperSource = getCallWallpaperSource(settings, t.dark);
   const selectGalleryWallpaper = async () => {
     if (wallpaperBusy) return;
     setWallpaperBusy(true);
@@ -425,7 +414,7 @@ export default function SettingsScreen() {
                   {({ pressed }) => (
                     <>
                       <View style={{ width: tileW, height: tileW * 1.35, borderRadius: 14, padding: 2, borderWidth: 2, borderColor: selected ? t.blue : 'transparent', transform: [{ scale: pressed ? 0.96 : 1 }] }}>
-                        <Image source={wallpaper.source} resizeMode="cover" style={{ flex: 1, width: '100%', borderRadius: 10 }} />
+                        <Image source={t.dark ? wallpaper.darkSource : wallpaper.source} resizeMode="cover" style={{ flex: 1, width: '100%', borderRadius: 10 }} />
                         {selected ? (
                           <View style={{ position: 'absolute', right: 6, top: 6, width: 20, height: 20, borderRadius: 10, backgroundColor: t.blue, alignItems: 'center', justifyContent: 'center' }}>
                             <Ionicons name="checkmark" size={14} color="#fff" />
@@ -454,7 +443,7 @@ export default function SettingsScreen() {
             )}
           </Pressable>
         </View>
-        <Footer>Pick one of ten soft pastel wallpapers or use any photo from your gallery. Your choice appears across the app in light mode and on the call screen when the pastel background is selected.</Footer>
+        <Footer>Pick one of ten soft pastel wallpapers or use any photo from your gallery. Each colour has a matching dark version. The Pastel call background follows your selected app wallpaper.</Footer>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>
@@ -599,21 +588,22 @@ export default function SettingsScreen() {
 
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>
-          <CallPreview colors={previewColors} light={lightCallBackground} pastel={bg === 'pastel' || bg === 'auto'} wallpaper={wallpaperSource} />
+          <CallPreview colors={callLook.plain ? [callLook.background, callLook.background, callLook.background] : previewColors} light={lightCallBackground} wallpaper={wallpaperSource} custom={(bg === 'pastel' || bg === 'auto') && settings.appBackground === 'custom'} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, padding: 12, paddingBottom: 2 }}>
             {GRADIENTS.map((g) => (
-              <Swatch key={g.id} width={tileW} name={g.name} colors={g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'pastel')} onPress={() => updateSettings({ callBackground: g.id })} />
+              <Swatch key={g.id} wallpaper={getCallWallpaperSource({ ...settings, callBackground: g.id }, t.dark)} width={tileW} name={g.name} colors={g.id === 'plain' && t.dark ? [t.backdropBase, t.backdropBase, t.backdropBase] : g.colors} selected={bg === g.id || (bg === 'auto' && g.id === 'pastel')} onPress={() => updateSettings({ callBackground: g.id })} />
             ))}
           </View>
         </Group>
-        <Footer>Light mode uses the selected call background. Dark mode follows the app’s dark appearance.</Footer>
+        <Footer>Call backgrounds share the app’s soft pastel finish, with matching dark versions. Pastel follows your app wallpaper; other presets keep their own colour family.</Footer>
 
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>
           <Cell value="Record Calls Automatically" right={toggle('autoRecord')} />
           <Cell value={tr('Recordings')} color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
         </Group>
-        <Footer>Tap Record on the call screen to record a call. Android only lets the phone’s own system app hear the other side directly, so on most phones turn on Speaker while recording to capture both voices clearly. Recording laws differ by country — let people know when you record.</Footer>
+        {recordingSupport ? <Footer>{recordingSupport.family} · {recordingSupport.model}{'\n'}{recordingSupport.mode}{'\n'}{recordingSupport.notice}</Footer> : null}
+        <Footer>Recording switches the call to speakerphone and says “This call is being recorded” using an offline English voice before capture begins. Keep media volume audible and confirm the other person heard the announcement; Android cannot inject it directly into a cellular call. Headsets are not supported while recording. Some phones block all call capture, and both voices cannot be guaranteed. Test playback on your device.</Footer>
 
         <SectionTitle>{tr('Privacy')}</SectionTitle>
         <Group>

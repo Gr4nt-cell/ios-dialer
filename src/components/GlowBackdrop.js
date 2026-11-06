@@ -1,47 +1,19 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
-import { PerformanceModeContext } from './Glass';
 import { useData } from '../DataContext';
 import { getWallpaperSource } from '../wallpapers';
 
-// Shared offline backdrop for mobile, tablet, and modal screens.
-// The pale center keeps dark labels readable through translucent glass.
+// One bundled image replaces the old stacked neon gradients. Both themes use
+// the selected wallpaper family, with no live blur or decorative animation.
 export function GlowBackdrop({ style }) {
   const t = useTheme();
-  const performanceMode = useContext(PerformanceModeContext);
   const { settings } = useData();
-  const wallpaper = getWallpaperSource(settings);
-  const [a, b, c] = t.glow;
+  const custom = settings.appBackground === 'custom' && !!settings.appBackgroundUri;
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.backdropBase }]}>
-      {t.dark ? (
-        <>
-          <LinearGradient
-            colors={t.backdrop}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          {performanceMode ? (
-            <LinearGradient colors={[a, b, c]} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-          ) : (
-            <>
-              <LinearGradient colors={[a, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.75, y: 0.55 }} style={StyleSheet.absoluteFill} />
-              <LinearGradient colors={['transparent', b]} start={{ x: 0.2, y: 0.3 }} end={{ x: 1, y: 0.75 }} style={StyleSheet.absoluteFill} />
-              <LinearGradient colors={['transparent', c]} start={{ x: 0.7, y: 0.45 }} end={{ x: 0.1, y: 1 }} style={StyleSheet.absoluteFill} />
-            </>
-          )}
-        </>
-      ) : (
-        <Image
-          source={wallpaper}
-          resizeMode="stretch"
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+      <Image source={getWallpaperSource(settings, t.dark)} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
+      {t.dark && custom ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
     </View>
   );
 }

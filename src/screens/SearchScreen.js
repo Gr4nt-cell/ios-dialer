@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,8 +19,33 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const tabBarSpace = useBottomSpace();
   const nav = useNav();
-  const { contacts, recents, resolve, call } = useData();
+  const { contacts, recents, resolve, call, searchHistory, rememberSearch, clearSearchHistory } = useData();
   const [q, setQ] = useState('');
+  const queryRef = useRef('');
+  const lastCommitted = useRef('');
+  const commitSearch = () => {
+    const query = queryRef.current.trim().replace(/\s+/g, ' ');
+    if (query && query !== lastCommitted.current) {
+      rememberSearch(query);
+      lastCommitted.current = query;
+    }
+  };
+  const changeQuery = (query) => {
+    if (!query.trim()) commitSearch();
+    queryRef.current = query;
+    lastCommitted.current = '';
+    setQ(query);
+  };
+  const repeatSearch = (query) => {
+    queryRef.current = query;
+    lastCommitted.current = query;
+    setQ(query);
+    rememberSearch(query);
+  };
+  useEffect(() => () => {
+    if (queryRef.current.trim()) rememberSearch(queryRef.current);
+  }, [rememberSearch]);
+  const callFromSearch = (number) => { commitSearch(); call(number); };
 
   const sections = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -53,7 +78,7 @@ export default function SearchScreen() {
   const renderItem = ({ item }) => {
     if (item.kind === 'dial') {
       return (
-        <Pressable onPress={() => call(item.number)}>
+        <Pressable onPress={() => callFromSearch(item.number)}>
           {({ pressed }) => (
             <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
               <View style={[styles.iconCircle, { backgroundColor: t.green }]}>
@@ -69,7 +94,7 @@ export default function SearchScreen() {
       const c = item.contact;
       const phone = (c.phoneNumbers || [])[0];
       return (
-        <Pressable onPress={() => nav.push({ name: 'contact', contactId: c.id })}>
+        <Pressable onPress={() => { commitSearch(); nav.push({ name: 'contact', contactId: c.id }); }}>
           {({ pressed }) => (
             <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
               <Avatar name={contactName(c)} image={c.image && c.image.uri} size={40} />
@@ -78,7 +103,7 @@ export default function SearchScreen() {
                 {phone ? <Text style={{ color: t.secondary, fontSize: fs(14) }}>{prettyLabel(phone.label)} · {formatNumber(phone.number)}</Text> : null}
               </View>
               {phone ? (
-                <Pressable onPress={() => call(phone.number)} hitSlop={10}>
+                <Pressable onPress={() => callFromSearch(phone.number)} hitSlop={10}>
                   <Ionicons name="call-outline" size={22} color={t.blue} />
                 </Pressable>
               ) : null}
@@ -90,7 +115,7 @@ export default function SearchScreen() {
     const g = item.group;
     const m = resolve(g.number);
     return (
-      <Pressable onPress={() => call(g.number)}>
+      <Pressable onPress={() => callFromSearch(g.number)}>
         {({ pressed }) => (
           <Glass strong vivid radius={18} pressed={pressed} style={styles.row}>
             <View style={[styles.iconCircle, { backgroundColor: t.fill }]}>
@@ -109,7 +134,7 @@ export default function SearchScreen() {
   return (
     <View style={{ flex: 1 }}>
       <LargeHeader title={tr('Search')}>
-        <SearchBar value={q} onChangeText={setQ} placeholder={tr('Contacts, calls or a number')} autoFocus />
+        <SearchBar value={q} onChangeText={changeQuery} onSubmitEditing={commitSearch} onBlur={commitSearch} placeholder={tr('Contacts, calls or a number')} autoFocus />
       </LargeHeader>
       <SectionList
         removeClippedSubviews
@@ -122,6 +147,33 @@ export default function SearchScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         renderItem={renderItem}
+        ListHeaderComponent={searchHistory.length ? (
+          <View style={styles.history}>
+            <View style={styles.historyHeading}>
+              <Text style={{ color: t.text, fontSize: fs(17), fontWeight: '700', flex: 1 }}>{tr('Recent Searches')}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr('Clear search history')} hitSlop={10} onPress={() => { queryRef.current = ''; lastCommitted.current = ''; setQ(''); clearSearchHistory(); }}>
+                <Text style={{ color: t.blue, fontSize: fs(15) }}>{tr('Clear')}</Text>
+              </Pressable>
+            </View>
+            {[0, 1, 2].map((row) => (
+              <View key={row} style={styles.historyRow}>
+                {[0, 1, 2].map((column) => {
+                  const query = searchHistory[row * 3 + column];
+                  return query ? (
+                    <Pressable key={column} style={styles.historyCell} accessibilityRole="button" accessibilityLabel={tr('Search again for {query}').replace('{query}', query)} onPress={() => repeatSearch(query)}>
+                      {({ pressed }) => (
+                        <Glass radius={22} liquid strong vivid soft pressed={pressed} style={styles.historyChip}>
+                          <Ionicons name="time-outline" size={16} color={t.secondary} />
+                          <Text numberOfLines={2} style={{ color: t.text, fontSize: fs(14), flexShrink: 1, textAlign: 'center' }}>{query}</Text>
+                        </Glass>
+                      )}
+                    </Pressable>
+                  ) : <View key={column} style={styles.historyCell} />;
+                })}
+              </View>
+            ))}
+          </View>
+        ) : null}
         renderSectionHeader={({ section }) =>
           section.title ? <Text style={{ color: t.text, fontSize: fs(20), fontWeight: '700', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4, backgroundColor: t.dark ? t.bg : 'transparent' }}>{section.title}</Text> : null
         }
@@ -133,6 +185,11 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
+  history: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 10 },
+  historyHeading: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, paddingBottom: 10 },
+  historyRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  historyCell: { flex: 1, minWidth: 0 },
+  historyChip: { minHeight: 62, paddingHorizontal: 8, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', gap: 5 },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 12, marginVertical: 4 },
   iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

@@ -95,7 +95,7 @@ export function GlassRefractionProvider({ children, active = true }) {
  */
 function lift(dark, soft, liquid, performanceMode = false) {
   const borderColor = liquid
-    ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(104,139,180,0.25)'
+    ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(255,255,255,0.78)'
     : dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)';
   if (performanceMode) return { borderColor };
 
@@ -115,7 +115,7 @@ function lift(dark, soft, liquid, performanceMode = false) {
   return {
     borderColor,
     boxShadow: liquid && !dark
-      ? `0px ${y}px ${blur}px rgba(56,91,137,${a})`
+      ? `0px ${y}px ${blur}px rgba(57,83,70,${a})`
       : `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
@@ -279,12 +279,12 @@ export function Glass({
     : flat
     ? dark ? `rgba(39,42,48,${a})` : `rgba(246,250,255,${a})`
     : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.55)';
+  const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
     : optimizedLight
     ? liquid
-      ? 'rgba(37,85,149,0.32)'
+      ? 'rgba(255,255,255,0.86)'
       : strong || outline
         ? 'rgba(45,66,94,0.26)'
         : 'rgba(45,66,94,0.2)'
@@ -295,13 +295,13 @@ export function Glass({
     : outline
     ? dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.12)'
     : dark ? 'rgba(220,228,240,0.1)' : 'rgba(80,86,96,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.35)' : lightLiquid ? 'rgba(90,111,174,0.04)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
+  const edge = dark ? 'rgba(0,0,0,0.35)' : lightLiquid ? 'rgba(72,105,85,0.035)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
   const highlight = flat
     ? liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.78)' : dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
     ? liquid ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.14)'
     : vivid
-    ? liquid ? dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)' : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
+    ? liquid ? dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.36)' : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
     : liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.42)' : dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)';
 
   // Android derives an elevation shadow from the view's outline, and a view
@@ -325,7 +325,7 @@ export function Glass({
       {!performanceMode && lightLiquid && !tint ? (
         <LinearGradient
           pointerEvents="none"
-          colors={['rgba(185,218,255,0.12)', 'rgba(255,255,255,0)', 'rgba(211,194,255,0.10)']}
+          colors={['rgba(214,238,230,0.10)', 'rgba(255,255,255,0)', 'rgba(220,230,246,0.07)']}
           locations={[0, 0.5, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -349,11 +349,11 @@ export function Glass({
         end={{ x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill}
       /> : null}
-      {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
+      {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around (on the outer view when lifted) */}
       {lifted ? null : (
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? 1 : StyleSheet.hairlineWidth, borderColor: rim }]} />
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? (lightLiquid ? 1.15 : 1) : StyleSheet.hairlineWidth, borderColor: rim }]} />
       )}
       {performanceMode || (flat && !liquid) ? null : (
         <LinearGradient
@@ -402,7 +402,7 @@ export function Glass({
         onLayout={onLayout}
         style={[
           { borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] },
-          performanceMode ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(74,99,155,${soft ? 0.08 : 0.1})` },
+          performanceMode ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(57,83,70,${soft ? 0.055 : 0.075})` },
           style,
         ]}
       >
@@ -438,8 +438,8 @@ export function GlassShadow({ children, style, radius = 999 }) {
       style={[
         performanceMode ? { borderRadius: radius } : {
           borderRadius: radius,
-          shadowColor: '#000',
-          shadowOpacity: t.dark ? 0.5 : 0.14,
+          shadowColor: t.dark ? '#000' : '#395346',
+          shadowOpacity: t.dark ? 0.32 : 0.07,
           shadowRadius: 20,
           shadowOffset: { width: 0, height: 8 },
         },

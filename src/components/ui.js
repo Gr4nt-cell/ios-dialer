@@ -154,7 +154,7 @@ export function LargeHeader({ title, left, right, center, children, compact }) {
 
 // ---------- Search bar ----------
 
-export function SearchBar({ value, onChangeText, placeholder = 'Search', autoFocus }) {
+export function SearchBar({ value, onChangeText, onSubmitEditing, onBlur, placeholder = 'Search', autoFocus }) {
   const t = useTheme();
   return (
     <Glass radius={20} blur={EXTENDED_BLUR} vivid intensity={85} style={styles.search}>
@@ -163,6 +163,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search', autoFoc
         <TextInput
           value={value}
           onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
+          onBlur={onBlur}
           placeholder={placeholder}
           placeholderTextColor={t.secondary}
           style={[styles.searchInput, { color: t.text }]}

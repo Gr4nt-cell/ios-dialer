@@ -1,23 +1,23 @@
-// Call-screen backgrounds. Each preset is [glow A, glow B, base].
+// Soft call-background swatch palettes. Full-size light/dark images live in wallpapers.js.
 export const GRADIENTS = [
   // The app's own pastel backdrop, drawn from assets/dialer-gradient-background.jpg.
   // The three colours are only for the swatch and the preview; the call screen
-  // itself renders the image, which has detail no three-stop gradient can carry.
-  { id: 'pastel', name: 'Pastel', colors: ['#FFA6CD', '#9CFFE2', '#E9E7F2'] },
+  // itself renders the selected offline wallpaper.
+  { id: 'pastel', name: 'Pastel', colors: ['#D9EAE5', '#E5EEF0', '#E9F2DE'] },
   { id: 'plain', name: 'Plain White', colors: ['#FFFFFF', '#FFFFFF', '#FFFFFF'] },
-  { id: 'fastscore', name: 'Fast Score', colors: ['#9BDEF3', '#F3E5E7', '#A5E7D2'] },
-  { id: 'aurora', name: 'Aurora', colors: ['#2EE6A6', '#3A5BD9', '#06142B'] },
-  { id: 'sunset', name: 'Sunset', colors: ['#FF8A3D', '#E0306E', '#2A0B1C'] },
-  { id: 'ocean', name: 'Ocean', colors: ['#1FA2C9', '#2C5FD6', '#04162A'] },
-  { id: 'midnight', name: 'Midnight', colors: ['#4A4FD8', '#7A3FD1', '#07081A'] },
-  { id: 'rose', name: 'Rose', colors: ['#FF7EB3', '#B0306E', '#2A0A18'] },
-  { id: 'forest', name: 'Forest', colors: ['#2E9D5B', '#0F8F86', '#04190F'] },
-  { id: 'lavender', name: 'Lavender', colors: ['#B49CFF', '#6D5BD0', '#140F2E'] },
-  { id: 'ember', name: 'Ember', colors: ['#FFB547', '#D9573A', '#250C04'] },
-  { id: 'peach', name: 'Peach', colors: ['#FFC29E', '#F0717A', '#2B1212'] },
-  { id: 'lagoon', name: 'Lagoon', colors: ['#5CE1E6', '#2E9D8F', '#03201F'] },
-  { id: 'cosmic', name: 'Cosmic', colors: ['#D04A8C', '#4A4FD8', '#0D0620'] },
-  { id: 'mono', name: 'Graphite', colors: ['#8E8E93', '#48484A', '#0B0B0D'] },
+  { id: 'fastscore', name: 'Fast Score', colors: ['#D2E9E8', '#E5EFF5', '#E0F0E9'] },
+  { id: 'aurora', name: 'Aurora', colors: ['#D9EAE5', '#E5EEF0', '#E9F2DE'] },
+  { id: 'sunset', name: 'Sunset', colors: ['#F8E3CF', '#F4E6E4', '#F7EFCF'] },
+  { id: 'ocean', name: 'Ocean', colors: ['#D2E9E8', '#E5EFF5', '#E0F0E9'] },
+  { id: 'midnight', name: 'Midnight', colors: ['#DFE8F7', '#E9E5F5', '#E3EFF1'] },
+  { id: 'rose', name: 'Rose', colors: ['#F3DAE4', '#F4E7F2', '#F9E9E1'] },
+  { id: 'forest', name: 'Forest', colors: ['#DEEAD9', '#E6EEE2', '#ECEDD8'] },
+  { id: 'lavender', name: 'Lavender', colors: ['#E7DEF3', '#E2EBF7', '#EEEAF7'] },
+  { id: 'ember', name: 'Ember', colors: ['#F8E5D6', '#F9EDE3', '#F0EAD7'] },
+  { id: 'peach', name: 'Peach', colors: ['#F8E5D6', '#F9EDE3', '#F0EAD7'] },
+  { id: 'lagoon', name: 'Lagoon', colors: ['#D2E9E8', '#E5EFF5', '#E0F0E9'] },
+  { id: 'cosmic', name: 'Cosmic', colors: ['#F3E1F0', '#E1ECF9', '#F8E9F2'] },
+  { id: 'mono', name: 'Graphite', colors: ['#E5F0E9', '#EDF4F8', '#F0F4E9'] },
 ];
 
 const ROTATION = ['midnight', 'ocean', 'sunset', 'aurora', 'cosmic', 'forest', 'ember', 'lavender', 'rose', 'lagoon'];

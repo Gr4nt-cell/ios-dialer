@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import DockIcon from './DockIcon';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, TAB_BAR_HEIGHT, useTheme } from '../theme';
@@ -140,8 +140,8 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
           vivid
           outline
           radius={32}
-          fillScale={t.dark ? 1 : 0.45}
-          sheenScale={t.dark ? 1 : 0.55}
+          fillScale={t.dark ? 0.86 : 0.85}
+          sheenScale={t.dark ? 0.75 : 0.9}
           onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
           style={{ height: TAB_BAR_HEIGHT }}
         >
@@ -165,8 +165,10 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                   radius={27}
                   selected
                   style={{ flex: 1, ...(performanceMode ? null : { boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }) }}
-                  tint={t.dark ? 'rgba(218,228,242,0.1)' : 'rgba(90,99,112,0.055)'}
-                  tintOpacity={0.9}
+                  liquid
+                  outline
+                  fillScale={t.dark ? 1 : 0.7}
+                  sheenScale={1.1}
                 />
               </FlatBackdropContext.Provider>
             </Animated.View>
@@ -174,11 +176,11 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
           <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: 4 }} {...responder.panHandlers}>
             {tabs.map((tab, i) => {
               const on = hover >= 0 ? i === hover : tab.key === active;
-              const color = on ? t.blue : t.text;
+              const color = on ? t.blue : t.dockInactive;
               return (
                 <View key={tab.key} style={styles.item} pointerEvents="none">
                   <View style={{ transform: [{ scale: hover === i ? 1.1 : 1 }] }}>
-                    <Ionicons name={tab.icon === 'search' ? 'search' : on ? tab.icon : tab.icon + '-outline'} size={tabs.length > 5 ? 22 : 24} color={color} />
+                    <DockIcon name={tab.key} fallback={tab.icon} size={tabs.length > 5 ? 23 : 27} color={color} />
                     {badges[tab.key] ? (
                       <View style={[styles.badge, { backgroundColor: t.red }]}>
                         <Text style={styles.badgeText}>{badges[tab.key] > 99 ? '99+' : badges[tab.key]}</Text>
@@ -201,7 +203,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: fs(10), fontWeight: '600', marginTop: 2, letterSpacing: -0.1 },
+  label: { fontSize: fs(12), fontWeight: '500', marginTop: 5, letterSpacing: -0.1 },
   badge: { position: 'absolute', top: -4, right: -12, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontSize: fs(11), fontWeight: '700' },
 });

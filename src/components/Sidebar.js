@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import Dialer from '../dialer';
 import { Glass } from './Glass';
+import DockIcon from './DockIcon';
 import { ChromeText } from './ui';
 import { useT } from '../i18n';
 
@@ -80,7 +81,7 @@ export default function Sidebar({ tabs, active, onChange, onSettings, badges = {
                 hitSlop={4}
               >
                 <View>
-                  <Ionicons name={on ? tab.icon : `${tab.icon}-outline`} size={24} color={on ? t.blue : t.secondary} />
+                  <DockIcon name={tab.key} fallback={tab.icon} size={27} color={on ? t.blue : t.dockInactive} />
                   {badge ? (
                     <View style={[styles.badge, { backgroundColor: t.red }]}>
                       <Text allowFontScaling={false} style={styles.badgeText}>

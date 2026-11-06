@@ -546,6 +546,7 @@ class DialerModule : Module() {
 
     Function("startRecording") { number: String -> RecordingService.start(ctx, number) }
     Function("stopRecording") { -> RecordingService.stop(ctx); true }
+    Function("getRecordingSupport") { -> RecordingSupport.info(ctx) }
     Function("recordingError") { -> RecordingService.lastError }
     Function("listRecordings") { -> RecordingService.list(ctx) }
     Function("deleteRecording") { name: String -> RecordingService.delete(ctx, name) }

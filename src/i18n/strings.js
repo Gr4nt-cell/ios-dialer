@@ -1,3 +1,5 @@
+import TURKISH from './tr';
+
 // Translations keyed by the English source text.
 //
 // Keying on the English string (rather than on invented ids) means a string
@@ -12,6 +14,7 @@ export const LANGS = [
   { code: 'pl', name: 'Polski', english: 'Polish' },
   { code: 'ja', name: '日本語', english: 'Japanese' },
   { code: 'it', name: 'Italiano', english: 'Italian' },
+  { code: 'tr', name: 'Türkçe', english: 'Turkish' },
 ];
 
 export const STRINGS = {
@@ -226,3 +229,8 @@ export const STRINGS = {
   'Set Phone as your default phone app to use this code.': { es: 'Establece Phone como tu app de teléfono para usar este código.', zh: '将 Phone 设为默认电话应用后才能使用此代码。', th: 'ตั้ง Phone เป็นแอปโทรศัพท์เริ่มต้นเพื่อใช้รหัสนี้', pl: 'Ustaw Phone jako domyślną aplikację telefonu, aby użyć tego kodu.', ja: 'このコードを使うには Phone を既定の電話アプリに設定してください。', it: 'Imposta Phone come app telefono predefinita per usare questo codice.' },
   'Android doesn’t share the IMEI with phone apps. You’ll find it in Settings › About phone.': { es: 'Android no comparte el IMEI con las apps de teléfono. Lo encontrarás en Ajustes › Información del teléfono.', zh: 'Android 不会把 IMEI 提供给电话应用。你可以在“设置 › 关于手机”中查看。', th: 'Android ไม่เปิดเผย IMEI ให้แอปโทรศัพท์ ดูได้ที่ การตั้งค่า › เกี่ยวกับโทรศัพท์', pl: 'Android nie udostępnia IMEI aplikacjom telefonu. Znajdziesz go w Ustawienia › Informacje o telefonie.', ja: 'Android は IMEI を電話アプリに渡しません。設定 › 端末情報 で確認できます。', it: 'Android non condivide l’IMEI con le app telefono. Lo trovi in Impostazioni › Info telefono.' },
 };
+
+// Merge the complete Turkish catalog without changing existing translations.
+for (const [source, translation] of Object.entries(TURKISH)) {
+  STRINGS[source] = { ...STRINGS[source], tr: translation };
+}

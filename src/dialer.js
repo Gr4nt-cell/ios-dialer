@@ -55,7 +55,7 @@ export async function runUssd(code, accountKey = null) {
 export function parseCallState(json) {
   try {
     const s = JSON.parse(json);
-    return { calls: s.calls || [], audio: s.audio || null, recording: s.recording || null };
+    return { calls: s.calls || [], audio: s.audio || null, recording: s.recording || null, recordingError: s.recordingError || null };
   } catch {
     return { calls: [], audio: null, recording: null };
   }

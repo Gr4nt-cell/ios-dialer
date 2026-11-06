@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, Easing, Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Animated, Easing, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -18,14 +18,13 @@ import { fs, useTheme } from '../theme';
 import { useNav } from '../nav';
 import { contactName, contactPhoto, formatNumber, initials, sendMessage } from '../phone';
 import { FlatBackdropContext, Glass, CallControlGlass, PerformanceModeContext } from '../components/Glass';
-import { GlowBackdrop } from '../components/GlowBackdrop';
 import { gradientFor } from '../gradients';
 import { callAppearance } from '../callAppearance';
 import { useActionSheet } from '../components/ActionSheet';
 import { useT } from '../i18n';
 import { ChromeText } from '../components/ui';
 import { ReferenceCallTypography, ReferenceCallSurface, ReferenceCallIcon, ReferenceCallLabel } from '../components/ReferenceCallControls';
-import { getWallpaperSource } from '../wallpapers';
+import { getCallWallpaperSource } from '../wallpapers';
 
 // ---------------------------------------------------------------------------
 // Look & feel
@@ -126,72 +125,12 @@ function CallStatusText({ call, who, style }) {
 // ---------------------------------------------------------------------------
 
 // Screen backdrop, independent of the caller's avatar photo.
-function Poster({ palette, light, plain = false, plainColor = WHITE, pastel = false, wallpaperSource }) {
-  const performanceMode = useContext(PerformanceModeContext);
-  const { width, height } = useWindowDimensions();
-  const drift = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (plain || performanceMode) return undefined;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(drift, { toValue: 1, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(drift, { toValue: 0, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [drift, performanceMode, plain]);
-
-  if (plain) {
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
-  }
-
-  // The app's own backdrop, the same picture the rest of the app sits on, so a
-  // call doesn't arrive on a different-looking screen. It is drawn rather than
-  // approximated: the radial washes in it don't survive a three-stop gradient.
-  if (pastel) {
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Image
-          source={wallpaperSource || require('../../assets/dialer-gradient-background.jpg')}
-          resizeMode="stretch"
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-    );
-  }
-
-  const [c1, c2, base] = palette;
-  const glow = width * 1.25;
-  const a = {
-    transform: [
-      { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [-width * 0.3, width * 0.1] }) },
-      { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [-height * 0.08, height * 0.06] }) },
-    ],
-  };
-  const b = {
-    transform: [
-      { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [width * 0.2, -width * 0.15] }) },
-      { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [height * 0.38, height * 0.26] }) },
-    ],
-  };
+function Poster({ plain = false, plainColor = WHITE, wallpaperSource, custom = false, dark = false }) {
+  if (plain) return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* the chosen gradient itself, edge to edge */}
-      <LinearGradient colors={[c1, c2, base]} locations={[0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }} style={StyleSheet.absoluteFill} />
-      {/* Decorative moving glows are omitted on detected low-end devices. */}
-      {!performanceMode ? (
-        <>
-          <Animated.View style={[{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, overflow: 'hidden', opacity: 0.55 }, a]}>
-            <LinearGradient colors={[c1, c1 + '00']} style={{ flex: 1 }} start={{ x: 0.5, y: 0.2 }} end={{ x: 0.5, y: 1 }} />
-          </Animated.View>
-          <Animated.View style={[{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, overflow: 'hidden', opacity: 0.5 }, b]}>
-            <LinearGradient colors={[c2, c2 + '00']} style={{ flex: 1 }} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} />
-          </Animated.View>
-        </>
-      ) : null}
-      {/* Keep controls readable on dark gradients. */}
-      {!light ? <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.38)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: height * 0.5 }} /> : null}
+      <Image source={wallpaperSource || require('../../assets/dialer-gradient-background.jpg')} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
+      {dark && custom ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
     </View>
   );
 }
@@ -345,7 +284,7 @@ export default function CallScreen() {
   const appearance = callAppearance(t, settings.callBackground);
   const plainBackground = appearance.plain;
   const callBackgroundChoice = settings.callBackground || 'pastel';
-  const pastelBackground = !appearance.plain && (callBackgroundChoice === 'pastel' || callBackgroundChoice === 'auto');
+  const customCallBackground = (callBackgroundChoice === 'pastel' || callBackgroundChoice === 'auto') && settings.appBackground === 'custom' && !!settings.appBackgroundUri;
   const lightBackground = appearance.light;
   const plainColor = appearance.background;
   const primaryText = appearance.text;
@@ -387,8 +326,7 @@ export default function CallScreen() {
     <FlatBackdropContext.Provider value={plainBackground && !t.dark}>
       <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#0B0C10' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
-        {t.dark ? <GlowBackdrop /> : null}
-        <Poster palette={palette} light={lightBackground} plain={plainBackground} plainColor={plainColor} pastel={pastelBackground} wallpaperSource={getWallpaperSource(settings)} />
+        <Poster plain={plainBackground} plainColor={plainColor} wallpaperSource={getCallWallpaperSource(settings, t.dark)} custom={customCallBackground} dark={t.dark} />
         {children}
       </Animated.View>
     </FlatBackdropContext.Provider>
@@ -715,7 +653,7 @@ export default function CallScreen() {
             <CallButton
               size={KEY}
               icon="radio-button-on"
-              label={recording ? 'Stop recording' : 'Record'}
+              label={tr(recording ? (recording.phase === 'recording' ? 'Stop recording' : 'Cancel recording') : 'Record')}
               color={recording ? RED : undefined}
               onPress={toggleRecording}
               disabled={!connected && !recording}

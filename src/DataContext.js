@@ -3,6 +3,7 @@ import { Appearance, AppState, PermissionsAndroid, Platform } from 'react-native
 import * as Contacts from 'expo-contacts/legacy';
 import CallLog from '../modules/call-log';
 import { load, save } from './storage';
+import useSearchHistory from './useSearchHistory';
 import { contactName, numberKey, placeCall, prettyLabel, sameDay } from './phone';
 import Dialer, { requestPhonePermissions } from './dialer';
 
@@ -49,6 +50,7 @@ function groupCalls(calls) {
 }
 
 export function DataProvider({ children }) {
+  const searchHistoryActions = useSearchHistory();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [favorites, setFavorites] = useState([]);
   const [dismissedAutoFavorites, setDismissedAutoFavorites] = useState([]);
@@ -514,6 +516,7 @@ export function DataProvider({ children }) {
   );
 
   const value = {
+    ...searchHistoryActions,
     settings,
     updateSettings,
     contacts,

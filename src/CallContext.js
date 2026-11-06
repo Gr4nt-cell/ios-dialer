@@ -106,21 +106,35 @@ export function CallProvider({ children }) {
     return () => timers.forEach(clearTimeout);
   }, [live.length, refreshCallLog]);
   const recording = state.recording;
+  const recordingRequest = useRef(false);
+  const shownRecordingError = useRef(null);
+  useEffect(() => {
+    if (state.recordingError && state.recordingError !== shownRecordingError.current) {
+      shownRecordingError.current = state.recordingError;
+      Alert.alert('Couldn’t Record', state.recordingError);
+    } else if (!state.recordingError) shownRecordingError.current = null;
+  }, [state.recordingError]);
 
   const startRecording = useCallback(async (number, quiet = false) => {
-    if (!Dialer || !Dialer.startRecording) return false;
+    if (!Dialer || !Dialer.startRecording || recordingRequest.current) return false;
+    recordingRequest.current = true;
     try {
       const perm = await requestRecordingPermissionsAsync();
       if (!perm.granted) {
         if (!quiet) Alert.alert('Microphone Access Needed', 'Allow microphone access to record calls.');
         return false;
       }
-    } catch {
-      // continue; native side reports failures
+      // This acknowledges a queued request; the native phase/error reports the result.
+      const ok = Dialer.startRecording(number || '');
+      setState(parseCallState(Dialer.getState()));
+      if (!ok) Alert.alert('Couldn’t Record', Dialer.recordingError() || 'Recording isn’t available on this phone.');
+      return ok;
+    } catch (error) {
+      Alert.alert('Couldn’t Record', error?.message || 'Could not request microphone access.');
+      return false;
+    } finally {
+      recordingRequest.current = false;
     }
-    const ok = Dialer.startRecording(number || '');
-    if (!ok && !quiet) Alert.alert('Couldn’t Record', Dialer.recordingError() || 'Recording isn’t available on this phone.');
-    return ok;
   }, []);
 
   const stopRecording = useCallback(() => {

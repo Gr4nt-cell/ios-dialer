@@ -190,6 +190,7 @@ object CallManager {
     val root = JSONObject()
     root.put("calls", arr)
     root.put("recording", RecordingService.stateJson())
+    root.put("recordingError", RecordingService.lastError ?: JSONObject.NULL)
     val audio = service?.callAudioState
     if (audio != null) {
       root.put(
