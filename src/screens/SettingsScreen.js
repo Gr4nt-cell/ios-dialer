@@ -103,6 +103,24 @@ export default function SettingsScreen() {
     try { return Dialer?.getCallAnnouncer?.() || { enabled: false, speakNumbers: false }; } catch { return { enabled: false, speakNumbers: false }; }
   });
   const [testingAnnouncer, setTestingAnnouncer] = useState(false);
+  const [announcementVoices, setAnnouncementVoices] = useState(() => {
+    try { return Dialer?.getAnnouncementVoices?.() || { recordingVoice: 'female', callerVoice: 'female' }; }
+    catch { return { recordingVoice: 'female', callerVoice: 'female' }; }
+  });
+  const chooseAnnouncementVoice = (kind, voice) => {
+    if (Dialer?.setAnnouncementVoice?.(kind, voice)) {
+      setAnnouncementVoices((previous) => ({ ...previous, [kind]: voice }));
+    } else {
+      Alert.alert(tr('Voice'), 'Install the updated Android app to choose an announcement voice.');
+    }
+  };
+  const voiceSelector = (kind) => (
+    <Segmented
+      options={[{ label: tr('Female'), value: 'female' }, { label: tr('Male'), value: 'male' }]}
+      value={announcementVoices[kind]}
+      onChange={(voice) => chooseAnnouncementVoice(kind, voice)}
+    />
+  );
   const updateAnnouncer = (patch) => {
     const next = { ...announcer, ...patch };
     try {
@@ -579,14 +597,16 @@ export default function SettingsScreen() {
 
         <SectionTitle>{tr('Call Announcer')}</SectionTitle>
         <Group>
+          <Cell value={tr('Voice')} right={voiceSelector('callerVoice')} />
           <Cell value={tr('Announce Incoming Calls')} right={<Switch value={!!announcer.enabled} onValueChange={(enabled) => updateAnnouncer({ enabled })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell value={tr('Speak Unsaved Numbers')} right={<Switch value={!!announcer.speakNumbers} disabled={!announcer.enabled} onValueChange={(speakNumbers) => updateAnnouncer({ speakNumbers })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell value={tr(testingAnnouncer ? 'Testing…' : 'Test Announcer')} color={t.blue} onPress={testAnnouncer} />
         </Group>
-        <Footer>{tr('Speaks a saved contact’s name once for an incoming call using an offline voice in your phone language. Unsaved callers are announced as “Incoming call” unless Speak Unsaved Numbers is enabled. Respects silent mode, vibrate, Do Not Disturb and hidden caller details on the lock screen. No microphone permission is needed.')}</Footer>
+        <Footer>{tr('Bundled male and female neural voices read saved contact names offline, without Google speech services or a separate voice app. English pronunciation is used; some names may sound different. Repeat announcements are cached on this phone. Respects silent mode, Do Not Disturb and lock-screen privacy. No microphone permission is needed.')}</Footer>
 
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>
+          <Cell value={tr('Voice')} right={voiceSelector('recordingVoice')} />
           <Cell value={tr('Microphone Access')} onPress={allowMicrophone} right={<Text style={{ color: microphoneAllowed ? t.green : t.blue, fontSize: fs(15) }}>{tr(microphoneBusy ? 'Checking…' : microphoneAllowed ? 'Allowed' : 'Allow')}</Text>} />
           <Cell value="Record Calls Automatically" right={<Switch value={!!settings.autoRecord} disabled={microphoneBusy} onValueChange={async (enabled) => {
             if (!enabled) { updateSettings({ autoRecord: false }); return; }

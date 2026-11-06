@@ -37,6 +37,13 @@ Settings › Appearance).
 - Asks before sending tones after a wait (`;`) in a number.
 - Tap the chevron to use the rest of the app mid-call; tap the green pill to return.
 
+**Offline caller-name announcements**
+- Optional incoming-call announcements use bundled male or female English neural
+  voices; no Google speech service, installed TTS engine, internet, or microphone
+  access is needed. Pronunciation of non-English names may be approximate.
+- See [EMBEDDED_CALLER_SPEECH.md](EMBEDDED_CALLER_SPEECH.md) for privacy, storage,
+  performance, and third-party license details.
+
 **USSD and codes**
 - `*124#`, `*170#`, `#100#` … run straight from the keypad. The network's reply
   shows in the app, with a SIM switch on dual-SIM phones.

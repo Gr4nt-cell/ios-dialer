@@ -5,19 +5,18 @@ import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.telecom.Call
-import java.util.Locale
 
 /** Optional, once-per-ring local speech. No reverse lookup or online voices. */
 object CallerAnnouncer {
   private const val PREFS = "dialer_call_announcer"
   private val main = Handler(Looper.getMainLooper())
-  private var engine: TextToSpeech? = null
-  private var token = 0
+  private var audioPlayer: MediaPlayer? = null
+  @Volatile private var fallbackPlaying = false
+  @Volatile private var token = 0
   private var currentId: String? = null
   private var completion: ((Boolean, String?) -> Unit)? = null
   @Volatile private var lastError: String? = null
@@ -32,6 +31,7 @@ object CallerAnnouncer {
   fun set(ctx: Context, enabled: Boolean, speakNumbers: Boolean) {
     prefs(ctx).edit().putBoolean("enabled", enabled).putBoolean("speakNumbers", speakNumbers).apply()
     if (!enabled) main.post { stop() }
+    else EmbeddedCallerSpeech.warm(ctx.applicationContext)
   }
 
   private fun audible(ctx: Context): Boolean {
@@ -40,17 +40,6 @@ object CallerAnnouncer {
     return audio.ringerMode == AudioManager.RINGER_MODE_NORMAL &&
       audio.getStreamVolume(AudioManager.STREAM_RING) > 0 &&
       notifications.currentInterruptionFilter == NotificationManager.INTERRUPTION_FILTER_ALL
-  }
-
-  private fun incoming(locale: Locale, identity: String?): String = when (locale.language) {
-    "tr" -> identity?.let { "$it arıyor" } ?: "Gelen arama"
-    "es" -> identity?.let { "Llamada de $it" } ?: "Llamada entrante"
-    "zh" -> identity?.let { "$it 来电" } ?: "有来电"
-    "th" -> identity?.let { "สายเรียกเข้าจาก $it" } ?: "สายเรียกเข้า"
-    "pl" -> identity?.let { "Dzwoni $it" } ?: "Połączenie przychodzące"
-    "ja" -> identity?.let { "$it から着信です" } ?: "着信です"
-    "it" -> identity?.let { "Chiamata da $it" } ?: "Chiamata in arrivo"
-    else -> identity?.let { "Incoming call from $it" } ?: "Incoming call"
   }
 
   fun announce(ctx: Context, call: Call, id: String) {
@@ -87,37 +76,83 @@ object CallerAnnouncer {
     completion = done
     lastError = null
     val generation = token
-    val locale = Locale.getDefault()
-    try {
-      engine = TextToSpeech(ctx) { status -> main.post {
-        if (token != generation) return@post
-        try {
-          val tts = engine
-          if (status != TextToSpeech.SUCCESS || tts == null || !valid(ctx, id)) {
-            finish(false, "The call announcer voice is unavailable."); return@post
+    main.postDelayed({ if (generation == token) finish(false, "Announcement playback timed out.") }, 25000)
+    monitor(ctx, id, generation, id != "preview" && identity != null)
+    val locked = (ctx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
+    val safeIdentity = if (id != "preview" && locked && PrivacyPrefs.hideOnLockScreen(ctx)) null else identity
+    if (safeIdentity.isNullOrBlank() || safeIdentity.all { it in '0'..'9' || it.isWhitespace() }) {
+      playFallback(ctx, id, safeIdentity, generation)
+      return
+    }
+    val voice = AnnouncementVoice.all(ctx)["callerVoice"] ?: "female"
+    EmbeddedCallerSpeech.synthesize(ctx, safeIdentity, voice, { token == generation && !fallbackPlaying }) { file ->
+      if (generation != token || fallbackPlaying) return@synthesize
+      if (!valid(ctx, id)) { stop(); return@synthesize }
+      val privateNow = id != "preview" && (ctx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked && PrivacyPrefs.hideOnLockScreen(ctx)
+      if (file == null && id == "preview") { finish(false, "The bundled name voice could not initialize. Try the test again."); return@synthesize }
+      if (privateNow || file == null) { playFallback(ctx, id, null, generation); return@synthesize }
+      try {
+        val player = MediaPlayer()
+        audioPlayer = player
+        player.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+          .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        player.setDataSource(file.absolutePath)
+        player.setOnPreparedListener {
+          if (generation == token && valid(ctx, id)) { fallbackPlaying = true; Ringer.duckForAnnouncement(true); it.start() }
+          else if (generation == token) stop()
+        }
+        player.setOnCompletionListener { if (generation == token) finish(true, null) }
+        player.setOnErrorListener { _, _, _ ->
+          if (generation == token) finish(false, "The offline name announcement could not play.")
+          true
+        }
+        player.prepareAsync()
+      } catch (_: Exception) { playFallback(ctx, id, null, generation) }
+    }
+    // On slow devices keep ringing, and use a short generic clip if synthesis takes too long.
+    main.postDelayed({
+      if (generation == token && !fallbackPlaying && audioPlayer == null) {
+        if (id == "preview") finish(false, "The offline name voice took too long. Try the test again.")
+        else playFallback(ctx, id, null, generation)
+      }
+    }, 12000)
+  }
+
+  private fun playFallback(ctx: Context, id: String, identity: String?, generation: Int) {
+    if (generation != token || fallbackPlaying) return
+    if (!valid(ctx, id)) { stop(); return }
+    fallbackPlaying = true
+    try { audioPlayer?.release() } catch (_: Exception) {}
+    audioPlayer = null
+    val locked = (ctx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
+    val safeIdentity = if (locked && PrivacyPrefs.hideOnLockScreen(ctx)) null else identity
+    val clips = AnnouncementVoice.incomingResources(ctx, safeIdentity)
+    val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+      .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+    fun playAt(index: Int) {
+      if (generation != token) return
+      if (!valid(ctx, id)) { stop(); return }
+      if (index >= clips.size) { finish(true, null); return }
+      try {
+        val player = MediaPlayer.create(ctx, clips[index], attributes, AudioManager.AUDIO_SESSION_ID_GENERATE)
+        if (player == null) { finish(false, "The bundled announcement could not be opened."); return }
+        audioPlayer = player
+        player.setOnCompletionListener { completed ->
+          if (generation == token && audioPlayer === completed) {
+            audioPlayer = null
+            try { completed.release() } catch (_: Exception) {}
+            playAt(index + 1)
           }
-          val voice = tts.voices?.firstOrNull { it.locale == locale && !it.isNetworkConnectionRequired }
-            ?: tts.voices?.firstOrNull { it.locale.language == locale.language && !it.isNetworkConnectionRequired }
-          if (voice == null || tts.setVoice(voice) != TextToSpeech.SUCCESS) {
-            finish(false, "Install an offline text-to-speech voice for your phone language in Android settings."); return@post
-          }
-          tts.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-          tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) { main.post { if (generation == token) Ringer.duckForAnnouncement(true) } }
-            override fun onDone(utteranceId: String?) { main.post { if (generation == token) finish(true, null) } }
-            @Deprecated("Deprecated in Java")
-            override fun onError(utteranceId: String?) { main.post { if (generation == token) finish(false, "The announcer voice could not play.") } }
-          })
-          val lockedNow = (ctx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
-          val safeIdentity = if (lockedNow && PrivacyPrefs.hideOnLockScreen(ctx)) null else identity
-          if (tts.speak(incoming(locale, safeIdentity), TextToSpeech.QUEUE_FLUSH, null, "caller_notice_$generation") == TextToSpeech.ERROR)
-            finish(false, "The announcer voice could not play.")
-        } catch (_: Exception) { finish(false, "The announcer voice could not play.") }
-      } }
-      main.postDelayed({ if (generation == token) finish(false, "The call announcer timed out.") }, 12000)
-      monitor(ctx, id, generation, identity != null)
-    } catch (_: Exception) { finish(false, "The announcer engine is unavailable.") }
+        }
+        player.setOnErrorListener { _, _, _ ->
+          if (generation == token) finish(false, "The bundled announcement could not play.")
+          true
+        }
+        Ringer.duckForAnnouncement(true)
+        player.start()
+      } catch (_: Exception) { finish(false, "The bundled announcement could not play.") }
+    }
+    playAt(0)
   }
 
   private fun monitor(ctx: Context, id: String, generation: Int, privateContent: Boolean) {
@@ -141,8 +176,10 @@ object CallerAnnouncer {
     token++
     currentId = null
     main.removeCallbacksAndMessages(null)
-    try { engine?.stop(); engine?.shutdown() } catch (_: Exception) {}
-    engine = null
+    try { audioPlayer?.stop() } catch (_: Exception) {}
+    try { audioPlayer?.release() } catch (_: Exception) {}
+    audioPlayer = null
+    fallbackPlaying = false
     Ringer.duckForAnnouncement(false)
     val done = completion
     completion = null

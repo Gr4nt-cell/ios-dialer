@@ -9,15 +9,13 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
+import android.media.MediaPlayer
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.Manifest
 import android.content.pm.PackageManager
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.telecom.Call
 import android.telecom.CallAudioState
-import java.util.Locale
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -144,7 +142,7 @@ class RecordingService : Service() {
   private var number: String = ""
   private var phase = "starting"
   private var callId: String? = null
-  private var speech: TextToSpeech? = null
+  private var noticePlayer: MediaPlayer? = null
   private var closing = false
   private var previousRoute: Int? = null
   private var receivedAudio = false
@@ -179,50 +177,41 @@ class RecordingService : Service() {
   private fun announce() {
     phase = "announcing"
     CallManager.emit()
-    // Offline engine only. A locally completed utterance does not prove remote audibility.
-    speech = TextToSpeech(this) { status -> handler.post {
-      if (closing) return@post
-      try {
-      val tts = speech
-      if (status != TextToSpeech.SUCCESS || tts == null) {
-        fail("Recording did not start: the announcement voice is unavailable. Install an offline English text-to-speech voice.")
-        return@post
+    val audio = getSystemService(AUDIO_SERVICE) as AudioManager
+    if (audio.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) {
+      fail("Recording did not start: turn up media volume so the announcement can be heard.")
+      return
+    }
+    // Fixed local audio works without Google services or any installed TTS engine.
+    val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+      .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+    try {
+      val player = MediaPlayer.create(this, AnnouncementVoice.recordingResource(this), attributes, AudioManager.AUDIO_SESSION_ID_GENERATE)
+      if (player == null) {
+        fail("Recording did not start: the bundled announcement could not be opened.")
+        return
       }
-      val language = tts.setLanguage(Locale.US)
-      val voice = tts.voices?.firstOrNull { it.locale.language == "en" && !it.isNetworkConnectionRequired }
-      if (language < 0 || voice == null || tts.setVoice(voice) != TextToSpeech.SUCCESS) {
-        fail("Recording did not start: install an offline English text-to-speech voice in Android settings.")
-        return@post
-      }
-      val audio = getSystemService(AUDIO_SERVICE) as AudioManager
-      if (audio.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) {
-        fail("Recording did not start: turn up media volume so the announcement can be heard.")
-        return@post
-      }
-      tts.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-      tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-        override fun onStart(id: String?) {}
-        override fun onDone(id: String?) { handler.post {
-          if (!closing && id == "recording_notice") {
-            speech?.shutdown()
-            speech = null
-            if (sessionValid()) startCapture() else fail("Recording did not start: keep the call active, unmuted and on speakerphone.")
+      noticePlayer = player
+      player.setOnCompletionListener { completed ->
+        if (noticePlayer !== completed) return@setOnCompletionListener
+        noticePlayer = null
+        try { completed.release() } catch (_: Exception) {}
+        if (!closing) handler.postDelayed({
+          if (!closing) {
+            if (sessionValid()) startCapture()
+            else fail("Recording did not start: keep the call active, unmuted and on speakerphone.")
           }
-        } }
-        @Deprecated("Deprecated in Java")
-        override fun onError(id: String?) { handler.post {
-          if (!closing) fail("Recording did not start: the spoken announcement failed.")
-        } }
-      })
-      if (tts.speak("This call is being recorded", TextToSpeech.QUEUE_FLUSH, null, "recording_notice") == TextToSpeech.ERROR) {
-        fail("Recording did not start: the spoken announcement failed.")
+        }, 150)
       }
-      } catch (e: Exception) {
-        fail("Recording did not start: the announcement engine failed. Check the offline voice in Android settings.")
+      player.setOnErrorListener { failed, _, _ ->
+        if (!closing && noticePlayer === failed) fail("Recording did not start: the bundled announcement could not play.")
+        true
       }
-    } }
-    handler.postDelayed({ if (!closing && phase == "announcing") fail("Recording did not start: the announcement timed out.") }, 15000)
+      player.start()
+    } catch (_: Exception) {
+      fail("Recording did not start: the bundled announcement could not play.")
+    }
+    handler.postDelayed({ if (!closing && phase == "announcing") fail("Recording did not start: announcement playback timed out.") }, 15000)
   }
 
   private fun startCapture() {
@@ -279,7 +268,7 @@ class RecordingService : Service() {
     } else if (CallManager.isSpeaker()) {
       handler.post(watchdog)
       try { announce() } catch (_: Exception) {
-        fail("Recording did not start: the announcement engine is unavailable.")
+        fail("Recording did not start: the bundled announcement is unavailable.")
       }
     } else if (round < 15) {
       handler.postDelayed({ waitForSpeaker(round + 1) }, 200)
@@ -364,8 +353,9 @@ class RecordingService : Service() {
     if (closing) return
     closing = true
     requested = false
-    try { speech?.stop(); speech?.shutdown() } catch (_: Exception) {}
-    speech = null
+    try { noticePlayer?.stop() } catch (_: Exception) {}
+    try { noticePlayer?.release() } catch (_: Exception) {}
+    noticePlayer = null
     handler.removeCallbacksAndMessages(null)
     release(deleteFile = false)
     // Restore only when our speaker route is still selected; respect user route changes.

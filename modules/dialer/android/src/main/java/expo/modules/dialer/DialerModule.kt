@@ -543,6 +543,8 @@ class DialerModule : Module() {
     }
 
     // ---------- optional local incoming-call announcer ----------
+    Function("getAnnouncementVoices") { -> AnnouncementVoice.all(ctx) }
+    Function("setAnnouncementVoice") { kind: String, voice: String -> AnnouncementVoice.set(ctx, kind, voice) }
     Function("getCallAnnouncer") { -> CallerAnnouncer.all(ctx) }
     Function("setCallAnnouncer") { enabled: Boolean, speakNumbers: Boolean -> CallerAnnouncer.set(ctx, enabled, speakNumbers); true }
     AsyncFunction("testCallAnnouncer") { promise: Promise ->
