@@ -59,6 +59,7 @@
       ],
       "./plugins/withDefaultDialer",
       "./plugins/withReleaseOptimizations",
+      "./plugins/withOfflineTtsRepository",
       "expo-status-bar",
       "expo-font",
       "expo-asset",
