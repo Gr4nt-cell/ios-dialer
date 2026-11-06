@@ -1,5 +1,12 @@
 // Turkish translations for the shared application string catalog.
 export default {
+  'Use App Background': 'Uygulama Arka Planını Kullan',
+  'Recording Format': 'Kayıt Biçimi',
+  'Caller announcements repeat three times and stop when the call is answered or dismissed.': 'Arayan duyurusu üç kez tekrarlanır; arama yanıtlandığında veya reddedildiğinde durur.',
+  'M4A saves directly as AAC audio. MP3 converts after recording stops; the original M4A stays available if conversion fails. Saved recordings play inside the app after the call ends.': 'M4A doğrudan AAC olarak kaydedilir. Kayıt durduktan sonra MP3 biçimine dönüştürülür; dönüşüm başarısız olursa özgün M4A korunur. Kayıtlar arama bittikten sonra uygulamada oynatılır.',
+  'Install the updated app to play saved recordings.': 'Kayıtları oynatmak için güncel uygulamayı yükleyin.',
+  'This recording is missing or empty.': 'Bu kayıt eksik veya boş.',
+
   'Microphone Access': 'Mikrofon erişimi',
   'Allowed': 'İzin verildi',
   'Checking…': 'Kontrol ediliyor…',

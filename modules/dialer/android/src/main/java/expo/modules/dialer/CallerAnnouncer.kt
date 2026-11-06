@@ -10,13 +10,14 @@ import android.os.Handler
 import android.os.Looper
 import android.telecom.Call
 
-/** Optional, once-per-ring local speech. No reverse lookup or online voices. */
+/** Optional local speech, three repetitions per ring. No online lookup or voices. */
 object CallerAnnouncer {
   private const val PREFS = "dialer_call_announcer"
   private val main = Handler(Looper.getMainLooper())
   private var audioPlayer: MediaPlayer? = null
   @Volatile private var fallbackPlaying = false
   @Volatile private var token = 0
+  private var repeats = 0
   private var currentId: String? = null
   private var completion: ((Boolean, String?) -> Unit)? = null
   @Volatile private var lastError: String? = null
@@ -76,7 +77,7 @@ object CallerAnnouncer {
     completion = done
     lastError = null
     val generation = token
-    main.postDelayed({ if (generation == token) finish(false, "Announcement playback timed out.") }, 25000)
+    main.postDelayed({ if (generation == token) finish(false, "Announcement playback timed out.") }, 45000)
     monitor(ctx, id, generation, id != "preview" && identity != null)
     val locked = (ctx.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
     val safeIdentity = if (id != "preview" && locked && PrivacyPrefs.hideOnLockScreen(ctx)) null else identity
@@ -101,7 +102,10 @@ object CallerAnnouncer {
           if (generation == token && valid(ctx, id)) { fallbackPlaying = true; Ringer.duckForAnnouncement(true); it.start() }
           else if (generation == token) stop()
         }
-        player.setOnCompletionListener { if (generation == token) finish(true, null) }
+        player.setOnSeekCompleteListener { if (generation == token && valid(ctx, id)) it.start() }
+        player.setOnCompletionListener { completed ->
+          if (generation == token) repeatOrFinish(ctx, id, generation) { completed.seekTo(0) }
+        }
         player.setOnErrorListener { _, _, _ ->
           if (generation == token) finish(false, "The offline name announcement could not play.")
           true
@@ -132,7 +136,7 @@ object CallerAnnouncer {
     fun playAt(index: Int) {
       if (generation != token) return
       if (!valid(ctx, id)) { stop(); return }
-      if (index >= clips.size) { finish(true, null); return }
+      if (index >= clips.size) { repeatOrFinish(ctx, id, generation) { playAt(0) }; return }
       try {
         val player = MediaPlayer.create(ctx, clips[index], attributes, AudioManager.AUDIO_SESSION_ID_GENERATE)
         if (player == null) { finish(false, "The bundled announcement could not be opened."); return }
@@ -164,6 +168,15 @@ object CallerAnnouncer {
     }, 300)
   }
 
+  private fun repeatOrFinish(ctx: Context, id: String, generation: Int, replay: () -> Unit) {
+    repeats++
+    if (repeats >= 3) { finish(true, null); return }
+    main.postDelayed({
+      if (generation != token) return@postDelayed
+      if (valid(ctx, id)) replay() else stop()
+    }, 800)
+  }
+
   private fun finish(ok: Boolean, error: String?) {
     lastError = error
     val done = completion
@@ -174,6 +187,7 @@ object CallerAnnouncer {
 
   fun stop() {
     token++
+    repeats = 0
     currentId = null
     main.removeCallbacksAndMessages(null)
     try { audioPlayer?.stop() } catch (_: Exception) {}

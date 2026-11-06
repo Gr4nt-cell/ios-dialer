@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable } from './Touch';
 import { fs, useTheme } from '../theme';
 
-export function wallpaperGridLayout(width) {
+export function wallpaperGridLayout(width, count = 0) {
   const available = Math.max(1, Number.isFinite(width) ? width : 288);
-  const columns = available >= 680 ? 6 : available >= 430 ? 4 : available < 210 ? 2 : 3;
+  const columns = count === 4 ? (available >= 430 ? 4 : 2) : available >= 680 ? 6 : available >= 430 ? 4 : available < 210 ? 2 : 3;
   const gap = 10;
   return { columns, gap, tileWidth: Math.max(1, Math.floor((available - gap * (columns - 1)) / columns)) };
 }
@@ -16,7 +16,7 @@ export function wallpaperGridLayout(width) {
 export default function WallpaperGrid({ items, selectedId, onSelect, dark = false }) {
   const t = useTheme();
   const [width, setWidth] = useState(288);
-  const { gap, tileWidth } = wallpaperGridLayout(width);
+  const { gap, tileWidth } = wallpaperGridLayout(width, items.length);
   return (
     <View onLayout={(event) => {
       const next = Math.floor(event.nativeEvent.layout.width);

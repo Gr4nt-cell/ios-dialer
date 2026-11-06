@@ -4,13 +4,14 @@ import * as Contacts from 'expo-contacts/legacy';
 import CallLog from '../modules/call-log';
 import { load, save } from './storage';
 import useSearchHistory from './useSearchHistory';
+import { appBackgroundId } from './wallpapers';
 import { contactName, numberKey, placeCall, prettyLabel, sameDay } from './phone';
 import Dialer, { requestPhonePermissions } from './dialer';
 
 const DataContext = createContext(null);
 export const useData = () => useContext(DataContext);
 
-const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0, callBackground: 'pastel', callBackgroundVersion: 2, appBackground: 'mint', appBackgroundUri: '', autoRecord: false, language: 'system' };
+const DEFAULT_SETTINGS = { dialTones: true, haptics: true, voicemailNumber: '', glass: 'clear', liquidGlass: true, theme: 'system', callPhoto: true, depth: true, depthSprout: 48, depthScale: 100, depthX: 0, depthY: 0, callBackground: 'pastel', callBackgroundVersion: 2, appBackground: 'rose', appBackgroundUri: '', autoRecord: false, language: 'system' };
 
 const CALL_TYPES = { 1: 'incoming', 2: 'outgoing', 3: 'missed', 4: 'voicemail', 5: 'rejected', 6: 'blocked', 7: 'incoming' };
 const isMissedType = (t) => t === 'missed' || t === 'rejected' || t === 'blocked';
@@ -150,6 +151,9 @@ export function DataProvider({ children }) {
         loadedSettings.depth = s.callDepth !== false;
       }
       delete loadedSettings.callDepth;
+      delete loadedSettings.performanceProfile;
+      loadedSettings.appBackground = appBackgroundId(loadedSettings.appBackground);
+      loadedSettings.appBackgroundUri = '';
       // The previous default was Fast Score. Move that default (and legacy
       // Automatic) to the user's requested plain white background while
       // leaving any other explicitly chosen gradient untouched.

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Animated, FlatList, StyleSheet, Text, View } from 'react-native';
 import { getTabBarClipSpace, usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import { isMissedType, useData } from '../DataContext';

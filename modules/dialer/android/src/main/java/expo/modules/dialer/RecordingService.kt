@@ -103,7 +103,7 @@ class RecordingService : Service() {
 
     fun list(ctx: Context): String {
       val arr = JSONArray()
-      val files = dir(ctx).listFiles { f -> f.isFile && f.name.endsWith(".m4a") }?.sortedByDescending { it.lastModified() } ?: emptyList()
+      val files = dir(ctx).listFiles { f -> f.isFile && f.extension.lowercase() in setOf("m4a", "mp3") }?.sortedByDescending { it.lastModified() } ?: emptyList()
       val current = instance?.file
       for (f in files) {
         if (f == current) continue
@@ -124,7 +124,7 @@ class RecordingService : Service() {
             .put("number", number)
             .put("date", date)
             .put("duration", duration)
-            .put("size", f.length()),
+            .put("size", f.length()).put("format", f.extension.lowercase()),
         )
       }
       return arr.toString()
@@ -136,6 +136,7 @@ class RecordingService : Service() {
     }
   }
 
+  private var desiredFormat = "m4a"
   private var recorder: MediaRecorder? = null
   private var file: File? = null
   private val handler = Handler(Looper.getMainLooper())
@@ -327,6 +328,7 @@ class RecordingService : Service() {
       r.prepare()
       r.start()
       recorder = r
+      desiredFormat = RecordingFormats.get(this)
       file = out
       sourceName = name
       startedAt = System.currentTimeMillis()
@@ -346,7 +348,10 @@ class RecordingService : Service() {
     try { r.release() } catch (_: Throwable) {}
     val f = file
     file = null
-    if (f != null && (deleteFile || !ok || f.length() < 1024)) f.delete()
+    if (f != null) {
+      if (deleteFile || !ok || f.length() < 1024) f.delete()
+      else if (desiredFormat == "mp3") RecordingFormats.convert(f)
+    }
   }
 
   fun finish() {

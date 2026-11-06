@@ -1,6 +1,6 @@
 {
   "name": "ios-style-dialer",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "private": true,
   "main": "index.js",
   "scripts": {

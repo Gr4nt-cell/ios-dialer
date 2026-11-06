@@ -1,41 +1,46 @@
-// Twelve bundled AI-created soft-colour wallpapers. Dark mode dims the same art at render time.
+// Four shared images serve independent app and call choices. Dark mode stays black.
 export const WALLPAPERS = [
-  { id: 'mint', title: 'Mint Lagoon', source: require('../assets/wallpapers-glass/01-mint-lagoon.png'), darkSource: require('../assets/wallpapers-glass/01-mint-lagoon.png') },
-  { id: 'rose', title: 'Rosewater', source: require('../assets/wallpapers-glass/02-rosewater.png'), darkSource: require('../assets/wallpapers-glass/02-rosewater.png') },
-  { id: 'lavender', title: 'Lilac Breeze', source: require('../assets/wallpapers-glass/03-lilac-breeze.png'), darkSource: require('../assets/wallpapers-glass/03-lilac-breeze.png') },
-  { id: 'peach', title: 'Peach Sorbet', source: require('../assets/wallpapers-glass/04-peach-sorbet.png'), darkSource: require('../assets/wallpapers-glass/04-peach-sorbet.png') },
-  { id: 'ocean', title: 'Ocean Pearl', source: require('../assets/wallpapers-glass/05-ocean-pearl.png'), darkSource: require('../assets/wallpapers-glass/05-ocean-pearl.png') },
-  { id: 'pistachio', title: 'Pistachio Glow', source: require('../assets/wallpapers-glass/06-pistachio-glow.png'), darkSource: require('../assets/wallpapers-glass/06-pistachio-glow.png') },
-  { id: 'coral', title: 'Coral Dawn', source: require('../assets/wallpapers-glass/07-coral-dawn.png'), darkSource: require('../assets/wallpapers-glass/07-coral-dawn.png') },
-  { id: 'cotton', title: 'Pink Opal', source: require('../assets/wallpapers-glass/08-pink-opal.png'), darkSource: require('../assets/wallpapers-glass/08-pink-opal.png') },
-  { id: 'sage', title: 'Sage Silk', source: require('../assets/wallpapers-glass/09-sage-silk.png'), darkSource: require('../assets/wallpapers-glass/09-sage-silk.png') },
-  { id: 'sunrise', title: 'Golden Hour', source: require('../assets/wallpapers-glass/10-golden-hour.png'), darkSource: require('../assets/wallpapers-glass/10-golden-hour.png') },
-  { id: 'bluebell', title: 'Aqua Frost', source: require('../assets/wallpapers-glass/11-aqua-frost.png'), darkSource: require('../assets/wallpapers-glass/11-aqua-frost.png') },
-  { id: 'pearl', title: 'Prism Dream', source: require('../assets/wallpapers-glass/12-prism-dream.png'), darkSource: require('../assets/wallpapers-glass/12-prism-dream.png') },
- ];
+  { id: 'mint', title: 'Mint Lagoon', source: require('../assets/wallpapers-glass/01-mint-lagoon.webp') },
+  { id: 'rose', title: 'Rosewater', source: require('../assets/wallpapers-glass/02-rosewater.webp') },
+  { id: 'lavender', title: 'Lilac Breeze', source: require('../assets/wallpapers-glass/03-lilac-breeze.webp') },
+  { id: 'ocean', title: 'Ocean Pearl', source: require('../assets/wallpapers-glass/05-ocean-pearl.webp') },
+];
 
-export function getWallpaperSource(settings = {}, dark = false) {
-  if (settings.appBackground === 'custom' && settings.appBackgroundUri) return { uri: settings.appBackgroundUri };
-  const wallpaper = WALLPAPERS.find((entry) => entry.id === settings.appBackground) || WALLPAPERS[0];
-  return wallpaper.source;
+// The same image files are reused, while app/call selections remain independent.
+export const APP_WALLPAPER = WALLPAPERS.find((item) => item.id === 'rose');
+export function appBackgroundId(choice) {
+  if (WALLPAPERS.some((entry) => entry.id === choice)) return choice;
+  return LEGACY_CALL_WALLPAPERS[choice] || 'rose';
+}
+export function getAppWallpaperSource(dark = false, settings = {}) {
+  return dark ? null : getWallpaperSource(settings);
 }
 
+export function getWallpaperSource(settings = {}, dark = false) {
+  return (WALLPAPERS.find((entry) => entry.id === appBackgroundId(settings.appBackground)) || APP_WALLPAPER).source;
+}
+
+// Migrate removed presets so old preferences still select an available background.
 const LEGACY_CALL_WALLPAPERS = {
-  fastscore: 'ocean', aurora: 'mint', sunset: 'sunrise', ocean: 'ocean',
-  midnight: 'bluebell', rose: 'rose', forest: 'sage', lavender: 'lavender',
-  ember: 'coral', peach: 'peach', lagoon: 'ocean', cosmic: 'cotton', mono: 'pearl',
+  fastscore: 'ocean', aurora: 'mint', sunset: 'rose', ocean: 'ocean',
+  midnight: 'ocean', rose: 'rose', forest: 'mint', lavender: 'lavender',
+  ember: 'rose', peach: 'rose', lagoon: 'ocean', cosmic: 'rose', mono: 'ocean',
+  mint: 'mint', sage: 'mint', pistachio: 'mint', sunrise: 'rose', coral: 'rose',
+  cotton: 'rose', bluebell: 'ocean', pearl: 'ocean',
 };
 
 export function callBackgroundId(choice = 'pastel') {
   if (!choice || choice === 'auto' || choice === 'pastel') return 'pastel';
   if (choice === 'plain') return 'plain';
-  if (choice.startsWith('wallpaper:') && WALLPAPERS.some((item) => item.id === choice.slice(10))) return choice;
-  return `wallpaper:${LEGACY_CALL_WALLPAPERS[choice] || 'mint'}`;
+  const id = choice.startsWith('wallpaper:') ? choice.slice(10) : choice;
+  const available = WALLPAPERS.some((item) => item.id === id) ? id : LEGACY_CALL_WALLPAPERS[id] || 'rose';
+  return `wallpaper:${available}`;
 }
 
 export function getCallWallpaperSource(settings = {}, dark = false) {
+  if (dark) return null;
   const choice = callBackgroundId(settings.callBackground);
   if (choice === 'plain') return null;
-  if (choice === 'pastel') return getWallpaperSource(settings, dark);
+  if (choice === 'pastel') return getAppWallpaperSource(dark, settings);
   return getWallpaperSource({ appBackground: choice.slice(10) }, dark);
 }

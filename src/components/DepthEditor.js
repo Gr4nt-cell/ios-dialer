@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Alert, Modal, PanResponder, Pressable, ScrollView, Switch, Text, View, useWindowDimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DepthPoster from './DepthPoster';
 import { DEPTH_DEFAULTS, DEPTH_RANGES, depthOptions } from '../depthSettings';

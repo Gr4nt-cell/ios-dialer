@@ -2,18 +2,15 @@ import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme';
 import { useData } from '../DataContext';
-import { getWallpaperSource } from '../wallpapers';
+import { getAppWallpaperSource } from '../wallpapers';
 
-// One bundled image replaces the old stacked neon gradients. Both themes use
-// the selected wallpaper family, with no live blur or decorative animation.
+// One of four compressed wallpapers in light mode; unlit black in dark mode.
 export function GlowBackdrop({ style }) {
   const t = useTheme();
   const { settings } = useData();
-  const custom = settings.appBackground === 'custom' && !!settings.appBackgroundUri;
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.backdropBase }]}>
-      <Image source={getWallpaperSource(settings, t.dark)} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
-      {t.dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, style, { backgroundColor: t.dark ? '#000000' : t.backdropBase }]}>
+      {!t.dark ? <Image source={getAppWallpaperSource(false, settings)} resizeMode="stretch" fadeDuration={0} style={StyleSheet.absoluteFill} /> : null}
     </View>
   );
 }

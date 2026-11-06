@@ -37,10 +37,10 @@ const light = {
 
 const dark = {
   dark: true,
-  backdrop: ['#05060A', '#05060A', '#05060A'],
+  backdrop: ['#000000', '#000000', '#000000'],
   glow: ['rgba(58,91,217,0.48)', 'rgba(46,230,166,0.30)', 'rgba(224,48,110,0.32)'],
-  backdropBase: '#0D1716',
-  base: '#0D1716',
+  backdropBase: '#000000',
+  base: '#000000',
   bg: 'transparent',
   grouped: 'transparent',
   card: 'rgba(44,44,48,0.42)',

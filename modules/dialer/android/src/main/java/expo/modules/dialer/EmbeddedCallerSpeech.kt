@@ -14,7 +14,7 @@ import java.util.concurrent.Executors
 
 /** Bundled English neural TTS. No microphone, network, or installed TTS service. */
 object EmbeddedCallerSpeech {
-  private const val ASSETS = "caller-speech-v1"
+  private const val ASSETS = "caller-speech-en-v2"
   private const val MODEL = "en_US-libritts_r-medium.onnx"
   private val main = Handler(Looper.getMainLooper())
   private val worker = Executors.newSingleThreadExecutor { task ->
@@ -26,6 +26,7 @@ object EmbeddedCallerSpeech {
 
   private fun model(ctx: Context): OfflineTts {
     engine?.let { return it }
+    File(ctx.noBackupFilesDir, "caller-speech-v1").deleteRecursively()
     val dir = File(ctx.noBackupFilesDir, ASSETS)
     val ready = File(dir, ".ready")
     if (!ready.exists()) {
@@ -58,6 +59,11 @@ object EmbeddedCallerSpeech {
     main.postDelayed({ worker.execute {
       if (activity == stamp) { engine?.release(); engine = null }
     } }, 60000)
+  }
+
+  fun cleanupLegacy(ctx: Context) {
+    val app = ctx.applicationContext
+    worker.execute { File(app.noBackupFilesDir, "caller-speech-v1").deleteRecursively() }
   }
 
   fun warm(ctx: Context) {

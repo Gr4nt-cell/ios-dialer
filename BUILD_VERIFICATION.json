@@ -1,0 +1,12 @@
+{
+  "version": "1.0.10",
+  "version_code": 11,
+  "apk_bytes": 62017697,
+  "apk_sha256": "3167f6b3a6d275114bcd0b6856bf551b806ab398b2759e46bb6c10904533625b",
+  "architecture": "arm64-v8a",
+  "signing": "Android Debug (testing)",
+  "native_release_build": "passed",
+  "javascript_export": "passed",
+  "regression_tests": 7,
+  "device_testing": "not performed"
+}

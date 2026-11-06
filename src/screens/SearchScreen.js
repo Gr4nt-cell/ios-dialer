@@ -1,7 +1,7 @@
 import React, { useContext, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import { useBottomSpace } from '../device';

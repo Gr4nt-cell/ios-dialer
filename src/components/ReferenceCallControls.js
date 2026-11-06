@@ -1,9 +1,10 @@
 import React, { createContext, useContext } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { PerformanceProfileContext } from './Glass';
 import { glassBudget } from '../performanceProfile';
+import { useTheme } from '../theme';
 
 // Bundled outlines preserve the reference symbols on Android: no platform emoji
 // substitution, downloaded fonts, or dependence on the device's symbol font.
@@ -49,12 +50,14 @@ export function ReferenceCallLabel({ children, color = '#20363B', style, ...prop
 }
 
 export function ReferenceCallSurface({ children, radius = 36, pressed, tint, on, style }) {
+  const t = useTheme();
   const profile = useContext(PerformanceProfileContext);
   const budget = glassBudget(profile || {});
   return <View style={[styles.surface, {
     borderRadius: radius,
     ...(budget.shadows ? null : { boxShadow: 'none' }),
-    backgroundColor: tint || (on ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.20)'),
+    backgroundColor: tint || (t.dark ? (on ? '#38383B' : '#242426') : (on ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.20)')),
+    borderColor: t.dark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.45)',
     opacity: pressed ? 0.92 : 1,
     transform: [{ scale: pressed ? 0.96 : 1 }],
   }, style]}>{children}</View>;

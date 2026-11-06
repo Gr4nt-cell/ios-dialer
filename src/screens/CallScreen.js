@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, Easing, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../components/Touch';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -129,7 +129,7 @@ function Poster({ plain = false, plainColor = WHITE, wallpaperSource, custom = f
   if (plain) return <View style={[StyleSheet.absoluteFill, { backgroundColor: plainColor }]} pointerEvents="none" />;
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Image source={wallpaperSource || require('../../assets/wallpapers-glass/01-mint-lagoon.png')} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
+      <Image source={wallpaperSource || require('../../assets/wallpapers-glass/01-mint-lagoon.webp')} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
       {dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
     </View>
   );

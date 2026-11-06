@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Linking, Modal, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from './src/components/Touch';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DataProvider, useData } from './src/DataContext';
@@ -312,38 +312,26 @@ function Main() {
   );
 }
 
-function PerformanceProfileProvider({ defaultOptimized, children }) {
-  const { settings, updateSettings } = useData();
-  const savedProfile = settings.performanceProfile;
-  const selectedProfile = savedProfile === 'performance' || savedProfile === 'optimized' ? savedProfile : null;
-  const profile = selectedProfile || (defaultOptimized ? 'optimized' : 'performance');
-  const performanceMode = profile === 'optimized';
-  const setProfile = useCallback((next) => {
-    if (next === 'performance' || next === 'optimized') updateSettings({ performanceProfile: next });
-  }, [updateSettings]);
-  const profileValue = useMemo(
-    () => ({ profile, lowEnd: defaultOptimized, automatic: selectedProfile == null, setProfile }),
-    [profile, defaultOptimized, selectedProfile, setProfile]
-  );
-
+function AdaptiveRenderingProvider({ lowEnd, children }) {
+  const value = useMemo(() => ({ lowEnd }), [lowEnd]);
   return (
-    <PerformanceProfileContext.Provider value={profileValue}>
-      <PerformanceModeContext.Provider value={performanceMode}>{children}</PerformanceModeContext.Provider>
+    <PerformanceProfileContext.Provider value={value}>
+      <PerformanceModeContext.Provider value={lowEnd}>{children}</PerformanceModeContext.Provider>
     </PerformanceProfileContext.Provider>
   );
 }
 
 export default function App() {
-  const defaultOptimized = useMemo(detectLowEndDevice, []);
+  const lowEnd = useMemo(detectLowEndDevice, []);
   return (
     <SafeAreaProvider>
       <DataProvider>
         <CallProvider>
-          <PerformanceProfileProvider defaultOptimized={defaultOptimized}>
+          <AdaptiveRenderingProvider lowEnd={lowEnd}>
             <ActionSheetProvider>
               <Main />
             </ActionSheetProvider>
-          </PerformanceProfileProvider>
+          </AdaptiveRenderingProvider>
         </CallProvider>
       </DataProvider>
     </SafeAreaProvider>

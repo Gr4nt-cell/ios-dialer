@@ -3,7 +3,7 @@ import { Alert, FlatList, Linking, Platform, StyleSheet, Text, View } from 'reac
 import { getTabBarClipSpace, usePaneSize, useBottomSpace } from '../device';
 import { Pressable } from '../components/Touch';
 import { scrollTick } from '../haptics';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';

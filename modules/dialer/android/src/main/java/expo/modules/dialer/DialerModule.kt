@@ -80,6 +80,7 @@ class DialerModule : Module() {
     OnCreate {
       (appContext.reactContext?.applicationContext as? Application)?.let { app ->
         CallManager.hook(app)
+        EmbeddedCallerSpeech.cleanupLegacy(app)
 
         val legacyDepthCache = app.cacheDir.resolve("call-depth")
         if (legacyDepthCache.exists() && !legacyDepthCache.deleteRecursively()) {
@@ -561,6 +562,14 @@ class DialerModule : Module() {
     ) }
     Function("getRecordingSupport") { -> RecordingSupport.info(ctx) }
     Function("recordingError") { -> RecordingService.lastError }
+    Function("getRecordingRevision") { -> RecordingFormats.revision() }
+    Function("getRecordingFormat") { -> RecordingFormats.get(ctx) }
+    Function("setRecordingFormat") { format: String -> RecordingFormats.set(ctx, format) }
+    Function("playRecording") { name: String -> RecordingPlayback.play(ctx, name) }
+    Function("pauseRecordingPlayback") { -> RecordingPlayback.pause(); true }
+    Function("resumeRecordingPlayback") { -> RecordingPlayback.resume(); true }
+    Function("stopRecordingPlayback") { -> RecordingPlayback.stop(); true }
+    Function("getRecordingPlayback") { -> RecordingPlayback.state() }
     Function("listRecordings") { -> RecordingService.list(ctx) }
     Function("deleteRecording") { name: String -> RecordingService.delete(ctx, name) }
 

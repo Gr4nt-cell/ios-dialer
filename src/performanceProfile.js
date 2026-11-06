@@ -21,11 +21,7 @@ export function shouldUseLowEndProfile({
   return has32BitArm && !has64BitArm;
 }
 
-/** Keep the selected profile while bounding GPU work on modest hardware. */
-export function glassBudget({ profile = 'performance', lowEnd = false } = {}) {
-  const optimized = profile === 'optimized';
-  return {
-    compact: optimized || lowEnd,
-    shadows: !optimized && !lowEnd,
-  };
+/** A single automatic renderer; no saved/user-selected performance modes. */
+export function glassBudget({ lowEnd = false } = {}) {
+  return { compact: lowEnd, shadows: !lowEnd };
 }

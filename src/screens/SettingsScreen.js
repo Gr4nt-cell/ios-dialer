@@ -7,12 +7,12 @@ import DepthEditor from '../components/DepthEditor';
 import { posterSettings, posterPatch } from '../depthSettings';
 import { DEPTH_DEFAULTS, DEPTH_LIMITS, depthAvailable, useDepth } from '../depth';
 import { Pressable } from '../components/Touch';
-import { Glass, PerformanceModeContext, PerformanceProfileContext } from '../components/Glass';
+import { Glass } from '../components/Glass';
 import WallpaperGrid from '../components/WallpaperGrid';
 import { LinearGradient } from 'expo-linear-gradient';
 import { gradientFor } from '../gradients';
 import { callAppearance } from '../callAppearance';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fs, useTheme } from '../theme';
 import { useData } from '../DataContext';
@@ -24,9 +24,7 @@ import LanguageWheel from '../components/LanguageWheel';
 import { useCalls } from '../CallContext';
 import Dialer from '../dialer';
 import { useActionSheet } from '../components/ActionSheet';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
-import { callBackgroundId, getCallWallpaperSource, getWallpaperSource, WALLPAPERS } from '../wallpapers';
+import { appBackgroundId, callBackgroundId, getCallWallpaperSource, WALLPAPERS } from '../wallpapers';
 import { ensureRecordingPermission, hasRecordingPermission } from '../recordingPermissions';
 
 function SectionTitle({ children }) {
@@ -87,8 +85,6 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
 }
 
 export default function SettingsScreen() {
-  const performanceMode = useContext(PerformanceModeContext);
-  const performanceProfile = useContext(PerformanceProfileContext);
   const t = useTheme();
   const tr = useT();
   const recordingSupport = useMemo(() => {
@@ -96,7 +92,6 @@ export default function SettingsScreen() {
   }, []);
   const [depthEditor, setDepthEditor] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [wallpaperBusy, setWallpaperBusy] = useState(false);
   const [microphoneAllowed, setMicrophoneAllowed] = useState(null);
   const [microphoneBusy, setMicrophoneBusy] = useState(false);
   const [announcer, setAnnouncer] = useState(() => {
@@ -108,19 +103,10 @@ export default function SettingsScreen() {
     catch { return { recordingVoice: 'female', callerVoice: 'female' }; }
   });
   const chooseAnnouncementVoice = (kind, voice) => {
-    if (Dialer?.setAnnouncementVoice?.(kind, voice)) {
-      setAnnouncementVoices((previous) => ({ ...previous, [kind]: voice }));
-    } else {
-      Alert.alert(tr('Voice'), 'Install the updated Android app to choose an announcement voice.');
-    }
+    if (Dialer?.setAnnouncementVoice?.(kind, voice)) setAnnouncementVoices((previous) => ({ ...previous, [kind]: voice }));
+    else Alert.alert(tr('Voice'), 'Install the updated Android app to choose an announcement voice.');
   };
-  const voiceSelector = (kind) => (
-    <Segmented
-      options={[{ label: tr('Female'), value: 'female' }, { label: tr('Male'), value: 'male' }]}
-      value={announcementVoices[kind]}
-      onChange={(voice) => chooseAnnouncementVoice(kind, voice)}
-    />
-  );
+  const voiceSelector = (kind) => <Segmented options={[{ label: tr('Female'), value: 'female' }, { label: tr('Male'), value: 'male' }]} value={announcementVoices[kind]} onChange={(voice) => chooseAnnouncementVoice(kind, voice)} />;
   const updateAnnouncer = (patch) => {
     const next = { ...announcer, ...patch };
     try {
@@ -135,7 +121,7 @@ export default function SettingsScreen() {
     try {
       if (!Dialer?.testCallAnnouncer) throw new Error('Install the updated Android build to test the call announcer.');
       const result = await Dialer.testCallAnnouncer();
-      if (!result.ok) Alert.alert(tr('Call Announcer'), result.error || 'No offline voice is available.');
+      if (!result.ok) Alert.alert(tr('Call Announcer'), result.error || 'The bundled announcement could not play.');
     } catch (error) { Alert.alert(tr('Call Announcer'), error.message); }
     finally { setTestingAnnouncer(false); }
   };
@@ -202,39 +188,7 @@ export default function SettingsScreen() {
   const previewColors = gradientFor('Jane Appleseed', bg);
   const callLook = callAppearance(t, bg);
   const lightCallBackground = callLook.light;
-  const selectedWallpaper = settings.appBackground || 'mint';
   const wallpaperSource = getCallWallpaperSource(settings, t.dark);
-  const selectGalleryWallpaper = async () => {
-    if (wallpaperBusy) return;
-    setWallpaperBusy(true);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.9,
-        allowsEditing: false,
-      });
-      if (result.canceled || !result.assets?.[0]?.uri) return;
-      const asset = result.assets[0];
-      if (!FileSystem.documentDirectory) throw new Error('Private image storage is unavailable.');
-      const directory = `${FileSystem.documentDirectory}wallpapers/`;
-      await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-      const mime = (asset.mimeType || '').toLowerCase();
-      const mimeExtension = mime.split('/')[1]?.split(';')[0];
-      const nameExtension = (asset.fileName || asset.uri).split('.').pop()?.split('?')[0]?.toLowerCase();
-      const candidateExtension = mimeExtension || nameExtension;
-      const fileExtension = candidateExtension === 'jpeg' ? 'jpg' : /^[a-z0-9]{2,5}$/.test(candidateExtension || '') ? candidateExtension : 'jpg';
-      const destination = `${directory}background-${Date.now()}.${fileExtension}`;
-      await FileSystem.copyAsync({ from: asset.uri, to: destination });
-      updateSettings({ appBackground: 'custom', appBackgroundUri: destination });
-    } catch (error) {
-      Alert.alert('Couldn’t set background', error?.message || 'Choose another image and try again.');
-    } finally {
-      setWallpaperBusy(false);
-    }
-  };
-
-  // Use the supplied portrait for a consistent, private preview instead of
-  // pulling a photo from the user's contacts.
   const sample = useMemo(() => {
     let image = null;
     try {
@@ -269,6 +223,13 @@ export default function SettingsScreen() {
       return {};
     }
   };
+  const [recordingFormat, setRecordingFormat] = useState(() => {
+    try { return Dialer?.getRecordingFormat?.() || 'm4a'; } catch { return 'm4a'; }
+  });
+  const chooseRecordingFormat = () => sheet.show({ title: tr('Recording Format'), options: ['m4a', 'mp3'].map((format) => ({
+    text: format.toUpperCase() + (recordingFormat === format ? '  ✓' : ''),
+    onPress: () => { if (Dialer?.setRecordingFormat?.(format)) setRecordingFormat(format); },
+  })) });
   const [privacy, setPrivacyState] = useState(readPrivacy);
   const setPrivacy = (key, value) => {
     try {
@@ -398,14 +359,6 @@ export default function SettingsScreen() {
             <Cell value="Glass" right={<Segmented options={[{ label: tr('Clear'), value: 'clear' }, { label: tr('Tinted'), value: 'tinted' }]} value={settings.glass || 'clear'} onChange={(v) => updateSettings({ glass: v })} />} />
           ) : null}
           <Cell
-            value="Performance profile"
-            right={<Segmented
-              options={[{ label: 'Performance', value: 'performance' }, { label: 'Optimized', value: 'optimized' }]}
-              value={performanceProfile.profile}
-              onChange={performanceProfile.setProfile}
-            />}
-          />
-          <Cell
             value={tr('Language')}
             onPress={() => setLangOpen(true)}
             right={
@@ -415,31 +368,14 @@ export default function SettingsScreen() {
             }
           />
         </Group>
-        <Footer>
-          {performanceMode
-            ? 'Optimized reduces decorative motion, live blur and list rendering for smoother use. Light-mode surfaces have stronger contrast; calling and contact features remain available.'
-            : 'Performance keeps the glass design and adapts effects to your device. Low-end phones use a static glass sheen and lighter shadows; Optimized reduces effects further.'}
-        </Footer>
+        <Footer>Glass rendering adapts automatically to your device. Static highlights and lighter shadows keep the same design responsive on lower-end phones.</Footer>
 
-        <SectionTitle>Background</SectionTitle>
-        <View style={{ marginHorizontal: 16, padding: 12, borderRadius: 20, backgroundColor: t.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: t.glassBorder }}>
-          <WallpaperGrid items={WALLPAPERS} selectedId={selectedWallpaper} dark={t.dark} onSelect={(id) => updateSettings({ appBackground: id })} />
-          {settings.appBackground === 'custom' && settings.appBackgroundUri ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 10, gap: 10 }}>
-              <Image source={{ uri: settings.appBackgroundUri }} resizeMode="cover" style={{ width: 42, height: 56, borderRadius: 10, borderWidth: 2, borderColor: t.blue }} />
-              <Text style={{ color: t.blue, fontSize: fs(13), fontWeight: '600' }}>Your gallery background is selected</Text>
-            </View>
-          ) : null}
-          <Pressable accessibilityRole="button" onPress={selectGalleryWallpaper} disabled={wallpaperBusy}>
-            {({ pressed }) => (
-              <View style={{ minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 14, backgroundColor: t.fill, borderWidth: StyleSheet.hairlineWidth, borderColor: t.glassBorder, opacity: pressed || wallpaperBusy ? 0.6 : 1 }}>
-                <Ionicons name={wallpaperBusy ? 'hourglass-outline' : 'images-outline'} size={18} color={t.blue} />
-                <Text style={{ color: t.blue, fontSize: fs(14), fontWeight: '600' }}>{wallpaperBusy ? 'Loading photo…' : 'Choose from Gallery'}</Text>
-              </View>
-            )}
-          </Pressable>
-        </View>
-        <Footer>Pick one of twelve colourful soft-blur wallpapers or use any photo from your gallery. Dark mode applies a dim layer to the selected wallpaper. The Pastel call background follows your selected app wallpaper.</Footer>
+        <SectionTitle>App Background</SectionTitle>
+        <Group>
+          <View style={{ padding: 12 }}>
+            <WallpaperGrid dark={t.dark} selectedId={appBackgroundId(settings.appBackground)} onSelect={(id) => updateSettings({ appBackground: id })} items={WALLPAPERS} />
+          </View>
+        </Group>
 
         <SectionTitle>{tr('Dynamic Island')}</SectionTitle>
         <Group>
@@ -584,16 +520,13 @@ export default function SettingsScreen() {
 
         <SectionTitle>{tr('Call Background')}</SectionTitle>
         <Group>
-          <CallPreview colors={callLook.plain ? [callLook.background, callLook.background, callLook.background] : previewColors} light={lightCallBackground} wallpaper={wallpaperSource} custom={(bg === 'pastel' || bg === 'auto') && settings.appBackground === 'custom'} />
+          <CallPreview colors={callLook.plain ? [callLook.background, callLook.background, callLook.background] : previewColors} light={lightCallBackground} wallpaper={wallpaperSource} custom={false} />
+          <Cell value={tr('Use App Background')} right={<Switch value={bg === 'pastel'} onValueChange={(follow) => updateSettings({ callBackground: follow ? 'pastel' : `wallpaper:${appBackgroundId(settings.appBackground)}` })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <View style={{ padding: 12 }}>
-            <WallpaperGrid dark={t.dark} selectedId={bg} onSelect={(id) => updateSettings({ callBackground: id })} items={[
-              { id: 'pastel', title: 'Follow App', source: getWallpaperSource(settings, t.dark) },
-              { id: 'plain', title: 'Plain', color: t.dark ? t.backdropBase : '#FFFFFF' },
-              ...WALLPAPERS.map((item) => ({ ...item, id: `wallpaper:${item.id}` })),
-            ]} />
+            <WallpaperGrid dark={t.dark} selectedId={bg === 'pastel' ? `wallpaper:${appBackgroundId(settings.appBackground)}` : bg} onSelect={(id) => updateSettings({ callBackground: id })} items={WALLPAPERS.map((item) => ({ ...item, id: `wallpaper:${item.id}` }))} />
           </View>
         </Group>
-        <Footer>Call backgrounds share the app’s soft pastel finish, with matching dark versions. Pastel follows your app wallpaper; other presets keep their own colour family.</Footer>
+        <Footer>Four lightweight backgrounds are available for the app and call screen, with separate selections. Dark mode always stays AMOLED black.</Footer>
 
         <SectionTitle>{tr('Call Announcer')}</SectionTitle>
         <Group>
@@ -604,9 +537,12 @@ export default function SettingsScreen() {
         </Group>
         <Footer>{tr('Bundled male and female neural voices read saved contact names offline, without Google speech services or a separate voice app. English pronunciation is used; some names may sound different. Repeat announcements are cached on this phone. Respects silent mode, Do Not Disturb and lock-screen privacy. No microphone permission is needed.')}</Footer>
 
+        <Footer>{tr('Caller announcements repeat three times and stop when the call is answered or dismissed.')}</Footer>
+
         <SectionTitle>{tr('Call Recording')}</SectionTitle>
         <Group>
           <Cell value={tr('Voice')} right={voiceSelector('recordingVoice')} />
+          <Cell value={tr('Recording Format')} onPress={chooseRecordingFormat} right={valueRight(recordingFormat.toUpperCase())} />
           <Cell value={tr('Microphone Access')} onPress={allowMicrophone} right={<Text style={{ color: microphoneAllowed ? t.green : t.blue, fontSize: fs(15) }}>{tr(microphoneBusy ? 'Checking…' : microphoneAllowed ? 'Allowed' : 'Allow')}</Text>} />
           <Cell value="Record Calls Automatically" right={<Switch value={!!settings.autoRecord} disabled={microphoneBusy} onValueChange={async (enabled) => {
             if (!enabled) { updateSettings({ autoRecord: false }); return; }
@@ -614,8 +550,9 @@ export default function SettingsScreen() {
           }} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell value={tr('Recordings')} color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
         </Group>
+        <Footer>{tr('M4A saves directly as AAC audio. MP3 converts after recording stops; the original M4A stays available if conversion fails. Saved recordings play inside the app after the call ends.')}</Footer>
         {recordingSupport ? <Footer>{recordingSupport.family} · {recordingSupport.model}{'\n'}{recordingSupport.mode}{'\n'}{recordingSupport.notice}</Footer> : null}
-        <Footer>Allow Microphone Access here before a call. If permission is blocked, use Open Settings and allow Microphone while using the app. Recording switches the call to speakerphone and says “This call is being recorded” using an offline English voice before capture begins. Keep media volume audible and confirm the other person heard the announcement; Android cannot inject it directly into a cellular call. Headsets are not supported while recording. Some phones block all call capture, and both voices cannot be guaranteed. Test playback on your device.</Footer>
+        <Footer>Allow Microphone Access here before a call. If permission is blocked, use Open Settings and allow Microphone while using the app. Recording switches the call to speakerphone and says “This call is being recorded” using the selected bundled male or female voice before capture begins. Keep media volume audible and confirm the other person heard the announcement; Android cannot inject it directly into a cellular call. Headsets are not supported while recording. Some phones block all call capture, and both voices cannot be guaranteed. Test playback on your device.</Footer>
 
         <SectionTitle>{tr('Privacy')}</SectionTitle>
         <Group>

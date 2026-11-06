@@ -28,6 +28,7 @@ function setProp(props, key, value) {
 module.exports = function withReleaseOptimizations(config) {
   config = withGradleProperties(config, (cfg) => {
     setProp(cfg.modResults, 'android.enableProguardInReleaseBuilds', 'true');
+    setProp(cfg.modResults, 'expo.webp.enabled', 'true');
     // older template property names, harmless if unused
     setProp(cfg.modResults, 'android.enableMinifyInReleaseBuilds', 'true');
     return cfg;

@@ -1,3 +1,6 @@
+> Version 1.0.9 reduces this payload to English-only data, with no voice-model
+> change. Current size and background choices are documented in SIZE_REDUCTION.md.
+
 # Bundled caller-name speech — version 1.0.7 (Android version code 8)
 
 ## Use
@@ -37,7 +40,7 @@ capture restrictions; this change does not grant system capture privileges.
 - First synthesis may take longer on slow hardware. Keep ringing and fall back
   to a short generic clip after 12 seconds. The generated result can speed the
   next call. No speech starts after the pending call has ended.
-- The source includes a ~28 MiB all-ABI AAR and ~40 MiB uncompressed model/data;
+- The source includes a ~28 MiB all-ABI AAR and ~23 MiB uncompressed model/data;
   APK sizes vary by ABI. Expect extra installed storage for extracted model data.
 
 ## Integration

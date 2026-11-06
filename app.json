@@ -2,7 +2,7 @@
   "expo": {
     "name": "Phone",
     "slug": "ios-style-dialer",
-    "version": "1.0.7",
+    "version": "1.0.10",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -32,8 +32,7 @@
       "blockedPermissions": [
         "android.permission.INTERNET"
       ],
-      "versionCode": 8,
-      "edgeToEdgeEnabled": true
+      "versionCode": 11
     },
     "plugins": [
       [
@@ -59,7 +58,6 @@
       ],
       "./plugins/withDefaultDialer",
       "./plugins/withReleaseOptimizations",
-      "./plugins/withOfflineTtsRepository",
       "expo-status-bar",
       "expo-font",
       "expo-asset",
@@ -76,6 +74,7 @@
           }
         }
       ],
+      "./plugins/withOfflineSpeechRepository",
       "./plugins/withRecordingPermissions"
     ],
     "extra": {

@@ -1,10 +1,10 @@
-/** All call presets use pale pastels in light mode and matching charcoal hues in dark mode. */
+/** Light wallpaper presets; every dark call stays AMOLED black. */
 export function callAppearance(theme, choice) {
   const pick = choice === 'auto' || !choice ? 'pastel' : choice;
   return {
-    plain: pick === 'plain',
+    plain: theme.dark || pick === 'plain',
     light: !theme.dark,
-    background: theme.dark ? theme.backdropBase : '#FFFFFF',
+    background: theme.dark ? '#000000' : '#FFFFFF',
     text: theme.text,
     secondary: theme.secondary,
   };

@@ -5,6 +5,36 @@ default dialer: floating tab bar, large titles, round keypad, its own full-scree
 call screen, light and dark mode (follows the system, or force either in
 Settings › Appearance).
 
+## Build and bundle cleanup (1.0.10)
+
+Direct Ionicons imports remove eighteen unused font assets from the Android
+bundle. Release workflows now enforce the compact asset budget. A config plugin
+registers the bundled speech AAR's local repository for the generated app, fixing
+transitive dependency resolution in a clean build. See [SIZE_REDUCTION.md](SIZE_REDUCTION.md).
+
+## Smaller background bundle (1.0.9)
+
+Four independently selectable app backgrounds and four call backgrounds share
+four compact image files. Dark mode remains AMOLED black. Unused artwork and
+non-English caller-voice dictionaries are removed; both offline speakers and
+M4A/MP3 recording/playback remain. See [SIZE_REDUCTION.md](SIZE_REDUCTION.md).
+
+## Recording playback update (1.0.8)
+
+Saved M4A and MP3 recordings play inside the app with Android's native player.
+Choose the recording format in Settings → Call Recording. Dark call screens now
+stay AMOLED black even with an older wallpaper selection, and incoming caller
+announcements repeat three times. See [RECORDING_PLAYBACK_UPDATE.md](RECORDING_PLAYBACK_UPDATE.md).
+
+## Offline caller-name announcements (1.0.7)
+
+The app now bundles its own English neural speech engine and model. Saved contact
+names can be announced in male or female voices on ROMs without Google TTS or
+any installed voice service. Enable **Settings → Call Announcer**, select a voice,
+and use **Test Announcer** to hear “Incoming call from Stephen.”
+See [EMBEDDED_CALLER_SPEECH.md](EMBEDDED_CALLER_SPEECH.md) for behavior, validation,
+size, privacy, and bundled component notices.
+
 ## Features
 
 **Liquid Glass look**
@@ -36,13 +66,6 @@ Settings › Appearance).
 - Screen turns off when the phone is at your ear.
 - Asks before sending tones after a wait (`;`) in a number.
 - Tap the chevron to use the rest of the app mid-call; tap the green pill to return.
-
-**Offline caller-name announcements**
-- Optional incoming-call announcements use bundled male or female English neural
-  voices; no Google speech service, installed TTS engine, internet, or microphone
-  access is needed. Pronunciation of non-English names may be approximate.
-- See [EMBEDDED_CALLER_SPEECH.md](EMBEDDED_CALLER_SPEECH.md) for privacy, storage,
-  performance, and third-party license details.
 
 **USSD and codes**
 - `*124#`, `*170#`, `#100#` … run straight from the keypad. The network's reply
