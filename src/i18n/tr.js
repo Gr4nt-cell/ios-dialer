@@ -81,6 +81,8 @@ export default {
   'Block this Caller': 'Bu arayanı engelle',
   'Contact': 'Kişi',
   'Message': 'Mesaj',
+  'Note': 'Not',
+  'No notes app is available on this phone.': 'Bu telefonda kullanılabilir bir not uygulaması yok.',
   'Voice Call': 'Sesli arama',
   'Video Call': 'Görüntülü arama',
   'Depth Adjustment': 'Derinlik ayarı',

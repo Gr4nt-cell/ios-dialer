@@ -453,6 +453,15 @@ export default function CallScreen() {
     else if (primary.number) nav.push({ name: 'newContact', number: primary.number });
   };
 
+  const openCallNote = () => {
+    tap();
+    const title = who.name && who.name !== 'Unknown' ? `Call note — ${who.name}` : 'Call note';
+    const text = [who.name !== 'Unknown' ? who.name : null, primary.number].filter(Boolean).join('\n');
+    if (!Dialer?.openNotes?.(title, text)) {
+      Alert.alert(tr('Note'), tr('No notes app is available on this phone.'));
+    }
+  };
+
   const addOrMerge = () => {
     if (canMerge) Dialer.merge(primary.id);
     else minimizeTo('keypad');
@@ -645,6 +654,7 @@ export default function CallScreen() {
           <View style={styles.gridRow}>
             <CallButton size={KEY} icon="person-outline" label={tr('Contact')} onPress={openContact} disabled={!primary.number || primary.isConference} light={lightBackground} />
             <CallButton size={KEY} icon="document-text-outline" label={tr('Message')} onPress={() => sendMessage(primary.number)} disabled={!primary.number} light={lightBackground} />
+            <CallButton size={KEY} icon="reader-outline" label={tr('Note')} onPress={openCallNote} light={lightBackground} />
           </View>
           <View style={styles.gridRow}>
             <CallButton size={KEY} icon={audioIcon} label={audioLabel} on={route !== ROUTE.EARPIECE} onPress={chooseAudio} light={lightBackground} />

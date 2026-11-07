@@ -446,6 +446,36 @@ class DialerModule : Module() {
       ContactTools.openWhatsApp(ctx, contactId?.toLongOrNull(), number, kind)
     }
 
+    Function("openNotes") { title: String, text: String ->
+      val createNote = Intent("android.intent.action.CREATE_NOTE").apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TITLE, title)
+        putExtra(Intent.EXTRA_TEXT, text)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+      try {
+        ctx.startActivity(createNote)
+        true
+      } catch (_: android.content.ActivityNotFoundException) {
+        try {
+          val shareText = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, title)
+            putExtra(Intent.EXTRA_TEXT, text)
+          }
+          ctx.startActivity(
+            Intent.createChooser(shareText, "Choose a notes app")
+              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+          )
+          true
+        } catch (_: Exception) {
+          false
+        }
+      } catch (_: Exception) {
+        false
+      }
+    }
+
     Function("toE164") { number: String -> ContactTools.toE164Digits(ctx, number) }
 
     // The best photo per contact, for screens that show one large.

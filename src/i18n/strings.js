@@ -93,6 +93,8 @@ export const STRINGS = {
   'Block this Caller': { es: 'Bloquear a quien llama', zh: '拦截此来电', th: 'บล็อกผู้โทรนี้', pl: 'Zablokuj tego rozmówcę', ja: 'この発信者をブロック', it: 'Blocca questo chiamante' },
   'Contact': { es: 'Contacto', zh: '联系人', th: 'รายชื่อ', pl: 'Kontakt', ja: '連絡先', it: 'Contatto' },
   'Message': { es: 'Mensaje', zh: '信息', th: 'ข้อความ', pl: 'Wiadomość', ja: 'メッセージ', it: 'Messaggio' },
+  'Note': { es: 'Nota', zh: '便笺', th: 'โน้ต', pl: 'Notatka', ja: 'メモ', it: 'Nota' },
+  'No notes app is available on this phone.': { es: 'No hay una aplicación de notas disponible en este teléfono.', zh: '此手机上没有可用的笔记应用。', th: 'ไม่มีแอปโน้ตในโทรศัพท์นี้', pl: 'Na tym telefonie nie ma aplikacji do notatek.', ja: 'この端末に利用できるメモアプリがありません。', it: 'Nessuna app per le note è disponibile su questo telefono.' },
   'Voice Call': { es: 'Llamada de voz', zh: '语音通话', th: 'สายสนทนา', pl: 'Połączenie głosowe', ja: '音声通話', it: 'Chiamata vocale' },
   'Video Call': { es: 'Videollamada', zh: '视频通话', th: 'วิดีโอคอล', pl: 'Rozmowa wideo', ja: 'ビデオ通話', it: 'Videochiamata' },
 
