@@ -2,7 +2,7 @@
   "expo": {
     "name": "Phone",
     "slug": "ios-style-dialer",
-    "version": "1.0.10",
+    "version": "1.0.6",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -24,13 +24,15 @@
         "android.permission.WAKE_LOCK",
         "android.permission.VIBRATE",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MICROPHONE"
+        "android.permission.FOREGROUND_SERVICE_PHONE_CALL"
       ],
       "allowBackup": false,
       "blockedPermissions": [
-        "android.permission.INTERNET"
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAPTURE_AUDIO_OUTPUT",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE"
       ],
       "versionCode": 11
     },
@@ -45,15 +47,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow Phone to use your photos for contact pictures.",
-          "cameraPermission": "Allow Phone to take contact pictures.",
-          "microphonePermission": "Allow Phone to record calls after the spoken announcement."
-        }
-      ],
-      [
-        "expo-audio",
-        {
-          "microphonePermission": "Allow Phone to record calls after the spoken announcement.",
-          "recordAudioAndroid": true
+          "cameraPermission": "Allow Phone to take contact pictures."
         }
       ],
       "./plugins/withDefaultDialer",
@@ -74,8 +68,7 @@
           }
         }
       ],
-      "./plugins/withOfflineSpeechRepository",
-      "./plugins/withRecordingPermissions"
+      "./plugins/withOfflineSpeechRepository"
     ],
     "extra": {
       "eas": {

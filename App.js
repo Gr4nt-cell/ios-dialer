@@ -25,7 +25,6 @@ import ContactDetailScreen from './src/screens/ContactDetailScreen';
 import NewContactScreen from './src/screens/NewContactScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import PickFavoriteScreen from './src/screens/PickFavoriteScreen';
-import RecordingsScreen from './src/screens/RecordingsScreen';
 import CallScreen from './src/screens/CallScreen';
 import Dialer from './src/dialer';
 import CallsScreen from './src/screens/CallsScreen';
@@ -43,14 +42,13 @@ const ROUTES = {
   settings: SettingsScreen,
   pickFavorite: PickFavoriteScreen,
   pickContact: PickFavoriteScreen, // the same picker, choosing where a number goes
-  recordings: RecordingsScreen,
   privacyPolicy: PrivacyPolicyScreen,
   statistics: StatisticsScreen,
 };
 
 // On a tablet these fill the pane beside the list instead of covering the
 // screen; the rest (the forms and pickers) stay modal, where they belong.
-const PANE_ROUTES = new Set(['contact', 'settings', 'recordings', 'privacyPolicy', 'statistics']);
+const PANE_ROUTES = new Set(['contact', 'settings', 'privacyPolicy', 'statistics']);
 
 function islandOn() {
   try {

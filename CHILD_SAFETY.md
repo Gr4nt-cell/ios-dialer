@@ -15,8 +15,7 @@ other. Calls go through the user's mobile network, and the app has no internet a
 
 - The app must never be used to sexualise, groom, exploit or endanger children. Any such use is
   prohibited.
-- We don't host, store or distribute content between users. Call recordings stay only on the
-  recording user's own device.
+- We don't host, store or distribute content between users.
 - Any report of CSAE or CSAM connected to the app is treated as a priority. Where we receive
   information about apparent CSAM or a child at risk, we report it to the relevant authorities,
   including the National Center for Missing & Exploited Children (NCMEC) and national law

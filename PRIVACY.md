@@ -1,6 +1,6 @@
 # Privacy Policy — Phone (com.gr4nt.dialer)
 
-_Last updated: 20 October 2026 · app version 1.0.2_
+_Last updated: 7 November 2026 · app version 1.0.6_
 
 Phone is a phone and contacts app for Android, made by Gr4nt. This policy explains what the app
 accesses, what it does with it, and what it never does.
@@ -19,7 +19,6 @@ listed here, and only on your device.
 | **Phone calls** (make and manage calls, phone state, default phone app) | To place, answer, hold, merge and end calls, choose a SIM, run USSD codes, and show the call screen. |
 | **Call log** | To show your recent calls and call statistics, and to remove calls you delete. |
 | **Contacts** | To show your contacts, put names and photos on calls, and add or edit contacts when you ask. |
-| **Microphone** | Only to record a call when you tap Record, or if you turn on automatic recording. |
 | **Camera and photos** | Only when you choose to take or pick a contact photo. |
 | **Notifications** | To show incoming and ongoing calls, with answer, decline and hang-up buttons. |
 | **Vibration and wake lock** | To vibrate for incoming calls, and to turn the screen off when the phone is at your ear. |
@@ -28,8 +27,6 @@ listed here, and only on your device.
 
 ## 2. What is stored, and where
 
-- **Call recordings** are saved in the app's private storage on your phone. Other apps can't open
-  them, and they are never uploaded.
 - **Settings, favourites and blocked numbers** are kept in the app's private storage.
 - **Contacts and call history** stay in Android's own contacts and call-log databases. The app
   reads them and changes them only when you ask (for example adding a contact or deleting calls).
@@ -38,7 +35,7 @@ listed here, and only on your device.
   model; the photo is processed on your phone and is not uploaded. Google Play services may download
   that model when needed.
 
-The app is **excluded from Android cloud backups**, so recordings and settings aren't copied to
+The app is **excluded from Android cloud backups**, so settings aren't copied to
 Google Drive or any other backup service.
 
 ## 3. No internet, no sharing
@@ -56,18 +53,8 @@ In **Settings › Privacy** you can:
 
 - hide who is calling on the lock screen;
 - block screenshots and app previews of the app;
-- delete recordings automatically after 7, 30, 90 or 365 days;
-- delete all recordings at once.
-
-You can also delete single recordings in **Settings › Call Recording › Recordings**, delete calls
-from Recents, and remove any permission in Android's settings. Uninstalling the app deletes
-everything it stored.
-
-## 5. Call recording
-
-Recording only happens when you start it, or if you turn on automatic recording. Laws about
-recording calls differ between countries. You are responsible for telling the other person and
-getting their consent where the law requires it.
+You can also delete calls from Recents and remove any permission in Android's settings.
+Uninstalling the app deletes its local settings.
 
 ## 6. Children
 

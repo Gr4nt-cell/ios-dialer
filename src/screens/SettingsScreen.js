@@ -25,7 +25,6 @@ import { useCalls } from '../CallContext';
 import Dialer from '../dialer';
 import { useActionSheet } from '../components/ActionSheet';
 import { appBackgroundId, callBackgroundId, getCallWallpaperSource, WALLPAPERS } from '../wallpapers';
-import { ensureRecordingPermission, hasRecordingPermission } from '../recordingPermissions';
 
 function SectionTitle({ children }) {
   const t = useTheme();
@@ -39,11 +38,12 @@ function Footer({ children }) {
 
 
 function CallPreview({ colors, light, wallpaper, custom }) {
+  const t = useTheme();
   const tr = useT();
   return (
-    <View style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.65)', margin: 12, marginBottom: 4, overflow: 'hidden', backgroundColor: colors[2] }}>
+    <View style={{ height: 150, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.65)', margin: 12, marginBottom: 4, overflow: 'hidden', backgroundColor: light ? colors[2] : '#000000' }}>
       {wallpaper ? <Image source={wallpaper} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} /> : null}
-      {!light && wallpaper ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+      {!light && wallpaper ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.68)' }]} /> : null}
       <View style={{ flex: 1, padding: 14, justifyContent: 'space-between' }}>
         <View style={{ alignItems: 'center' }}>
           <Text style={{ color: light ? '#53685F' : '#A9BBB3', fontSize: fs(12) }}>{tr('calling mobile…')}</Text>
@@ -87,20 +87,15 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
 export default function SettingsScreen() {
   const t = useTheme();
   const tr = useT();
-  const recordingSupport = useMemo(() => {
-    try { return Dialer?.getRecordingSupport?.() || null; } catch { return null; }
-  }, []);
   const [depthEditor, setDepthEditor] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [microphoneAllowed, setMicrophoneAllowed] = useState(null);
-  const [microphoneBusy, setMicrophoneBusy] = useState(false);
   const [announcer, setAnnouncer] = useState(() => {
     try { return Dialer?.getCallAnnouncer?.() || { enabled: false, speakNumbers: false }; } catch { return { enabled: false, speakNumbers: false }; }
   });
   const [testingAnnouncer, setTestingAnnouncer] = useState(false);
   const [announcementVoices, setAnnouncementVoices] = useState(() => {
-    try { return Dialer?.getAnnouncementVoices?.() || { recordingVoice: 'female', callerVoice: 'female' }; }
-    catch { return { recordingVoice: 'female', callerVoice: 'female' }; }
+    try { return Dialer?.getAnnouncementVoices?.() || { callerVoice: 'female' }; }
+    catch { return { callerVoice: 'female' }; }
   });
   const chooseAnnouncementVoice = (kind, voice) => {
     if (Dialer?.setAnnouncementVoice?.(kind, voice)) setAnnouncementVoices((previous) => ({ ...previous, [kind]: voice }));
@@ -124,22 +119,6 @@ export default function SettingsScreen() {
       if (!result.ok) Alert.alert(tr('Call Announcer'), result.error || 'The bundled announcement could not play.');
     } catch (error) { Alert.alert(tr('Call Announcer'), error.message); }
     finally { setTestingAnnouncer(false); }
-  };
-  useEffect(() => {
-    let mounted = true;
-    const refresh = () => hasRecordingPermission().then((allowed) => { if (mounted) setMicrophoneAllowed(allowed); }).catch(() => { if (mounted) setMicrophoneAllowed(false); });
-    refresh();
-    const sub = AppState.addEventListener('change', (state) => { if (state === 'active') refresh(); });
-    return () => { mounted = false; sub.remove(); };
-  }, []);
-  const allowMicrophone = async () => {
-    if (microphoneBusy) return false;
-    setMicrophoneBusy(true);
-    try {
-      const allowed = await ensureRecordingPermission();
-      setMicrophoneAllowed(allowed);
-      return allowed;
-    } finally { setMicrophoneBusy(false); }
   };
   const insets = useSafeAreaInsets();
   const nav = useNav();
@@ -223,19 +202,10 @@ export default function SettingsScreen() {
       return {};
     }
   };
-  const [recordingFormat, setRecordingFormat] = useState(() => {
-    try { return Dialer?.getRecordingFormat?.() || 'm4a'; } catch { return 'm4a'; }
-  });
-  const chooseRecordingFormat = () => sheet.show({ title: tr('Recording Format'), options: ['m4a', 'mp3'].map((format) => ({
-    text: format.toUpperCase() + (recordingFormat === format ? '  ✓' : ''),
-    onPress: () => { if (Dialer?.setRecordingFormat?.(format)) setRecordingFormat(format); },
-  })) });
   const [privacy, setPrivacyState] = useState(readPrivacy);
   const setPrivacy = (key, value) => {
     try {
-      if (typeof value === 'boolean') Dialer.setPrivacyBool(key, value);
-      else if (typeof value === 'number') Dialer.setPrivacyInt(key, value);
-      else Dialer.setPrivacyString(key, String(value));
+      Dialer?.setPrivacyBool?.(key, value);
     } catch {
       // ignore
     }
@@ -244,21 +214,6 @@ export default function SettingsScreen() {
   const pToggle = (key) => (
     <Switch value={!!privacy[key]} onValueChange={(v) => setPrivacy(key, v)} trackColor={{ true: t.green }} thumbColor="#fff" />
   );
-  const KEEP = [
-    { value: 0, label: tr('Forever') },
-    { value: 7, label: tr('7 days') },
-    { value: 30, label: tr('30 days') },
-    { value: 90, label: tr('90 days') },
-    { value: 365, label: tr('1 year') },
-  ];
-  const keepLabel = (v) => (KEEP.find((k) => k.value === v) || KEEP[0]).label;
-  const chooseKeep = () =>
-    sheet.show({ title: tr('Keep Recordings'), options: KEEP.map((k) => ({ text: k.label + ((privacy.recordingDays || 0) === k.value ? '  ✓' : ''), onPress: () => setPrivacy('recordingDays', k.value) })) });
-  const wipe = () =>
-    Alert.alert(tr('Delete All Recordings?'), tr('Every call recording on this phone will be deleted. This can’t be undone.'), [
-      { text: tr('Cancel'), style: 'cancel' },
-      { text: tr('Delete All'), style: 'destructive', onPress: () => Dialer && Dialer.deleteAllPrivateData && Dialer.deleteAllPrivateData() },
-    ]);
   const chev = <Ionicons name="chevron-forward" size={18} color={t.tertiary} />;
   const valueRight = (txt) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -535,36 +490,19 @@ export default function SettingsScreen() {
           <Cell value={tr('Speak Unsaved Numbers')} right={<Switch value={!!announcer.speakNumbers} disabled={!announcer.enabled} onValueChange={(speakNumbers) => updateAnnouncer({ speakNumbers })} trackColor={{ true: t.green }} thumbColor="#fff" />} />
           <Cell value={tr(testingAnnouncer ? 'Testing…' : 'Test Announcer')} color={t.blue} onPress={testAnnouncer} />
         </Group>
-        <Footer>{tr('Bundled male and female neural voices read saved contact names offline, without Google speech services or a separate voice app. English pronunciation is used; some names may sound different. Repeat announcements are cached on this phone. Respects silent mode, Do Not Disturb and lock-screen privacy. No microphone permission is needed.')}</Footer>
+        <Footer>{tr('Bundled male and female neural voices read saved contact names offline, without Google speech services or a separate voice app. English pronunciation is used; some names may sound different. Repeat announcements are cached on this phone. Respects silent mode, Do Not Disturb and lock-screen privacy.')}</Footer>
 
         <Footer>{tr('Caller announcements repeat three times and stop when the call is answered or dismissed.')}</Footer>
-
-        <SectionTitle>{tr('Call Recording')}</SectionTitle>
-        <Group>
-          <Cell value={tr('Voice')} right={voiceSelector('recordingVoice')} />
-          <Cell value={tr('Recording Format')} onPress={chooseRecordingFormat} right={valueRight(recordingFormat.toUpperCase())} />
-          <Cell value={tr('Microphone Access')} onPress={allowMicrophone} right={<Text style={{ color: microphoneAllowed ? t.green : t.blue, fontSize: fs(15) }}>{tr(microphoneBusy ? 'Checking…' : microphoneAllowed ? 'Allowed' : 'Allow')}</Text>} />
-          <Cell value="Record Calls Automatically" right={<Switch value={!!settings.autoRecord} disabled={microphoneBusy} onValueChange={async (enabled) => {
-            if (!enabled) { updateSettings({ autoRecord: false }); return; }
-            if (await allowMicrophone()) updateSettings({ autoRecord: true });
-          }} trackColor={{ true: t.green }} thumbColor="#fff" />} />
-          <Cell value={tr('Recordings')} color={t.blue} onPress={() => nav.push({ name: 'recordings' })} right={<Ionicons name="chevron-forward" size={18} color={t.tertiary} />} />
-        </Group>
-        <Footer>{tr('M4A saves directly as AAC audio. MP3 converts after recording stops; the original M4A stays available if conversion fails. Saved recordings play inside the app after the call ends.')}</Footer>
-        {recordingSupport ? <Footer>{recordingSupport.family} · {recordingSupport.model}{'\n'}{recordingSupport.mode}{'\n'}{recordingSupport.notice}</Footer> : null}
-        <Footer>Allow Microphone Access here before a call. If permission is blocked, use Open Settings and allow Microphone while using the app. Recording switches the call to speakerphone and says “This call is being recorded” using the selected bundled male or female voice before capture begins. Keep media volume audible and confirm the other person heard the announcement; Android cannot inject it directly into a cellular call. Headsets are not supported while recording. Some phones block all call capture, and both voices cannot be guaranteed. Test playback on your device.</Footer>
 
         <SectionTitle>{tr('Privacy')}</SectionTitle>
         <Group>
           <Cell value={tr('Hide Caller on Lock Screen')} right={pToggle('hideOnLockScreen')} />
           <Cell value={tr('Block Screenshots')} right={pToggle('blockScreenshots')} />
-          <Cell value={tr('Keep Recordings')} onPress={chooseKeep} right={valueRight(keepLabel(privacy.recordingDays || 0))} />
           <Cell value={tr('Privacy Policy')} color={t.blue} onPress={() => nav.push({ name: 'privacyPolicy' })} right={chev} />
-          <Cell value={tr('Delete All Recordings')} color={t.red} onPress={wipe} />
         </Group>
         <Footer>
           {tr(
-            'Your calls stay on this phone. Recordings are kept in the app’s private storage, which other apps can’t read; they are never uploaded and are left out of phone backups. The app has no internet access.'
+            'Calls, contacts, settings and favourites stay on this phone. The app has no internet access.'
           )}
         </Footer>
 

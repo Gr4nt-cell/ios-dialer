@@ -66,7 +66,6 @@ class DialerInCallService : InCallService() {
     CallManager.remove(call)
     if (!CallManager.hasLiveCalls()) {
       CallNotifications.cancel(this)
-      RecordingService.stop(this)
       Ringer.stop()
     }
   }

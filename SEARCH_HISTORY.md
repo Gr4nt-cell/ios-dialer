@@ -6,6 +6,6 @@ Tap an entry to search again and move it to the newest position. Use Clear to er
 
 History is saved only on this device using the app's existing AsyncStorage dependency. Writes are serialized; actions made before loading finishes are replayed against the loaded history.
 
-Turkish (Türkçe) is available in the existing language picker and automatically selected for Turkish device locales when language is System. All 191 shared catalog entries have Turkish translations, including search-history controls and recording button states. Existing hardcoded English text outside the translation catalog, including native recorder errors, remains English. The spoken recording announcement remains the exact requested English phrase.
+Turkish (Türkçe) is available in the existing language picker and automatically selected for Turkish device locales when language is System. All 191 shared catalog entries have Turkish translations, including search-history controls. Existing hardcoded English text outside the translation catalog remains English.
 
-Validation: JavaScript/JSX parsing; nine-item eviction, newest-first ordering, deduplication, whitespace handling and malformed stored-data checks; complete Turkish catalog coverage. Android runtime UI and device recordings have not been tested here. The supplied PNG is a design preview with sample searches, not a screenshot from a running Android build.
+Validation: JavaScript/JSX parsing; nine-item eviction, newest-first ordering, deduplication, whitespace handling and malformed stored-data checks; complete Turkish catalog coverage. The supplied PNG is a design preview with sample searches, not a screenshot from a running Android build.

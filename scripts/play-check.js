@@ -48,10 +48,22 @@ if (!manifestPath) {
   add('FAIL', 'merged release AndroidManifest.xml not found — run this after the release build');
 } else {
   const m = fs.readFileSync(manifestPath, 'utf8');
-  const recordingErrors = require('./check-recording-permissions.cjs').checkManifest(m);
-  if (recordingErrors.length) recordingErrors.forEach((message) => add('FAIL', message));
-  else add('PASS', 'microphone and recording foreground-service permissions are present');
-
+  const capturePermissions = [
+    'android.permission.RECORD_AUDIO',
+    'android.permission.CAPTURE_AUDIO_OUTPUT',
+    'android.permission.FOREGROUND_SERVICE_MICROPHONE',
+  ];
+  const permissionTags = m.match(/<uses-permission(?:-sdk-23)?\b[^>]*\/?>/g) || [];
+  const foundCapturePermissions = capturePermissions.filter((permission) =>
+    permissionTags.some((tag) =>
+      tag.includes(`android:name="${permission}"`) && !/tools:node="remove"/.test(tag),
+    ),
+  );
+  if (foundCapturePermissions.length) {
+    add('FAIL', `call-capture permissions remain in the merged manifest: ${foundCapturePermissions.join(', ')}`);
+  } else {
+    add('PASS', 'call-capture microphone permissions are absent');
+  }
   const target = Number((m.match(/android:targetSdkVersion="(\d+)"/) || [])[1] || 0);
   const versionCode = Number((m.match(/android:versionCode="(\d+)"/) || [])[1] || 0);
   const versionName = (m.match(/android:versionName="([^"]+)"/) || [])[1] || '?';

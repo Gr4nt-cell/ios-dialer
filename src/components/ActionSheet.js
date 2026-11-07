@@ -29,7 +29,7 @@ function Sheet({ sheet, onClose }) {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
-      <Pressable feedback="none" style={[styles.backdrop, { backgroundColor: t.dark ? 'rgba(9,12,18,0.48)' : 'rgba(91,99,111,0.18)' }]} onPress={onClose} />
+      <Pressable feedback="none" style={[styles.backdrop, { backgroundColor: t.dark ? 'rgba(0,0,0,0.48)' : 'rgba(91,99,111,0.18)' }]} onPress={onClose} />
       {/* each choice is its own glass pill, like the number picker */}
       <Animated.View
         style={[

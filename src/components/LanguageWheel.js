@@ -29,7 +29,7 @@ export default function LanguageWheel({ visible, options, value, onChange, onClo
         <View
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: t.dark ? 'rgba(9,12,18,0.48)' : 'rgba(91,99,111,0.18)' },
+            { backgroundColor: t.dark ? 'rgba(0,0,0,0.48)' : 'rgba(91,99,111,0.18)' },
           ]}
         />
       </Pressable>

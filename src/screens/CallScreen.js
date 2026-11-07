@@ -130,7 +130,7 @@ function Poster({ plain = false, plainColor = WHITE, wallpaperSource, custom = f
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Image source={wallpaperSource || require('../../assets/wallpapers-glass/01-mint-lagoon.webp')} resizeMode={custom ? 'cover' : 'stretch'} fadeDuration={0} style={StyleSheet.absoluteFill} />
-      {dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.68)' }]} /> : null}
+      {dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.68)' }]} /> : null}
     </View>
   );
 }
@@ -234,7 +234,7 @@ function SmallPill({ icon, label, onPress, light = false }) {
   return (
     <Pressable onPress={onPress} accessibilityLabel={label} style={{ alignItems: 'center', width: 110 }}>
       {({ pressed }) => (
-        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={light ? undefined : t.dark ? t.key : CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
+        <CallControlGlass light={light} liquid vivid outline soft radius={26} pressed={pressed} tint={light ? undefined : t.dark ? '#000000' : CONTROL_TINT} tintOpacity={1} style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={21} color={light ? LIGHT_TEXT : WHITE} />
         </CallControlGlass>
       )}
@@ -251,7 +251,7 @@ export default function CallScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNav();
   const sheet = useActionSheet();
-  const { live, audio, ended, setMinimized, recording, startRecording, stopRecording } = useCalls();
+  const { live, audio, ended, setMinimized } = useCalls();
   const { settings, resolve } = useData();
   const t = useTheme();
   const identify = useIdentity();
@@ -325,7 +325,7 @@ export default function CallScreen() {
   const wrap = (children, extra) => (
     <ReferenceCallTypography>
     <FlatBackdropContext.Provider value={plainBackground && !t.dark}>
-      <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#0B0C10' }, extra]}>
+      <Animated.View style={[styles.root, { opacity: fade, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28, backgroundColor: t.dark ? t.base : plainBackground ? plainColor : '#000000' }, extra]}>
         <StatusBar style={lightBackground ? 'dark' : 'light'} />
         <Poster plain={plainBackground} plainColor={plainColor} wallpaperSource={getCallWallpaperSource(settings, t.dark)} custom={customCallBackground} dark={t.dark} />
         {children}
@@ -421,8 +421,8 @@ export default function CallScreen() {
   const route = audio ? audio.route : ROUTE.EARPIECE;
   const supported = audio ? audio.supported : ROUTE.EARPIECE | ROUTE.SPEAKER;
   const hasBluetooth = !!(supported & ROUTE.BLUETOOTH);
-  const isHeld = primary.state === 'holding';
   const connected = primary.state === 'active' || primary.state === 'holding';
+  const isHeld = primary.state === 'holding';
   const twoCalls = held.length > 0;
   const canMerge = twoCalls && (primary.canMerge || held.some((h) => h.canMerge));
 
@@ -451,12 +451,6 @@ export default function CallScreen() {
     setMinimized(true);
     if (match) nav.push({ name: 'contact', contactId: match.contact.id, number: primary.number });
     else if (primary.number) nav.push({ name: 'newContact', number: primary.number });
-  };
-
-  const toggleRecording = () => {
-    tap();
-    if (recording) stopRecording();
-    else startRecording(primary.number);
   };
 
   const addOrMerge = () => {
@@ -651,15 +645,6 @@ export default function CallScreen() {
           <View style={styles.gridRow}>
             <CallButton size={KEY} icon="person-outline" label={tr('Contact')} onPress={openContact} disabled={!primary.number || primary.isConference} light={lightBackground} />
             <CallButton size={KEY} icon="document-text-outline" label={tr('Message')} onPress={() => sendMessage(primary.number)} disabled={!primary.number} light={lightBackground} />
-            <CallButton
-              size={KEY}
-              icon="radio-button-on"
-              label={tr(recording ? (recording.phase === 'recording' ? 'Stop recording' : 'Cancel recording') : 'Record')}
-              color={recording ? RED : undefined}
-              onPress={toggleRecording}
-              disabled={!connected && !recording}
-              light={lightBackground}
-            />
           </View>
           <View style={styles.gridRow}>
             <CallButton size={KEY} icon={audioIcon} label={audioLabel} on={route !== ROUTE.EARPIECE} onPress={chooseAudio} light={lightBackground} />
@@ -786,7 +771,7 @@ export default function CallScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0B0C10' },
+  root: { flex: 1, backgroundColor: '#000000' },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
   topBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
   statusTop: { color: DIM, fontSize: fs(17), fontWeight: '500', textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },

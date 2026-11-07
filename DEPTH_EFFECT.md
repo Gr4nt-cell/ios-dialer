@@ -1,6 +1,6 @@
 # Reference call portrait and photo quality
 
-Applied to the supplied `ios-dialer-main.zip` source, preserving its current app structure, native call handlers, tablet dial-pad layout, themes, recording, privacy controls, translations and release optimization configuration.
+Applied to the supplied `ios-dialer-main.zip` source, preserving its current app structure, native call handlers, tablet dial-pad layout, themes, privacy controls, translations and release optimization configuration.
 
 ## Depth settings
 

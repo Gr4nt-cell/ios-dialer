@@ -69,7 +69,7 @@ object EmbeddedCallerSpeech {
   fun warm(ctx: Context) {
     val app = ctx.applicationContext
     worker.execute {
-      try { model(app) } catch (_: Exception) { /* Recording and generic clips remain available. */ }
+      try { model(app) } catch (_: Exception) { /* Generic caller-announcement clips remain available. */ }
       catch (_: LinkageError) { /* Unsupported runtime: retain the prerecorded fallback. */ }
       finally { releaseLater() }
     }

@@ -23,7 +23,6 @@ const SECTIONS = [
       ['Phone calls', 'To place, answer, hold, merge and end calls, choose a SIM, run USSD codes and show the call screen.'],
       ['Call log', 'To show your recent calls and call statistics, and to remove calls you delete.'],
       ['Contacts', 'To show your contacts, put names and photos on calls, and add or edit contacts when you ask.'],
-      ['Microphone', 'Only to record a call when you tap Record, or if you turn on automatic recording.'],
       ['Camera and photos', 'Only when you choose to take or pick a contact photo.'],
       ['Notifications', 'To show incoming and ongoing calls with answer, decline and hang-up buttons.'],
       ['Vibration and wake lock', 'To vibrate for incoming calls and turn the screen off when the phone is at your ear.'],
@@ -37,11 +36,10 @@ const SECTIONS = [
   {
     title: 'What is stored, and where',
     body: [
-      'Call recordings are saved in the app’s private storage on your phone. Other apps can’t open them and they are never uploaded.',
       'Settings, favourites and blocked numbers are kept in the app’s private storage.',
       'Contacts and call history stay in Android’s own contacts and call-log databases. The app reads them and changes them only when you ask.',
       'Contact photos are read from the phone’s contacts and displayed on the call screen when enabled. When Depth Effect is on, Google Play services provides an on-device subject-segmentation model. The photo is processed on your phone and is not uploaded; Google Play services may download the model when needed.',
-      'The app is excluded from Android cloud backups, so recordings and settings aren’t copied to Google Drive or any other backup service.',
+      'The app is excluded from Android cloud backups, so settings aren’t copied to Google Drive or any other backup service.',
     ],
   },
   {
@@ -55,14 +53,8 @@ const SECTIONS = [
   {
     title: 'Your controls',
     body: [
-      'In Settings › Privacy you can hide who is calling on the lock screen, block screenshots, delete recordings automatically after 7, 30, 90 or 365 days, or delete all recordings at once.',
-      'You can also delete single recordings, delete calls from Recents, and remove any permission in Android’s settings. Uninstalling the app deletes everything it stored.',
-    ],
-  },
-  {
-    title: 'Call recording',
-    body: [
-      'Recording only happens when you start it, or if you turn on automatic recording. Laws about recording calls differ between countries. You are responsible for telling the other person and getting their consent where the law requires it.',
+      'In Settings › Privacy you can hide who is calling on the lock screen or block screenshots.',
+      'You can delete calls from Recents and remove any permission in Android’s settings. Uninstalling the app deletes its local settings.',
     ],
   },
   {
@@ -86,7 +78,7 @@ export default function PrivacyPolicyScreen() {
     <View style={{ flex: 1 }}>
       <SheetHeader title={tr('Privacy Policy')} left={<IconButton glass name="chevron-back" onPress={nav.pop} />} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40, gap: 12 }}>
-        <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 4 }}>Phone (com.gr4nt.dialer) · Last updated 20 October 2026</Text>
+        <Text style={{ color: t.secondary, fontSize: fs(13), marginHorizontal: 4 }}>Phone (com.gr4nt.dialer) · Last updated 7 November 2026</Text>
         {SECTIONS.map((sec) => (
           <Glass key={sec.title} radius={20} style={{ padding: 16 }}>
             <Text style={{ color: t.text, fontSize: fs(17), fontWeight: '700', marginBottom: 8 }}>{sec.title}</Text>

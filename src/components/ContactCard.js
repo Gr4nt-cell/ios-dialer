@@ -60,7 +60,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
       {face}
       {!performanceMode && glass && !keypadMaterial ? (
         <LinearGradient
-          colors={t.dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0)', 'rgba(10,12,18,0.12)'] : ['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.02)', 'rgba(35,50,70,0.06)']}
+          colors={t.dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.12)'] : ['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.02)', 'rgba(35,50,70,0.06)']}
           locations={[0, 0.42, 1]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"

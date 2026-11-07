@@ -56,7 +56,6 @@ export const STRINGS = {
   'Unknown Callers': { es: 'Números desconocidos', zh: '未知来电', th: 'เบอร์ที่ไม่รู้จัก', pl: 'Nieznane numery', ja: '不明な発信者', it: 'Numeri sconosciuti' },
   'Statistics': { es: 'Estadísticas', zh: '统计', th: 'สถิติ', pl: 'Statystyki', ja: '統計', it: 'Statistiche' },
   'Settings': { es: 'Ajustes', zh: '设置', th: 'ตั้งค่า', pl: 'Ustawienia', ja: '設定', it: 'Impostazioni' },
-  'Recordings': { es: 'Grabaciones', zh: '录音', th: 'การบันทึก', pl: 'Nagrania', ja: '録音', it: 'Registrazioni' },
 
   // ---------- calls screen ----------
   'Call Voicemail': { es: 'Llamar al buzón', zh: '拨打语音信箱', th: 'โทรฟังข้อความเสียง', pl: 'Zadzwoń na pocztę', ja: '留守番電話に発信', it: 'Chiama segreteria' },
@@ -136,15 +135,6 @@ export const STRINGS = {
   'Use this call screen for every call.': { es: 'Usa esta pantalla de llamada para todas las llamadas.', zh: '所有通话都使用此通话界面。', th: 'ใช้หน้าจอโทรนี้กับทุกสาย', pl: 'Używaj tego ekranu połączeń dla każdej rozmowy.', ja: 'すべての通話でこの通話画面を使います。', it: 'Usa questa schermata per ogni chiamata.' },
   'Set Default': { es: 'Establecer', zh: '设为默认', th: 'ตั้งเป็นค่าเริ่มต้น', pl: 'Ustaw domyślną', ja: '既定に設定', it: 'Imposta' },
 
-  // ---------- recording ----------
-  'Microphone Access Needed': { es: 'Se necesita acceso al micrófono', zh: '需要麦克风权限', th: 'ต้องการสิทธิ์ไมโครโฟน', pl: 'Potrzebny dostęp do mikrofonu', ja: 'マイクへのアクセスが必要です', it: 'Serve l’accesso al microfono' },
-  'Allow microphone access to record calls.': { es: 'Permite el acceso al micrófono para grabar llamadas.', zh: '允许使用麦克风以录制通话。', th: 'อนุญาตให้ใช้ไมโครโฟนเพื่อบันทึกสาย', pl: 'Zezwól na dostęp do mikrofonu, aby nagrywać rozmowy.', ja: '通話を録音するにはマイクへのアクセスを許可してください。', it: 'Consenti l’accesso al microfono per registrare le chiamate.' },
-  'Couldn’t Record': { es: 'No se pudo grabar', zh: '无法录音', th: 'บันทึกไม่สำเร็จ', pl: 'Nie udało się nagrać', ja: '録音できませんでした', it: 'Impossibile registrare' },
-  'No Recordings': { es: 'Sin grabaciones', zh: '暂无录音', th: 'ไม่มีการบันทึก', pl: 'Brak nagrań', ja: '録音なし', it: 'Nessuna registrazione' },
-  'Tap Record during a call to save it here.': { es: 'Toca Grabar durante una llamada para guardarla aquí.', zh: '通话中点按“录音”即可保存到这里。', th: 'แตะบันทึกระหว่างสายเพื่อเก็บไว้ที่นี่', pl: 'Dotknij Nagraj podczas rozmowy, aby zapisać ją tutaj.', ja: '通話中に録音をタップするとここに保存されます。', it: 'Tocca Registra durante una chiamata per salvarla qui.' },
-  'Couldn’t Play Recording': { es: 'No se pudo reproducir la grabación', zh: '无法播放录音', th: 'เล่นไฟล์บันทึกไม่สำเร็จ', pl: 'Nie udało się odtworzyć nagrania', ja: '録音を再生できませんでした', it: 'Impossibile riprodurre la registrazione' },
-  'Delete Recording?': { es: '¿Eliminar grabación?', zh: '删除录音？', th: 'ลบไฟล์บันทึกไหม', pl: 'Usunąć nagranie?', ja: '録音を削除しますか？', it: 'Eliminare la registrazione?' },
-  'This recording will be removed from this phone.': { es: 'La grabación se quitará de este teléfono.', zh: '该录音将从此手机中移除。', th: 'ไฟล์บันทึกนี้จะถูกลบออกจากเครื่อง', pl: 'To nagranie zostanie usunięte z tego telefonu.', ja: 'この録音はこの端末から削除されます。', it: 'La registrazione sarà rimossa da questo telefono.' },
 
   // ---------- search ----------
   'Contacts, calls or a number': { es: 'Contactos, llamadas o un número', zh: '联系人、通话或号码', th: 'รายชื่อ สายโทร หรือเบอร์', pl: 'Kontakty, połączenia lub numer', ja: '連絡先・通話・番号', it: 'Contatti, chiamate o un numero' },
@@ -196,7 +186,6 @@ export const STRINGS = {
   'Move Left / Right': { es: 'Mover izquierda / derecha', zh: '左右移动', th: 'เลื่อนซ้าย / ขวา', pl: 'Przesuń w lewo / w prawo', ja: '左右に移動', it: 'Sposta a sinistra / destra' },
   'Reset': { es: 'Restablecer', zh: '重置', th: 'รีเซ็ต', pl: 'Resetuj', ja: 'リセット', it: 'Ripristina' },
   'Call Background': { es: 'Fondo de llamada', zh: '通话背景', th: 'พื้นหลังหน้าโทร', pl: 'Tło połączenia', ja: '通話の背景', it: 'Sfondo chiamata' },
-  'Call Recording': { es: 'Grabación de llamadas', zh: '通话录音', th: 'การบันทึกสาย', pl: 'Nagrywanie rozmów', ja: '通話録音', it: 'Registrazione chiamate' },
   'Sounds & Haptics': { es: 'Sonidos y vibración', zh: '声音与触感', th: 'เสียงและการสั่น', pl: 'Dźwięki i wibracje', ja: 'サウンドと触覚', it: 'Suoni e feedback' },
   'Plays a tone and a light tap for each key you press.': { es: 'Reproduce un tono y una ligera vibración con cada tecla.', zh: '每次按键都会发出提示音并轻微震动。', th: 'เล่นเสียงและสั่นเบา ๆ ทุกครั้งที่กดปุ่ม', pl: 'Odtwarza dźwięk i lekkie puknięcie przy każdym klawiszu.', ja: 'キーを押すたびに音と軽い振動が鳴ります。', it: 'Riproduce un tono e un lieve tocco a ogni tasto.' },
   'Leave empty to use your SIM’s voicemail number.': { es: 'Déjalo vacío para usar el número del buzón de tu SIM.', zh: '留空则使用 SIM 卡的语音信箱号码。', th: 'เว้นว่างเพื่อใช้เบอร์ข้อความเสียงของซิม', pl: 'Zostaw puste, aby użyć numeru poczty z karty SIM.', ja: '空欄にすると SIM の留守番電話番号を使います。', it: 'Lascia vuoto per usare il numero della segreteria della SIM.' },

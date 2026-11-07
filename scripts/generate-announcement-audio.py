@@ -17,7 +17,7 @@ out=root/'modules/dialer/android/src/main/res/raw';out.mkdir(parents=True,exist_
 options=ort.SessionOptions();options.intra_op_num_threads=2;options.inter_op_num_threads=1
 session=ort.InferenceSession(str(args.models_dir/'kokoro-v1.0.int8.onnx'),sess_options=options,providers=['CPUExecutionProvider'])
 model=Kokoro.from_session(session,str(args.models_dir/'voices-v1.0.bin'))
-clips={'recording_notice':'This call is being recorded.','incoming_call':'Incoming call.','incoming_call_from':'Incoming call from.'}
+clips={'incoming_call':'Incoming call.','incoming_call_from':'Incoming call from.'}
 clips.update({f'digit_{index}':word+'.' for index,word in enumerate(['zero','one','two','three','four','five','six','seven','eight','nine'])})
 for gender,voice in [('female','af_heart'),('male','am_michael')]:
  for name,text in clips.items():
@@ -27,4 +27,4 @@ for gender,voice in [('female','af_heart'),('male','am_michael')]:
   samples=np.concatenate([np.zeros(round(rate*.04),dtype=np.float32),samples,np.zeros(round(rate*.08),dtype=np.float32)])
   sf.write(out/f'{name}_{gender}.wav',samples,rate,subtype='PCM_16')
   print(name,gender,round(len(samples)/rate,2),'seconds',flush=True)
-print('Generated all 26 neural voice clips.',flush=True)
+print('Generated all 24 neural voice clips.',flush=True)

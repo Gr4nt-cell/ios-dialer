@@ -29,5 +29,5 @@ Female: LibriTTS reader 14 (Kristin LeMoine), model speaker 307.
 Male: LibriTTS reader 17 (Gord Mackenzie), model speaker 805.
 These are pretrained synthesis speakers, not recordings of the app user's contacts.
 
-The fixed recording notice and generic/digit fallback WAVs use the earlier Kokoro
-voices; see ../KOKORO_AUDIO.md for their separate attribution.
+The generic/digit fallback WAVs use the earlier Kokoro voices; see
+../KOKORO_AUDIO.md for their separate attribution.

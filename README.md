@@ -16,15 +16,13 @@ transitive dependency resolution in a clean build. See [SIZE_REDUCTION.md](SIZE_
 
 Four independently selectable app backgrounds and four call backgrounds share
 four compact image files. Dark mode remains AMOLED black. Unused artwork and
-non-English caller-voice dictionaries are removed; both offline speakers and
-M4A/MP3 recording/playback remain. See [SIZE_REDUCTION.md](SIZE_REDUCTION.md).
+non-English caller-voice dictionaries are removed; both offline caller-announcement
+speakers remain.
 
-## Recording playback update (1.0.8)
+## Version 1.0.6
 
-Saved M4A and MP3 recordings play inside the app with Android's native player.
-Choose the recording format in Settings → Call Recording. Dark call screens now
-stay AMOLED black even with an older wallpaper selection, and incoming caller
-announcements repeat three times. See [RECORDING_PLAYBACK_UPDATE.md](RECORDING_PLAYBACK_UPDATE.md).
+Dark mode now uses pure black surfaces throughout the app; the keypad keeps its
+contrasting keys.
 
 ## Offline caller-name announcements (1.0.7)
 

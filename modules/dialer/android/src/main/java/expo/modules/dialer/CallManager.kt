@@ -189,8 +189,6 @@ object CallManager {
     }
     val root = JSONObject()
     root.put("calls", arr)
-    root.put("recording", RecordingService.stateJson())
-    root.put("recordingError", RecordingService.lastError ?: JSONObject.NULL)
     val audio = service?.callAudioState
     if (audio != null) {
       root.put(
@@ -375,7 +373,7 @@ object CallManager {
         if (show) activity.window.addFlags(flags) else activity.window.clearFlags(flags)
       }
     } catch (_: Exception) {}
-    // privacy: keep call history, recordings and transcripts out of screenshots and the
+    // privacy: keep call history and transcripts out of screenshots and the
     // recent-apps preview
     try {
       if (PrivacyPrefs.blockScreenshots(activity)) activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)

@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, AppState } from 'react-native';
-import { ensureRecordingPermission } from './recordingPermissions';
+import { AppState } from 'react-native';
 import { useData } from './DataContext';
 import Dialer, { isLive, isRinging, parseCallState } from './dialer';
 
@@ -8,7 +7,7 @@ const CallContext = createContext(null);
 export const useCalls = () => useContext(CallContext);
 
 export function CallProvider({ children }) {
-  const [state, setState] = useState(() => (Dialer ? parseCallState(Dialer.getState()) : { calls: [], audio: null, recording: null }));
+  const [state, setState] = useState(() => (Dialer ? parseCallState(Dialer.getState()) : { calls: [], audio: null }));
   const [ended, setEnded] = useState(null);
   const [minimized, setMinimized] = useState(false);
   const [isDefault, setIsDefault] = useState(() => (Dialer ? !!Dialer.isDefaultDialer() : false));
@@ -81,8 +80,7 @@ export function CallProvider({ children }) {
     if (ringingCount) setMinimized(false);
   }, [ringingCount]);
 
-  // ---------- call recording ----------
-  const { settings, refreshCallLog } = useData();
+  const { refreshCallLog } = useData();
 
   // Refresh Recents as soon as a call ends. Android writes the call log entry a moment after the
   // call drops, so check a few times over the next few seconds.
@@ -105,50 +103,6 @@ export function CallProvider({ children }) {
     );
     return () => timers.forEach(clearTimeout);
   }, [live.length, refreshCallLog]);
-  const recording = state.recording;
-  const recordingRequest = useRef(false);
-  const shownRecordingError = useRef(null);
-  useEffect(() => {
-    if (state.recordingError && state.recordingError !== shownRecordingError.current) {
-      shownRecordingError.current = state.recordingError;
-      Alert.alert('Couldn’t Record', state.recordingError);
-    } else if (!state.recordingError) shownRecordingError.current = null;
-  }, [state.recordingError]);
-
-  const startRecording = useCallback(async (number, quiet = false) => {
-    if (!Dialer || !Dialer.startRecording || recordingRequest.current) return false;
-    recordingRequest.current = true;
-    try {
-      const granted = await ensureRecordingPermission({ request: !quiet, notify: !quiet });
-      if (!granted) return false;
-      // This acknowledges a queued request; the native phase/error reports the result.
-      const ok = Dialer.startRecording(number || '');
-      setState(parseCallState(Dialer.getState()));
-      if (!ok) Alert.alert('Couldn’t Record', Dialer.recordingError() || 'Recording isn’t available on this phone.');
-      return ok;
-    } catch (error) {
-      Alert.alert('Couldn’t Record', error?.message || 'Could not request microphone access.');
-      return false;
-    } finally {
-      recordingRequest.current = false;
-    }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (Dialer && Dialer.stopRecording) Dialer.stopRecording();
-  }, []);
-
-  // Auto-record: start once per call when it connects.
-  const autoDone = useRef({});
-  useEffect(() => {
-    if (!settings.autoRecord || recording) return;
-    const active = live.find((c) => c.state === 'active');
-    if (active && !autoDone.current[active.id]) {
-      autoDone.current[active.id] = true;
-      startRecording(active.number, true);
-    }
-  }, [live, settings.autoRecord, recording, startRecording]);
-
   const requestDefault = useCallback(async () => {
     if (!Dialer) return false;
     let ok = false;
@@ -178,9 +132,6 @@ export function CallProvider({ children }) {
     calls: state.calls,
     live,
     audio: state.audio,
-    recording,
-    startRecording,
-    stopRecording,
     ended,
     minimized,
     setMinimized,

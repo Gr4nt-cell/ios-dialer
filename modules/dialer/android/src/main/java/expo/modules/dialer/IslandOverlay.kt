@@ -552,7 +552,7 @@ object IslandOverlay {
     val metrics = ctx.resources.displayMetrics
     val red = Color.parseColor("#FF3B30")
     val green = Color.parseColor("#30D158")
-    val gray = Color.parseColor("#3A3A3C")
+    val gray = Color.BLACK
     val dim = Color.parseColor("#A1A1A6")
     val topPad = maxOf(dpi(ctx, 12f), cameraTopPx)
     val card = LinearLayout(ctx).apply {
@@ -678,7 +678,7 @@ object IslandOverlay {
       gravity = Gravity.CENTER
       setTextSize(TypedValue.COMPLEX_UNIT_PX, s(18f).toFloat())
       typeface = Typeface.DEFAULT_BOLD
-      background = rounded(Color.parseColor("#3A3A3C"), s(24f).toFloat())
+      background = rounded(Color.BLACK, s(24f).toFloat())
     }
     header.addView(avatar, LinearLayout.LayoutParams(s(if (compact) 38f else 60f), s(if (compact) 38f else 60f)))
     val names = LinearLayout(ctx).apply {
@@ -725,7 +725,7 @@ object IslandOverlay {
     }
     val red = Color.parseColor("#FF3B30")
     val green = Color.parseColor("#30D158")
-    val gray = Color.parseColor("#3A3A3C")
+    val gray = Color.BLACK
     val ringingId = CallManager.ringingCall()?.let { CallManager.idOf(it) }
     val primaryId = CallManager.primaryCall()?.let { CallManager.idOf(it) }
     if (i.ringing && ringingId != null) {

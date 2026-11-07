@@ -9,15 +9,12 @@ Build and install a fresh native APK; Expo Go cannot run this module. In Setting
 enable Call Announcer, choose Male or Female, and tap Test Announcer. The test
 uses the embedded engine to say “Incoming call from Stephen.” It reports failure
 if name synthesis fails, rather than passing a generic clip off as a name test.
-There is no Google TTS, extra voice app, Internet request, microphone access,
-listening service, or runtime voice-model download.
+There is no Google TTS, extra voice app, Internet request, listening service,
+or runtime voice-model download.
 
 Saved contact names come from the existing contacts lookup. Unknown callers get
 “Incoming call”, or spoken digits if the existing number option is enabled.
-This does not identify unknown people or query Truecaller. The recording notice
-continues to use its bundled male/female clips and does not require neural
-synthesis or a system TTS engine. Recording remains subject to Android/OEM audio
-capture restrictions; this change does not grant system capture privileges.
+This does not identify unknown people or query Truecaller.
 
 ## Behavior and limits
 
@@ -60,8 +57,7 @@ JNI configuration classes. The arm64 native library has 16 KiB LOAD alignment.
 - CPU offline smoke test with the same engine version and bundled model:
   Stephen, Gloria, Kwame, Esther Sarfoa, Dr Bekui, both speaker IDs; each produced
   non-silent 22050 Hz audio. Desktop timing is not a phone performance promise.
-- JavaScript: all 70 files parse; scope check passes; all three microphone
-  permission regression tests pass.
+- JavaScript: source syntax and import-scope checks pass.
 - Full APK build and actual incoming calls on a Xiaomi/Chinese ROM remain to be
   tested. Check both voices, a cold start, screen locking during synthesis,
   answering immediately, silent/DND, and the generic unknown-caller fallback.

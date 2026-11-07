@@ -14,7 +14,6 @@ import { BlurTargetView, Glass } from '../components/Glass';
 import CallPicker, { callAccounts } from '../components/CallPicker';
 import { useActionSheet } from '../components/ActionSheet';
 import Dialer from '../dialer';
-import { loadRecordings } from './RecordingsScreen';
 import { useT } from '../i18n';
 
 function Action({ icon, label, onPress, disabled, color }) {
@@ -111,11 +110,6 @@ export default function ContactDetailScreen({ route }) {
     }
     return best;
   }, [phones.length, phoneKeys, recents]);
-  const recordingCount = useMemo(() => {
-    const keys = new Set(phoneKeys.split(','));
-    return loadRecordings().filter((r) => keys.has(numberKey(r.number))).length;
-  }, [phoneKeys]);
-
   const blocked = primary ? phones.some((p) => isBlocked(p.number)) : false;
   const favorite = primary ? phones.some((p) => isFavorite(p.number)) : false;
 
@@ -370,9 +364,6 @@ export default function ContactDetailScreen({ route }) {
         <Group style={{ marginBottom: 18 }}>
           {primary ? <Cell value="Send Message" color={t.blue} onPress={() => pickNumberFor('message')} /> : null}
           {primary ? <Cell value="Share Contact" color={t.blue} onPress={share} /> : null}
-          {recordingCount ? (
-            <Cell value={`Call Recordings (${recordingCount})`} color={t.blue} onPress={() => nav.push({ name: 'recordings', numbers: phones.map((p) => p.number) })} />
-          ) : null}
           {primary ? <Cell value={favorite ? 'Remove from Favorites' : 'Add to Favorites'} color={t.blue} onPress={toggleFavorite} /> : null}
           {!contact && primary ? <Cell value="Create New Contact" color={t.blue} onPress={() => nav.push({ name: 'newContact', number: primary })} /> : null}
         </Group>

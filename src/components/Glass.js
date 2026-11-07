@@ -184,8 +184,8 @@ export function Glass({
   const fill = tint
     ? colorWithOpacity(tint, tintOpacity * fillScale * (vivid ? 0.86 : 1))
     : flat
-    ? dark ? `rgba(39,42,48,${a})` : `rgba(246,250,255,${a})`
-    : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
+    ? dark ? `rgba(0,0,0,${a})` : `rgba(246,250,255,${a})`
+    : dark ? `rgba(0,0,0,${a})` : `rgba(252,253,254,${a})`;
   const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor

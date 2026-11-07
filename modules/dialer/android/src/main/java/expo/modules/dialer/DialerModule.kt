@@ -105,7 +105,6 @@ class DialerModule : Module() {
         // the module loads after the main screen has started, so record that it's on screen
         if (it.hasWindowFocus() || it.window?.decorView?.isShown == true) CallManager.markVisible(it, true)
       }
-      try { PrivacyPrefs.cleanup(ctx) } catch (_: Exception) {}
       CallManager.listener = { json ->
         try { sendEvent("onCallsChanged", mapOf("json" to json)) } catch (_: Exception) {}
       }
@@ -361,9 +360,6 @@ class DialerModule : Module() {
 
     Function("getPrivacy") { -> PrivacyPrefs.all(ctx) }
     Function("setPrivacyBool") { key: String, value: Boolean -> PrivacyPrefs.set(ctx, key, value) }
-    Function("setPrivacyString") { key: String, value: String -> PrivacyPrefs.set(ctx, key, value) }
-    Function("setPrivacyInt") { key: String, value: Int -> PrivacyPrefs.set(ctx, key, value) }
-    Function("deleteAllPrivateData") { -> PrivacyPrefs.deleteEverything(ctx) }
 
     Function("getIslandSize") { ->
       val z = IslandOverlay.size(ctx)
@@ -551,27 +547,6 @@ class DialerModule : Module() {
     AsyncFunction("testCallAnnouncer") { promise: Promise ->
       CallerAnnouncer.preview(ctx) { ok, error -> promise.resolve(mapOf("ok" to ok, "error" to error)) }
     }
-
-    // ---------- call recording ----------
-
-    Function("startRecording") { number: String -> RecordingService.start(ctx, number) }
-    Function("stopRecording") { -> RecordingService.stop(ctx); true }
-    Function("getRecordingPermissionStatus") { -> mapOf(
-      "declared" to RecordingSupport.microphoneDeclared(ctx),
-      "granted" to (androidx.core.content.ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED),
-    ) }
-    Function("getRecordingSupport") { -> RecordingSupport.info(ctx) }
-    Function("recordingError") { -> RecordingService.lastError }
-    Function("getRecordingRevision") { -> RecordingFormats.revision() }
-    Function("getRecordingFormat") { -> RecordingFormats.get(ctx) }
-    Function("setRecordingFormat") { format: String -> RecordingFormats.set(ctx, format) }
-    Function("playRecording") { name: String -> RecordingPlayback.play(ctx, name) }
-    Function("pauseRecordingPlayback") { -> RecordingPlayback.pause(); true }
-    Function("resumeRecordingPlayback") { -> RecordingPlayback.resume(); true }
-    Function("stopRecordingPlayback") { -> RecordingPlayback.stop(); true }
-    Function("getRecordingPlayback") { -> RecordingPlayback.state() }
-    Function("listRecordings") { -> RecordingService.list(ctx) }
-    Function("deleteRecording") { name: String -> RecordingService.delete(ctx, name) }
 
     // ---------- USSD & codes ----------
 

@@ -56,7 +56,7 @@ export function ReferenceCallSurface({ children, radius = 36, pressed, tint, on,
   return <View style={[styles.surface, {
     borderRadius: radius,
     ...(budget.shadows ? null : { boxShadow: 'none' }),
-    backgroundColor: tint || (t.dark ? (on ? '#38383B' : '#242426') : (on ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.20)')),
+    backgroundColor: tint || (t.dark ? '#000000' : (on ? 'rgba(255,255,255,0.36)' : 'rgba(255,255,255,0.20)')),
     borderColor: t.dark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.45)',
     opacity: pressed ? 0.92 : 1,
     transform: [{ scale: pressed ? 0.96 : 1 }],

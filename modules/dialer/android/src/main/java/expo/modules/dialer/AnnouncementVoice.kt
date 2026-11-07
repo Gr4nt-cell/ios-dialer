@@ -2,20 +2,18 @@ package expo.modules.dialer
 
 import android.content.Context
 
-/** Voice preferences shared by recording clips and embedded caller-name synthesis. */
+/** Voice preference for embedded caller-name announcements. */
 object AnnouncementVoice {
   private fun prefs(ctx: Context) = ctx.getSharedPreferences("dialer_announcement_voice", Context.MODE_PRIVATE)
-  fun all(ctx: Context): Map<String, String> = mapOf(
-    "recordingVoice" to (prefs(ctx).getString("recordingVoice", "female") ?: "female"),
-    "callerVoice" to (prefs(ctx).getString("callerVoice", "female") ?: "female"),
-  )
+  fun all(ctx: Context): Map<String, String> {
+    val preferences = prefs(ctx)
+    return mapOf("callerVoice" to (preferences.getString("callerVoice", "female") ?: "female"))
+  }
   fun set(ctx: Context, kind: String, voice: String): Boolean {
-    if (kind !in setOf("recordingVoice", "callerVoice") || voice !in setOf("male", "female")) return false
+    if (kind != "callerVoice" || voice !in setOf("male", "female")) return false
     prefs(ctx).edit().putString(kind, voice).apply()
     return true
   }
-  fun recordingResource(ctx: Context): Int = if (prefs(ctx).getString("recordingVoice", "female") == "male") R.raw.recording_notice_male else R.raw.recording_notice_female
-
   fun incomingResources(ctx: Context, identity: String?): List<Int> {
     val male = prefs(ctx).getString("callerVoice", "female") == "male"
     val number = identity?.takeIf { it.isNotBlank() && it.all { char -> char in '0'..'9' || char.isWhitespace() } }?.filter { it in '0'..'9' }

@@ -32,7 +32,7 @@ export default function WallpaperGrid({ items, selectedId, onSelect, dark = fals
                 <View style={{ width: tileWidth, height, padding: 2, borderRadius: 16, overflow: 'hidden', borderWidth: 2, borderColor: selected ? t.blue : t.glassBorder, transform: [{ scale: pressed ? 0.97 : 1 }] }}>
                   <View style={{ flex: 1, borderRadius: 11, overflow: 'hidden', backgroundColor: item.color || t.backdropBase }}>
                     {item.source ? <Image source={item.source} fadeDuration={0} resizeMode="cover" style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} /> : null}
-                    {dark && item.source ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,15,0.70)' }]} /> : null}
+                    {dark && item.source ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.70)' }]} /> : null}
                   </View>
                   {selected ? <View style={styles.check}><Ionicons name="checkmark" size={13} color="#fff" /></View> : null}
                 </View>

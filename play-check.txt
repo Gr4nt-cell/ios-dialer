@@ -1,9 +1,0 @@
-Google Play readiness
-✅ PASS  microphone and recording foreground-service permissions are present
-✅ PASS  targetSdkVersion 36
-✅ PASS  version 1.0.10 (versionCode 11)
-✅ PASS  no fixed screen orientation on the app’s activities
-✅ PASS  no advertising ID permission
-✅ PASS  no INTERNET permission
-✅ PASS  obfuscation 92.7% of 16743 classes (Play threshold 25%)
-ℹ️ INFO  deprecated edge-to-edge calls referenced (from React Native / AndroidX, advisory in Play): setStatusBarColor, setNavigationBarColor, getStatusBarColor
