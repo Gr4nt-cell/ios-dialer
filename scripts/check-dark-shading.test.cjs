@@ -11,9 +11,11 @@ test('dark decorative shading is limited to keypad keys and the keypad dock stat
   const contacts = read('src/components/ContactCard.js');
 
   assert.match(glass, /allowDarkShading = false/);
-  assert.match(glass, /const showShading = !dark \|\| allowDarkShading/);
+  assert.match(glass, /export const KeypadScreenShadingContext = createContext\(false\)/);
+  assert.match(glass, /const showShading = !dark \|\| allowDarkShading \|\| inKeypadScreen/);
   assert.match(glass, /budget\.compact && showShading \? <Image source=\{require\('\.\.\/\.\.\/assets\/glass\/static-sheen\.png'\)\}/);
   assert.match(glass, /<Glass \{\.\.\.props\} allowDarkShading soft/);
+  assert.match(read('src/screens/KeypadScreen.js'), /<KeypadScreenShadingContext\.Provider value=\{true\}>/);
   assert.equal((dock.match(/allowDarkShading=\{active === 'keypad'\}/g) || []).length, 2);
   assert.match(contacts, /!performanceMode && !keypadMaterial && !t\.dark/);
 });

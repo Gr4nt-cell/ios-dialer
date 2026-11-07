@@ -11,7 +11,7 @@ import { useData } from '../DataContext';
 import { useNav } from '../nav';
 import { cleanNumber, contactName, formatNumber, t9Search } from '../phone';
 import { playTone, preloadTones } from '../sounds';
-import { Glass, KeypadGlass } from '../components/Glass';
+import { Glass, KeypadGlass, KeypadScreenShadingContext } from '../components/Glass';
 import Dialer, { isImeiCode, isSecretCode, isUssdCode } from '../dialer';
 import { runUssdThroughOperator } from '../ussd';
 import { useCalls } from '../CallContext';
@@ -170,6 +170,7 @@ export default function KeypadScreen({ prefill }) {
   const display = formatNumber(num);
 
   return (
+    <KeypadScreenShadingContext.Provider value={true}>
     <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: tabBarSpace + insets.bottom }}>
       <View style={styles.topBar}>
         <View style={{ flex: 1 }} />
@@ -263,6 +264,7 @@ export default function KeypadScreen({ prefill }) {
         </View>
       </View>
     </View>
+    </KeypadScreenShadingContext.Provider>
   );
 }
 

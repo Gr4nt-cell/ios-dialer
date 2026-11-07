@@ -31,6 +31,7 @@ export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 
 export const GlassFillScaleContext = createContext(1);
 export const PerformanceModeContext = createContext(false);
 export const PerformanceProfileContext = createContext(null);
+export const KeypadScreenShadingContext = createContext(false);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
@@ -127,7 +128,8 @@ export function Glass({
   const profile = useContext(PerformanceProfileContext);
   const budget = glassBudget(profile || { lowEnd: performanceMode });
   const dark = forceDark ?? t.dark;
-  const showShading = !dark || allowDarkShading;
+  const inKeypadScreen = useContext(KeypadScreenShadingContext);
+  const showShading = !dark || allowDarkShading || inKeypadScreen;
   // Explicitly themed surfaces (the photo/gradient call screen) keep their
   // existing material, as does every surface when the system theme is dark.
   const lightLiquid = liquid && !t.dark && !dark && forceDark == null;
