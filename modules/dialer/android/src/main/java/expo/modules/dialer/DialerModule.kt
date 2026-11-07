@@ -87,6 +87,18 @@ class DialerModule : Module() {
           android.util.Log.w("Dialer", "Could not remove legacy call photo cache")
         }
 
+        // Remove recordings left by versions that included the call recorder.
+        // Keep the migration pending if deletion fails so the next app launch retries it.
+        val migrations = app.getSharedPreferences("dialer_feature_migrations", Context.MODE_PRIVATE)
+        if (!migrations.getBoolean("legacy_call_recordings_removed_v1", false)) {
+          val legacyRecordings = app.filesDir.resolve("recordings")
+          if (!legacyRecordings.exists() || legacyRecordings.deleteRecursively()) {
+            migrations.edit().putBoolean("legacy_call_recordings_removed_v1", true).apply()
+          } else {
+            android.util.Log.w("Dialer", "Could not remove legacy call recordings; will retry on next launch")
+          }
+        }
+
         // Remove cached voice models and settings left by older caller-announcer versions.
         val legacyKeys = arrayOf("announce", "announceRepeat", "announceUnknown", "announceVoice")
         val prefs = app.getSharedPreferences("dialer_overlay", Context.MODE_PRIVATE)
