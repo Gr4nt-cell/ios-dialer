@@ -26,6 +26,7 @@ export const UNIFIED_TABS = [
   { key: 'calls', label: 'Calls', icon: 'call' },
   { key: 'contacts', label: 'Contacts', icon: 'person-circle' },
   { key: 'keypad', label: 'Keypad', icon: 'keypad' },
+  { key: 'settings', label: 'Settings', icon: 'settings' },
   { key: 'search', label: 'Search', icon: 'search' },
 ];
 
@@ -143,6 +144,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
           radius={32}
           fillScale={t.dark ? 0.86 : 0.85}
           sheenScale={t.dark ? 0.75 : 0.9}
+          allowDarkShading={active === 'keypad'}
           onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
           style={{ height: TAB_BAR_HEIGHT }}
         >
@@ -165,6 +167,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 <Glass
                   radius={27}
                   selected
+                  allowDarkShading={active === 'keypad'}
                   style={{ flex: 1, ...(performanceMode || visualProfile?.lowEnd ? null : { boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }) }}
                   liquid
                   outline

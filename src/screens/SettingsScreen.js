@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Alert, AppState } from 'react-native';
-import { usePaneSize } from '../device';
+import { useBottomSpace, usePaneSize } from '../device';
 import { Image, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import DepthPreview from '../components/DepthPreview';
 import DepthEditor from '../components/DepthEditor';
@@ -84,7 +84,7 @@ function Stepper({ value, onChange, min, max, step = 1, format }) {
   );
 }
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ inTab = false }) {
   const t = useTheme();
   const tr = useT();
   const [depthEditor, setDepthEditor] = useState(false);
@@ -121,6 +121,7 @@ export default function SettingsScreen() {
     finally { setTestingAnnouncer(false); }
   };
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useBottomSpace();
   const nav = useNav();
   const { settings, updateSettings, blocked, block, unblock, resolve, callLogPerm, refreshCallLog, contactsPerm, refreshContacts, contacts } = useData();
   const { available, isDefault, requestDefault } = useCalls();
@@ -271,8 +272,8 @@ export default function SettingsScreen() {
   return (
     <View style={{ flex: 1 }}>
       <DepthEditor visible={depthEditor} onClose={() => setDepthEditor(false)} settings={posterSettings(settings)} updateSettings={(p) => updateSettings(posterPatch(p))} contacts={sample.image ? [{ name: sample.name, largeImage: { uri: sample.image } }] : []} />
-      <SheetHeader title={tr('Settings')} right={<IconButton prominent name="checkmark" onPress={nav.pop} />} />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + 40, paddingTop: 10 }}>
+      <SheetHeader title={tr('Settings')} right={inTab ? null : <IconButton prominent name="checkmark" onPress={nav.pop} />} />
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: insets.bottom + (inTab ? tabBarSpace + 24 : 40), paddingTop: 10 }}>
         <SectionTitle>{tr('Default Phone App')}</SectionTitle>
         <Group>
           <Cell

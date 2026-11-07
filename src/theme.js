@@ -60,7 +60,7 @@ const dark = {
   orange: '#FF9F0A',
   avatar: ['#000000', '#000000'],
   glass: '#000000',
-  glassBorder: 'rgba(255,255,255,0.08)',
+  glassBorder: 'rgba(220,238,255,0.22)',
   glassFillScale: 1,
   chartIncoming: '#3B93F0',
   chartOutgoing: '#1DB069',

@@ -33,7 +33,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
         { backgroundColor: glass ? 'transparent' : t.fill, alignItems: 'center', justifyContent: 'center', paddingBottom: overlay ? 24 : 0 },
       ]}
     >
-      {!performanceMode && !keypadMaterial ? <LinearGradient
+      {!performanceMode && !keypadMaterial && !t.dark ? <LinearGradient
         colors={
           glass
             ? t.dark
@@ -58,7 +58,7 @@ export default function ContactCard({ width, height, name, label, image, colorKe
   const cardContents = (
     <>
       {face}
-      {!performanceMode && glass && !keypadMaterial ? (
+      {!performanceMode && glass && !keypadMaterial && !t.dark ? (
         <LinearGradient
           colors={t.dark ? ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.12)'] : ['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.02)', 'rgba(35,50,70,0.06)']}
           locations={[0, 0.42, 1]}
@@ -66,16 +66,16 @@ export default function ContactCard({ width, height, name, label, image, colorKe
           pointerEvents="none"
         />
       ) : null}
-      {!performanceMode && !keypadMaterial ? <LinearGradient
+      {!performanceMode && !keypadMaterial && !t.dark ? <LinearGradient
         colors={glass ? ['rgba(255,255,255,0.3)', 'rgba(255,255,255,0)'] : ['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']}
         style={styles.sheen}
         pointerEvents="none"
       /> : null}
       {overlay ? (
         <>
-          {!keypadMaterial ? <LinearGradient colors={['transparent', 'rgba(0,0,0,0.65)']} style={styles.shade} pointerEvents="none" /> : null}
+          {!keypadMaterial && !t.dark ? <LinearGradient colors={['transparent', 'rgba(0,0,0,0.65)']} style={styles.shade} pointerEvents="none" /> : null}
           <View style={styles.overlayText}>
-            <Text style={{ color: keypadMaterial ? t.text : '#fff', fontSize: fs(14), fontWeight: '700' }} numberOfLines={1} allowFontScaling={false}>
+            <Text style={{ color: keypadMaterial ? t.text : '#fff', fontSize: fs(14), fontWeight: '700', textShadowColor: t.dark ? 'rgba(0,0,0,0.9)' : undefined, textShadowOffset: t.dark ? { width: 0, height: 1 } : undefined, textShadowRadius: t.dark ? 3 : undefined }} numberOfLines={1} allowFontScaling={false}>
               {name.split(' ')[0]}
             </Text>
             {label ? (

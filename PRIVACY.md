@@ -1,6 +1,6 @@
 # Privacy Policy — Phone (com.gr4nt.dialer)
 
-_Last updated: 7 November 2026 · app version 1.0.6_
+_Last updated: 7 November 2026 · app version 1.0.7_
 
 Phone is a phone and contacts app for Android, made by Gr4nt. This policy explains what the app
 accesses, what it does with it, and what it never does.

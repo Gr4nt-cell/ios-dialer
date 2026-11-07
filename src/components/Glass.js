@@ -59,7 +59,7 @@ function lift(dark, soft, liquid, performanceMode = false) {
   const borderColor = liquid
     ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(255,255,255,0.78)'
     : dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)';
-  if (performanceMode) return { borderColor };
+  if (performanceMode) return { borderColor, ...(dark ? { boxShadow: darkEdgeShadow(soft) } : {}) };
 
   // boxShadow, not elevation: Android's elevation shadow is traced from a
   // polygonal approximation of the view's outline, which turned the round keys
@@ -76,10 +76,18 @@ function lift(dark, soft, liquid, performanceMode = false) {
   const blur = soft ? 8 : 18;
   return {
     borderColor,
-    boxShadow: liquid && !dark
-      ? `0px ${y}px ${blur}px rgba(57,83,70,${a})`
-      : `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
+    boxShadow: dark
+      ? darkEdgeShadow(soft)
+      : liquid
+        ? `0px ${y}px ${blur}px rgba(57,83,70,${a})`
+        : `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
+}
+
+function darkEdgeShadow(soft = false) {
+  // A single cool edge shadow gives black glass visible depth without stacking
+  // several expensive effects on devices using the compact renderer.
+  return `0px ${soft ? 2 : 4}px ${soft ? 8 : 14}px rgba(220,238,255,${soft ? 0.13 : 0.2})`;
 }
 
 function blurProps(target) {
@@ -108,6 +116,7 @@ export function Glass({
   liquid = true, // brighter bevel and cool glass tint across glass surfaces
   fillScale = 1, // thins the fill further, e.g. a button over a photo
   sheenScale = 1, // lowers the glass sheen without dimming its contents
+  allowDarkShading = false, // reserve the striped dark-mode sheen for keypad keys
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
@@ -118,6 +127,7 @@ export function Glass({
   const profile = useContext(PerformanceProfileContext);
   const budget = glassBudget(profile || { lowEnd: performanceMode });
   const dark = forceDark ?? t.dark;
+  const showShading = !dark || allowDarkShading;
   // Explicitly themed surfaces (the photo/gradient call screen) keep their
   // existing material, as does every surface when the system theme is dark.
   const lightLiquid = liquid && !t.dark && !dark && forceDark == null;
@@ -148,6 +158,7 @@ export function Glass({
             borderWidth: flat ? 1 : StyleSheet.hairlineWidth,
             borderColor: t.separator,
             transform: [{ scale: pressed ? 1.02 : 1 }],
+            ...(dark ? { boxShadow: darkEdgeShadow(soft) } : {}),
             ...(lifted || {}),
           },
           style,
@@ -186,7 +197,7 @@ export function Glass({
     : flat
     ? dark ? `rgba(0,0,0,${a})` : `rgba(246,250,255,${a})`
     : dark ? `rgba(0,0,0,${a})` : `rgba(252,253,254,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)';
+  const rimTop = dark ? 'rgba(255,255,255,0.46)' : liquid ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
     : optimizedLight
@@ -196,7 +207,7 @@ export function Glass({
         ? 'rgba(45,66,94,0.26)'
         : 'rgba(45,66,94,0.2)'
     : liquid
-    ? dark ? 'rgba(220,238,255,0.28)' : lightLiquid ? t.glassBorder : 'rgba(105,143,185,0.25)'
+    ? dark ? 'rgba(220,238,255,0.38)' : lightLiquid ? t.glassBorder : 'rgba(105,143,185,0.25)'
     : strong
     ? dark ? 'rgba(220,228,240,0.18)' : 'rgba(80,86,96,0.16)'
     : outline
@@ -240,16 +251,16 @@ export function Glass({
         />
       ) : null}
       {/* specular highlight */}
-      {!budget.compact ? <LinearGradient
+      {!budget.compact && showShading ? <LinearGradient
         pointerEvents="none"
         colors={[highlight, 'rgba(255,255,255,0)']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.55 }}
         style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
       /> : null}
-      {budget.compact ? <Image source={require('../../assets/glass/static-sheen.png')} fadeDuration={0} resizeMode="stretch" pointerEvents="none" style={StyleSheet.absoluteFill} /> : null}
+      {budget.compact && showShading ? <Image source={require('../../assets/glass/static-sheen.png')} fadeDuration={0} resizeMode="stretch" pointerEvents="none" style={StyleSheet.absoluteFill} /> : null}
       {/* darker lower edge for depth */}
-      {!budget.compact ? <LinearGradient
+      {!budget.compact && showShading ? <LinearGradient
         pointerEvents="none"
         colors={['rgba(0,0,0,0)', edge]}
         start={{ x: 0.5, y: 0.55 }}
@@ -298,18 +309,20 @@ export function Glass({
     );
   }
 
-  // On Android, clipping a view and drawing a boxShadow on that same view can
-  // leave its children unpainted after Appearance.setColorScheme changes the
-  // app from dark to light. Keep the shadow on the outer layer and clip only
-  // the decorative glass layers; render labels and controls above that layer.
-  if (lightLiquid && Platform.OS === 'android') {
+  // Keep the shadow on an unclipped outer layer; clip only the glass decoration
+  // so rounded dark-mode edges remain visible without the internal shade band.
+  if ((lightLiquid || dark) && Platform.OS === 'android') {
     return (
       <View
         pointerEvents={pointerEvents}
         onLayout={onLayout}
         style={[
           { borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] },
-          !budget.shadows ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(57,83,70,${soft ? 0.055 : 0.075})` },
+          dark
+            ? { boxShadow: darkEdgeShadow(soft) }
+            : !budget.shadows
+              ? null
+              : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(57,83,70,${soft ? 0.055 : 0.075})` },
           style,
         ]}
       >
@@ -345,10 +358,10 @@ export function GlassShadow({ children, style, radius = 999 }) {
   return (
     <View
       style={[
-        !budget.shadows ? { borderRadius: radius } : {
+        t.dark ? { borderRadius: radius, boxShadow: darkEdgeShadow(false) } : !budget.shadows ? { borderRadius: radius } : {
           borderRadius: radius,
-          shadowColor: t.dark ? '#000' : '#395346',
-          shadowOpacity: t.dark ? 0.32 : 0.07,
+          shadowColor: '#395346',
+          shadowOpacity: 0.07,
           shadowRadius: 20,
           shadowOffset: { width: 0, height: 8 },
         },
@@ -366,7 +379,7 @@ export function KeypadGlass({ children, ...props }) {
   const t = useTheme();
   const performanceMode = useContext(PerformanceModeContext);
   const surface = (
-    <Glass {...props} soft tint={props.tint ?? t.key} tintOpacity={props.tintOpacity ?? (t.dark ? 1 : performanceMode ? 0.58 : 0.28)}>
+    <Glass {...props} allowDarkShading soft tint={props.tint ?? t.key} tintOpacity={props.tintOpacity ?? (t.dark ? 1 : performanceMode ? 0.58 : 0.28)}>
       {children}
     </Glass>
   );

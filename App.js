@@ -49,6 +49,7 @@ const ROUTES = {
 // On a tablet these fill the pane beside the list instead of covering the
 // screen; the rest (the forms and pickers) stay modal, where they belong.
 const PANE_ROUTES = new Set(['contact', 'settings', 'privacyPolicy', 'statistics']);
+const TABLET_TABS = UNIFIED_TABS.filter((tab) => tab.key !== 'settings');
 
 function islandOn() {
   try {
@@ -103,8 +104,8 @@ function Main() {
   const t = useTheme();
   const { missedCount, settings } = useData();
   const blurTarget = useRef(null);
-  const tabs = UNIFIED_TABS;
   const isTablet = useIsTablet();
+  const tabs = isTablet ? TABLET_TABS : UNIFIED_TABS;
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { showScreen, live, setMinimized } = useCalls();
   const [tab, setTabState] = useState('keypad');
@@ -190,6 +191,9 @@ function Main() {
       break;
     case 'search':
       screen = <SearchScreen />;
+      break;
+    case 'settings':
+      screen = <SettingsScreen inTab />;
       break;
     case 'favorites':
       screen = <FavoritesScreen />;
